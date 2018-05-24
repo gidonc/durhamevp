@@ -1,6 +1,6 @@
 Package: durhamevp
 Type: Package
-Title: Supporting Durham Victorian Election Violence Project
+Title: ESRC/AHRC Victorian Election Violence Project R Code (Durham University)
 Version: 0.1.0
 Author: Gidon Cohen
 Maintainer: Gidon Cohen <gidon.cohen@durham.ac.uk>
