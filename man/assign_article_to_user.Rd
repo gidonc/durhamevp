@@ -2,7 +2,7 @@
 % Please edit documentation in R/database_interactivity.R
 \name{assign_article_to_user}
 \alias{assign_article_to_user}
-\title{Assigns an article to a user.}
+\title{Assign article to a user.}
 \usage{
 assign_article_to_user(con, document_id, user_id, allocation_date,
   allocation_type, allocated_by, status, coding_complete = 0)
@@ -21,5 +21,5 @@ assign_article_to_user(con, document_id, user_id, allocation_date,
 \item{status}{Status of document coding (generally 'New' for newly assigned documents).}
 }
 \description{
-Assigns an article to a user.
+\code{assign_article_to_user} assigns a specific article to a specific user.
 }

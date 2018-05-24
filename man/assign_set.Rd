@@ -2,7 +2,7 @@
 % Please edit documentation in R/database_interactivity.R
 \name{assign_set}
 \alias{assign_set}
-\title{Assigns a whole set of articles to a user (articles which are already allocated to a user are not allocated again).}
+\title{Assigns set of articles to a user}
 \usage{
 assign_set(con, user_id, set, allocation_type, allocated_by = "assign_set",
   status = "NEW")
@@ -19,5 +19,9 @@ assign_set(con, user_id, set, allocation_type, allocated_by = "assign_set",
 \item{allocated_by}{The person (user_id) or the function which performed the allocation}
 }
 \description{
-Assigns a whole set of articles to a user (articles which are already allocated to a user are not allocated again).
+\code{assign_set} assigns a whole set of articles to a user (articles which are already allocated to a user are not allocated again).
+This function is a convenience wrapper around \code{assign_article_to_user}.
+}
+\seealso{
+\code{\link{assign_article_to_user}}
 }

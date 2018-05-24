@@ -48,7 +48,9 @@ get_allocation <- function(con=connect, user_id, allocation_type="%"){
 }
 
 user_allocated_fromset <- function(con, user_id, set, not_allocated=FALSE){
-  #' Returns the elements of a set of documents allocated (or not allocated) to a user.
+  #' Which items allocated (or not allocated) to user
+  #'
+  #' Returns the elements of a set of documents which are allocated (or not allocated) to a user.
   #' @param con The database connection to the election violence database.
   #' @param user_id The user id to check in the database.
   #' @param set The set of documents to check.
@@ -78,8 +80,9 @@ user_allocated_fromset <- function(con, user_id, set, not_allocated=FALSE){
 
 
 assign_article_to_user <- function (con, document_id, user_id, allocation_date, allocation_type, allocated_by, status, coding_complete=0){
-  #' Assigns an article to a user.
+  #' Assign article to a user.
   #'
+  #' \code{assign_article_to_user} assigns a specific article to a specific user.
   #' @param con The database connection to the election violence database.
   #' @param document_id Id of the document to be assigned.
   #' @param user_id Id of the user the document is to be assigned to.
@@ -105,12 +108,16 @@ assign_article_to_user <- function (con, document_id, user_id, allocation_date, 
 }
 
 assign_set <- function(con, user_id, set, allocation_type, allocated_by = "assign_set", status="NEW"){
-  #' Assigns a whole set of articles to a user (articles which are already allocated to a user are not allocated again).
+  #' Assigns set of articles to a user
+  #'
+  #' \code{assign_set} assigns a whole set of articles to a user (articles which are already allocated to a user are not allocated again).
+  #' This function is a convenience wrapper around \code{assign_article_to_user}.
   #' @param con The connection to the election violence database.
   #' @param user_id The user id.
   #' @param set A vector which contains the document ids of the articles to be allocated (generally the test set of articles and the training set of articles).
   #' @param allocation_type The type of the allocation in the database (one of testing, training, coding, checking and ideal)
   #' @param allocated_by The person (user_id) or the function which performed the allocation
+  #' @seealso \code{\link{assign_article_to_user}}
   #' @export
 
   # restrict assignment of set to items not already allocated to the user
@@ -131,23 +138,34 @@ assign_set <- function(con, user_id, set, allocation_type, allocated_by = "assig
   if(length(items_needed)<length(set)){
     completion_string<-paste0(completion_string, " ", length(set)-length(items_needed), " items (of ", length(set), ") were already allocated ")
   }
-  completion_string
+  message(completion_string)
 }
 
 assign_testset_to_user<-function(con, user_id, testset=define_testset(), allocation_type="testing", allocated_by="assign_testset_to_user") {
+  #' Assign test set
+  #'
+  #' \code{assign_testset_to_user} assigns the test set of articles to a user specified by the user id. Articles which are already allocated to a user are not allocated again.
+  #' @param con The connection to the election violence database.
+  #' @param user_id The user id.
+  #' @export
   assign_set(con=con, user_id=user_id, set=testset, allocation_type=allocation_type, allocated_by=allocated_by)
 }
 
 
 assign_trainingset_to_user <- function(con, user_id, trainingset=define_trainingset(),
                                        allocation_type="training", allocated_by="assign_trainingset_to_user"){
+  #' Assign training set to user
+  #'
   #' Assigns the training set to user (articles which are already allocated to a user are not allocated again).
   #' @param con The connection to the election violence database.
   #' @param user_id The user id.
+  #' @export
   assign_set(con=con, user_id=user_id, set=trainingset, allocation_type=allocation_type, allocated_by=allocated_by)
 }
 
 assign_initalsets_to_users <- function(con, user_ids){
+  #' Assigns initial article sets to user
+  #'
   #' Assigns the training set and test sets to a user or set of users (articles which are already allocated to a user are not allocated again).
   #' @param con The connection to the election violence database.
   #' @param user_id Either a single user id or a vector of user ids.
@@ -162,8 +180,8 @@ assign_initalsets_to_users <- function(con, user_ids){
   #' @export
 
   for (user_id in user_ids){
-    print(assign_testset_to_user(con, user_id))
-    print(assign_trainingset_to_user(con, user_id))
+    assign_testset_to_user(con, user_id)
+    assign_trainingset_to_user(con, user_id)
   }
 }
 

@@ -2,7 +2,7 @@
 % Please edit documentation in R/database_interactivity.R
 \name{user_allocated_fromset}
 \alias{user_allocated_fromset}
-\title{Returns the elements of a set of documents allocated (or not allocated) to a user.}
+\title{Which items allocated (or not allocated) to user}
 \usage{
 user_allocated_fromset(con, user_id, set, not_allocated = FALSE)
 }
@@ -19,7 +19,7 @@ user_allocated_fromset(con, user_id, set, not_allocated = FALSE)
 A vector numbers representing the document ids from the set which are allocated to the user (or which are not allocated to the user if not_allocated=TRUE).
 }
 \description{
-Returns the elements of a set of documents allocated (or not allocated) to a user.
+Returns the elements of a set of documents which are allocated (or not allocated) to a user.
 }
 \examples{
 # returns the trainingset documents allocated to user 1

@@ -2,7 +2,7 @@
 % Please edit documentation in R/database_interactivity.R
 \name{assign_initalsets_to_users}
 \alias{assign_initalsets_to_users}
-\title{Assigns the training set and test sets to a user or set of users (articles which are already allocated to a user are not allocated again).}
+\title{Assigns initial article sets to user}
 \usage{
 # to assign training set and test set to user 3
 assign_initialsets_to_users(con, 3)

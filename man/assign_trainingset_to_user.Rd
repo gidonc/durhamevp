@@ -2,7 +2,7 @@
 % Please edit documentation in R/database_interactivity.R
 \name{assign_trainingset_to_user}
 \alias{assign_trainingset_to_user}
-\title{Assigns the training set to user (articles which are already allocated to a user are not allocated again).}
+\title{Assign training set to user}
 \usage{
 assign_trainingset_to_user(con, user_id, trainingset = define_trainingset(),
   allocation_type = "training", allocated_by = "assign_trainingset_to_user")

@@ -3,6 +3,8 @@
 export(assign_article_to_user)
 export(assign_initalsets_to_users)
 export(assign_set)
+export(assign_testset_to_user)
+export(assign_trainingset_to_user)
 export(define_testset)
 export(define_trainingset)
 export(evdb_connect)
