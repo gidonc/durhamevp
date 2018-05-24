@@ -20,3 +20,5 @@ Suggests: knitr,
     rmarkdown,
     keychain
 VignetteBuilder: knitr
+URL: http://github.com/gidonc/durhamevp
+BugReports: http://github.com/gidonc/durhamevp/issues
