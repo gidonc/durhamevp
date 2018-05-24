@@ -36,6 +36,7 @@ get_allocation <- function(con=connect, user_id, allocation_type="%"){
   #' @param con The database connection to .
   #' @param user_id The userid to check in the database.
   #' @return dataframe of the document allocations to the user.
+  #' @export
   #'
   #'
   this_sql<-"SELECT * FROM portal_userdocumentallocation WHERE user_id=?user_id AND allocation_type LIKE ?allocation_type ;"
@@ -60,7 +61,7 @@ user_allocated_fromset <- function(con, user_id, set, not_allocated=FALSE){
   #' # returns the trainingset documents not allocated to user 1
   #' user_allocated_fromset(con, 1, set=define_trainingset(), not_allocated=TRUE)
   #'
-  #'
+  #' @export
   user_allocation <- get_allocation(con, user_id)
   training_allocation <- dplyr::filter(user_allocation, allocation_type=="training")
 
@@ -85,7 +86,7 @@ assign_article_to_user <- function (con, document_id, user_id, allocation_date, 
   #' @param allocation_date Date allocation made (usually today).
   #' @param allocation_type Type of allocation (training, testing, coding, checking, ideal).
   #' @param status Status of document coding (generally 'New' for newly assigned documents).
-  #'
+  #' @export
 
   allocated_at <- as.character(Sys.time())
   this_sql<-"INSERT INTO portal_userdocumentallocation (document_id, user_id, allocation_date, allocation_type, allocated_by, status, coding_complete, article_type, geo_relevant, time_relevant, electoral_nature, violent_nature, violent_focus, legibility, comment, recommend_qualitative, difficulty_ranking, ideal_coding_comments, score, assigned_at, last_updated) VALUES (?document_id, ?user_id, ?allocation_date, ?allocation_type, ?allocated_by, ?status, ?coding_complete, '' , '', '', '', '', '', '', '', '', -1, '', -1, ?allocated_at, ?allocated_at) ;"
@@ -110,6 +111,7 @@ assign_set <- function(con, user_id, set, allocation_type, allocated_by = "assig
   #' @param set A vector which contains the document ids of the articles to be allocated (generally the test set of articles and the training set of articles).
   #' @param allocation_type The type of the allocation in the database (one of testing, training, coding, checking and ideal)
   #' @param allocated_by The person (user_id) or the function which performed the allocation
+  #' @export
 
   # restrict assignment of set to items not already allocated to the user
   items_needed <- user_allocated_fromset(con, user_id, set=set, not_allocated = TRUE)
@@ -156,6 +158,8 @@ assign_initalsets_to_users <- function(con, user_ids){
   #'
   #' # to asssing training set and test set to users 3,5, and 6
   #' assing_initalsets_to_users(con, c(3, 5, 6))
+  #'
+  #' @export
 
   for (user_id in user_ids){
     print(assign_testset_to_user(con, user_id))
@@ -167,6 +171,7 @@ get_user <- function(con, user_id){
   #' Gets user details.
   #' @param con The connection to the election violence database.
   #' @param user_id The user id.
+  #' @export
 
   this_sql<-"SELECT * FROM auth_user WHERE id=?user_id ;"
 

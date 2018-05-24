@@ -28,5 +28,4 @@ user_allocated_fromset(con, 1, set=define_trainingset())
 # returns the trainingset documents not allocated to user 1
 user_allocated_fromset(con, 1, set=define_trainingset(), not_allocated=TRUE)
 
-
 }
