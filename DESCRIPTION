@@ -1,0 +1,22 @@
+Package: durhamevp
+Type: Package
+Title: Supporting Durham Victorian Election Violence Project
+Version: 0.1.0
+Author: Gidon Cohen
+Maintainer: Gidon Cohen <gidon.cohen@durham.ac.uk>
+Description: Package contains common functions supporting the research project 'Causes and Consequences of Election Violence: Evidence from England and Wales, 1932-1914'.
+    The initial set of functions are to enable interactivity with the project MySQL database.
+License: What license is it under?
+Encoding: UTF-8
+LazyData: true
+Imports:
+    dbplyr,
+    DBI,
+    RMySQL,
+    tidyverse,
+    config
+RoxygenNote: 6.0.1
+Suggests: knitr,
+    rmarkdown,
+    keychain
+VignetteBuilder: knitr
