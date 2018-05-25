@@ -13,7 +13,7 @@ evdb_connect <- function(host="coders.victorianelectionviolence.uk", user="data_
   #' # for default connection to the database
   #' con <- evdb_connect()
   #' # using alternative method of entering password information
-  #' con <- evbd_connect(password_method="config")
+  #' con <- evdb_connect(password_method="config")
 
   if (password_method=="keyring"){
     password <- keyring::key_get(dbname)
@@ -78,112 +78,6 @@ user_allocated_fromset <- function(con, user_id, set, not_allocated=FALSE){
   res
 }
 
-
-assign_article_to_user <- function (con, document_id, user_id, allocation_date, allocation_type, allocated_by, status, coding_complete=0){
-  #' Assign article to a user.
-  #'
-  #' \code{assign_article_to_user} assigns a specific article to a specific user.
-  #' @param con The database connection to the election violence database.
-  #' @param document_id Id of the document to be assigned.
-  #' @param user_id Id of the user the document is to be assigned to.
-  #' @param allocation_date Date allocation made (usually today).
-  #' @param allocation_type Type of allocation (training, testing, coding, checking, ideal).
-  #' @param status Status of document coding (generally 'New' for newly assigned documents).
-  #' @export
-
-  allocated_at <- as.character(Sys.time())
-  this_sql<-"INSERT INTO portal_userdocumentallocation (document_id, user_id, allocation_date, allocation_type, allocated_by, status, coding_complete, article_type, geo_relevant, time_relevant, electoral_nature, violent_nature, violent_focus, legibility, comment, recommend_qualitative, difficulty_ranking, ideal_coding_comments, score, assigned_at, last_updated) VALUES (?document_id, ?user_id, ?allocation_date, ?allocation_type, ?allocated_by, ?status, ?coding_complete, '' , '', '', '', '', '', '', '', '', -1, '', -1, ?allocated_at, ?allocated_at) ;"
-
-  this_safe_sql<-DBI::sqlInterpolate(DBI::ANSI(), this_sql,
-                                     document_id=document_id,
-                                     user_id=user_id,
-                                     allocation_date=allocation_date,
-                                     allocation_type=allocation_type,
-                                     allocated_by=allocated_by,
-                                     status=status,
-                                     coding_complete=coding_complete,
-                                     allocated_at=allocated_at)
-  DBI::dbSendStatement(con, this_safe_sql)
-  return(NULL)
-}
-
-assign_set <- function(con, user_id, set, allocation_type, allocated_by = "assign_set", status="NEW"){
-  #' Assigns set of articles to a user
-  #'
-  #' \code{assign_set} assigns a whole set of articles to a user (articles which are already allocated to a user are not allocated again).
-  #' This function is a convenience wrapper around \code{assign_article_to_user}.
-  #' @param con The connection to the election violence database.
-  #' @param user_id The user id.
-  #' @param set A vector which contains the document ids of the articles to be allocated (generally the test set of articles and the training set of articles).
-  #' @param allocation_type The type of the allocation in the database (one of testing, training, coding, checking and ideal)
-  #' @param allocated_by The person (user_id) or the function which performed the allocation
-  #' @seealso \code{\link{assign_article_to_user}}
-  #' @export
-
-  # restrict assignment of set to items not already allocated to the user
-  items_needed <- user_allocated_fromset(con, user_id, set=set, not_allocated = TRUE)
-
-
-
-  for (document_id in items_needed){
-    assign_article_to_user(con,
-                           document_id=document_id,
-                           user_id=user_id,
-                           allocation_date=as.character(Sys.Date()),
-                           allocation_type=allocation_type,
-                           allocated_by=allocated_by,
-                           status=status)
-  }
-  completion_string <- paste0(allocated_by, " allocated ", length(items_needed), " items to user ", user_id, ".")
-  if(length(items_needed)<length(set)){
-    completion_string<-paste0(completion_string, " ", length(set)-length(items_needed), " items (of ", length(set), ") were already allocated ")
-  }
-  message(completion_string)
-}
-
-assign_testset_to_user<-function(con, user_id, testset=define_testset(), allocation_type="testing", allocated_by="assign_testset_to_user") {
-  #' Assign test set
-  #'
-  #' \code{assign_testset_to_user} assigns the test set of articles to a user specified by the user id. Articles which are already allocated to a user are not allocated again.
-  #' @param con The connection to the election violence database.
-  #' @param user_id The user id.
-  #' @export
-  assign_set(con=con, user_id=user_id, set=testset, allocation_type=allocation_type, allocated_by=allocated_by)
-}
-
-
-assign_trainingset_to_user <- function(con, user_id, trainingset=define_trainingset(),
-                                       allocation_type="training", allocated_by="assign_trainingset_to_user"){
-  #' Assign training set to user
-  #'
-  #' Assigns the training set to user (articles which are already allocated to a user are not allocated again).
-  #' @param con The connection to the election violence database.
-  #' @param user_id The user id.
-  #' @export
-  assign_set(con=con, user_id=user_id, set=trainingset, allocation_type=allocation_type, allocated_by=allocated_by)
-}
-
-assign_initalsets_to_users <- function(con, user_ids){
-  #' Assigns initial article sets to user
-  #'
-  #' Assigns the training set and test sets to a user or set of users (articles which are already allocated to a user are not allocated again).
-  #' @param con The connection to the election violence database.
-  #' @param user_id Either a single user id or a vector of user ids.
-  #' @usage
-  #'
-  #' # to assign training set and test set to user 3
-  #' assign_initialsets_to_users(con, 3)
-  #'
-  #' # to asssing training set and test set to users 3,5, and 6
-  #' assing_initalsets_to_users(con, c(3, 5, 6))
-  #'
-  #' @export
-
-  for (user_id in user_ids){
-    assign_testset_to_user(con, user_id)
-    assign_trainingset_to_user(con, user_id)
-  }
-}
 
 get_user <- function(con, user_id){
   #' Gets user details.
