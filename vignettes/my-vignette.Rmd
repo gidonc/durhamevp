@@ -38,10 +38,10 @@ con <- evdb_connect()
 
 Once you have given the connection a name (here `con`) you will pass this as a parameter to the other database function.
 
-To pass the password without interactive modes use either the "config" package or the "keychain" package ("keychain" is more secure but not yet implemented). These methods might be more useful long-term.
+To pass the password without interactive modes use either the "config" package or the "keyring" package ("keyring" is more secure and should be the first option). These methods might be more useful long-term as the password only has to be entered once per computer, and these methods work without user interaction (e.g. when using knitr).
 
 ```{r}
-con <- evdb_connect(password_method="config")
+con <- evdb_connect(password_method="keyring")
 
 ```
 
