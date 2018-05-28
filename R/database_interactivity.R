@@ -16,7 +16,7 @@ evdb_connect <- function(host="coders.victorianelectionviolence.uk", user="data_
   #' con <- evdb_connect(password_method="config")
 
   if (password_method=="keyring"){
-    password <- keyring::key_get(dbname)
+    password <- keyring::key_get(dbname, user)
   } else if (password_method=="config"){
     password<-config::get()$datawarehouse$pwd
   } else{
@@ -31,17 +31,61 @@ evdb_connect <- function(host="coders.victorianelectionviolence.uk", user="data_
   )
 }
 
-get_allocation <- function(con=connect, user_id, allocation_type="%"){
+build_where_condition <- function (col_name, vals, existing_condition, existing_interpolate_list){
+  if (identical(vals, "all")|identical(vals, "%")){
+    return(list(condition= existing_condition, interpolate_list=existing_interpolate_list))
+  } else {
+    where_pos<- stringr::str_locate(existing_condition, "WHERE")
+    if (is.na(where_pos[1])){
+      existing_condition <- paste0(existing_condition, " WHERE ")
+    } else {
+      existing_condition <- paste0(existing_condition, " AND ")
+    }
+  }
+  expandout <- expand_out_ors (col_name, vals)
+  condition <- paste0(existing_condition, expandout[["condition"]])
+  interpolate_list <- c(existing_interpolate_list, expandout[["interpolate_list"]])
+
+  list(condition=condition, interpolate_list=interpolate_list)
+}
+expand_out_ors <- function(col_name, vals){
+  res<-list()
+  interpolate_list <- list()
+  for (this_n in seq_along(vals)){
+    if (this_n==1){
+      this_condition = "("
+    } else {
+      this_condition <- paste0(this_condition, " OR ")
+    }
+    this_condition <- paste0(this_condition, col_name, "=?", col_name, this_n)
+    interpolate_list[[paste0(col_name, this_n)]] <- vals[this_n]
+  }
+  this_condition <- paste0(this_condition, ")")
+  res[["condition"]] <- this_condition
+  res[["interpolate_list"]]<-interpolate_list
+  res
+}
+
+get_allocation <- function(con=connect, user_id = "all", allocation_type="all", document_id="all"){
   #' Get the articles currently allocated to the user.
   #' @param con The database connection to .
-  #' @param user_id The userid to check in the database.
+  #' @param user_id The user_id to check in the database.
+  #' @param document_id The set of document_ids to include in the allocation
   #' @return dataframe of the document allocations to the user.
   #' @export
-  #'
-  #'
-  this_sql<-"SELECT * FROM portal_userdocumentallocation WHERE user_id=?user_id AND allocation_type LIKE ?allocation_type ;"
 
-  this_safe_sql<-DBI::sqlInterpolate(DBI::ANSI(), this_sql, user_id=user_id, allocation_type=allocation_type)
+  this_sql <-"SELECT * FROM portal_userdocumentallocation" # base query
+
+  res<-build_where_condition("user_id", user_id, this_sql, NULL)
+  res<-build_where_condition("allocation_type", allocation_type, res[[1]], res[[2]])
+  res<-build_where_condition("document_id", document_id, res[[1]], res[[2]])
+
+  res[["condition"]] <- paste(res[["condition"]], ";")
+  this_sql<-res[["condition"]]
+  interpolate_list <- res[["interpolate_list"]]
+  this_safe_sql<-DBI::sqlInterpolate(DBI::ANSI(), this_sql,
+                                     .dots = interpolate_list)
+
   allocation<-DBI::dbGetQuery(con, this_safe_sql)
 
   allocation
@@ -92,3 +136,33 @@ get_user <- function(con, user_id){
 
   users
 }
+
+get_status<-function(con, user_id){
+  this_sql<-"SELECT * FROM auth_user WHERE id=?user_id ;"
+
+  this_safe_sql<-DBI::sqlInterpolate(DBI::ANSI(), this_sql, user_id=user_id)
+  users<-DBI::dbGetQuery(con, this_safe_sql)
+
+  users
+
+}
+
+get_document<-function(con, document_id){
+  #' Returns the document table filtered by document id
+  #'
+  #' @param con The connection to the election violence database.
+  #' @param document_id Document id or ids to filter by.
+  #' @export
+  this_sql<-"SELECT * FROM portal_document" # base query
+
+  res<-build_where_condition("id", document_id, this_sql, NULL)
+  res[["condition"]] <- paste(res[["condition"]], ";")
+  this_sql<-res[["condition"]]
+  interpolate_list <- res[["interpolate_list"]]
+  this_safe_sql<-DBI::sqlInterpolate(DBI::ANSI(), this_sql,
+                                     .dots = interpolate_list)
+  documents<-DBI::dbGetQuery(con, this_safe_sql)
+
+  documents
+}
+
