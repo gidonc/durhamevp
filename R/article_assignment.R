@@ -101,3 +101,35 @@ assign_initalsets_to_users <- function(con, user_ids){
     assign_trainingset_to_user(con, user_id)
   }
 }
+
+
+# For regular article assignment
+# Assign a set of articles (set) randomly to users
+# with a recode rate (on average)
+# recode rate 0 = no recoding
+# recode rate .5 = half of thing recoded
+# recode rate 1 = everything recoded
+# recode rate 2 = everything triple coded
+# articles should not be reassigned to coders who have already have the article assigned to them
+
+
+regular_random_assignment <- function (con, user_ids, set, additional_coder_rate, min_coders=1){
+  # restrict to actual articles and actual users (both must already be in the database)
+  set<-documents_to_actual(con, set)
+  user_ids<-users_to_actual(con, user_ids)
+
+  for (this_article in set){
+    n_assignments = min_coders + rpois(1, additional_coder_rate)
+    users_already_coding <- get_allocation(con, document_id=this_article)$user_id
+    available_users <- user_ids [!user_ids %in% users_already_coding]
+    if (length(available_users)< n_assignments) {
+      warning(paste0("insufficient available users: for document ", this_article, " aim to code document ", n_assignments, " times with only ", length(available_users), " coder(s) available. No assignments made for this document."))
+    } else {
+      print(paste0("article: ", this_article))
+      these_users <- sample(available_users, n_assignments)
+      print(paste0("users: ", these_users))
+    }
+
+
+  }
+}

@@ -177,7 +177,7 @@ users_to_actual<-function(con, user_id){
   users_from_db<-get_user(con, user_id)$id
   actual_users <- user_id[user_id %in% users_from_db]
   if (length(actual_users)<length(user_id)){
-    warning(paste0("Some user ids not found in database: ", paste0(user_id[!user_id %in% actual_users], collapse=", "), ". These will not be used."))
+    warning(paste0("Some user ids not found in database and will not be used: ", paste0(user_id[!user_id %in% actual_users], collapse=", ")))
   }
 
   actual_users
@@ -188,7 +188,7 @@ documents_to_actual<-function(con, document_id){
   docs_from_db<-get_document(con, document_id)$id
   actual_docs <- document_id[document_id %in% docs_from_db]
   if (length(actual_docs)<length(document_id)){
-    warning(paste0("Some document ids not found in database: ", paste0(document_id[!document_id %in% actual_docs], collapse=", "), ". These will not be used."))
+    warning(paste0("Some document ids not found in database and will not be used: ", paste0(document_id[!document_id %in% actual_docs], collapse=", ")))
   }
 
   actual_docs
