@@ -129,9 +129,15 @@ get_user <- function(con, user_id){
   #' @param user_id The user id.
   #' @export
 
-  this_sql<-"SELECT * FROM auth_user WHERE id=?user_id ;"
+  this_sql<-"SELECT * FROM auth_user"
 
-  this_safe_sql<-DBI::sqlInterpolate(DBI::ANSI(), this_sql, user_id=user_id)
+  res<-build_where_condition("id", user_id, this_sql, NULL)
+  res[["condition"]] <- paste(res[["condition"]], ";")
+  this_sql<-res[["condition"]]
+  interpolate_list <- res[["interpolate_list"]]
+  this_safe_sql<-DBI::sqlInterpolate(DBI::ANSI(), this_sql,
+                                     .dots = interpolate_list)
+
   users<-DBI::dbGetQuery(con, this_safe_sql)
 
   users
@@ -166,3 +172,24 @@ get_document<-function(con, document_id){
   documents
 }
 
+users_to_actual<-function(con, user_id){
+
+  users_from_db<-get_user(con, user_id)$id
+  actual_users <- user_id[user_id %in% users_from_db]
+  if (length(actual_users)<length(user_id)){
+    warning(paste0("Some user ids not found in database: ", paste0(user_id[!user_id %in% actual_users], collapse=", "), ". These will not be used."))
+  }
+
+  actual_users
+}
+
+documents_to_actual<-function(con, document_id){
+
+  docs_from_db<-get_document(con, document_id)$id
+  actual_docs <- document_id[document_id %in% docs_from_db]
+  if (length(actual_docs)<length(document_id)){
+    warning(paste0("Some document ids not found in database: ", paste0(document_id[!document_id %in% actual_docs], collapse=", "), ". These will not be used."))
+  }
+
+  actual_docs
+}
