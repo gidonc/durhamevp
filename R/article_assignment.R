@@ -103,42 +103,47 @@ assign_initalsets_to_users <- function(con, user_ids){
 }
 
 
-# For regular article assignment
-# Assign a set of articles (set) randomly to users
-# with a recode rate (on average)
-# recode rate 0 = no recoding
-# recode rate .5 = half of thing recoded
-# recode rate 1 = everything recoded
-# recode rate 2 = everything triple coded
-# articles should not be reassigned to coders who have already have the article assigned to them
+regular_random_assignment <- function (con, user_ids, set, min_coders=1, additional_coder_rate=.1, allocation_type="coding", allocated_by="regular_random_assignment", restrict_to_actual=TRUE){
+  #' Randomly assign a set of articles amongst a set of users for coding
+  #'
+  #' \code{regular_random_assignment} assigns a set of articles amongst a set of users for them to code in the election violence database.
+  #' By default the articles and user ids are checked against the database and codes which do not correspond to existing documents and/or users are ignored.
+  #' @param con The database connection to the election violence database.
+  #' @param user_ids The users to allocate the articles amongst (vector with single or multiple user_ids).
+  #' @param set The set of documents which are to be allocated (vector with single or multiple of document_ids).
+  #' @param min_coders The minimum number of coders to allocated to code any document.
+  #' @param additional_coder_rate The average number of additional coders (on top of the minimum number of coders) to allocate to code each document.
+  #' @param allocation_type The value to write to the allocation_type field in the database document_allocations table (training, testing, coding, checking, ideal).
+  #' @param allocated_by The value to write to the allocated_by field in the database document_allocations table.
+  #' @param restrict_to_actual Should the restriction to actual users and documents be enforced. Should only be set to FALSE for debugging purposes.
+  #'
+  #' @export
 
-
-regular_random_assignment <- function (con, user_ids, set, additional_coder_rate, min_coders=1, allocation_type="coding", allocated_by="regular_random_assignment"){
   # restrict to actual articles and actual users (both must already be in the database)
-  set<-documents_to_actual(con, set)
-  user_ids<-users_to_actual(con, user_ids)
+  if(restrict_to_actual){
+    set<-documents_to_actual(con, set)
+    user_ids<-users_to_actual(con, user_ids)
+  }
+  print(set)
+  print(user_ids)
 
   assign_dat <- data.frame(matrix(ncol=2, nrow=0))
   names(assign_dat) <- c("document_id", "user_id")
 
   for (this_article in set){
-    n_assignments = min_coders + rpois(1, additional_coder_rate)
+    n_assignments = min_coders + stats::rpois(1, additional_coder_rate)
     users_already_coding <- get_allocation(con, document_id=this_article)$user_id
     available_users <- user_ids [!user_ids %in% users_already_coding]
     if (length(available_users)< n_assignments) {
       warning(paste0("insufficient available users: for document ", this_article, " aim to code document ", n_assignments, " times with only ", length(available_users), " coder(s) available. No assignments made for this document."))
     } else {
-      print(paste0("article: ", this_article))
       these_users <- sample(available_users, n_assignments)
-      print(paste0("users: ", these_users))
       for (this_user in these_users){
-        assign_dat <- bind_rows(assign_dat,
-                                data.frame(document_id=document_id, user_id=this_user))
+        assign_dat <- dplyr::bind_rows(assign_dat,
+                                data.frame(document_id=this_article, user_id=this_user))
 
       }
     }
-
-
   }
   assign_dat
 }
