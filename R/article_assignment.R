@@ -113,10 +113,13 @@ assign_initalsets_to_users <- function(con, user_ids){
 # articles should not be reassigned to coders who have already have the article assigned to them
 
 
-regular_random_assignment <- function (con, user_ids, set, additional_coder_rate, min_coders=1){
+regular_random_assignment <- function (con, user_ids, set, additional_coder_rate, min_coders=1, allocation_type="coding", allocated_by="regular_random_assignment"){
   # restrict to actual articles and actual users (both must already be in the database)
   set<-documents_to_actual(con, set)
   user_ids<-users_to_actual(con, user_ids)
+
+  assign_dat <- data.frame(matrix(ncol=2, nrow=0))
+  names(assign_dat) <- c("document_id", "user_id")
 
   for (this_article in set){
     n_assignments = min_coders + rpois(1, additional_coder_rate)
@@ -128,8 +131,14 @@ regular_random_assignment <- function (con, user_ids, set, additional_coder_rate
       print(paste0("article: ", this_article))
       these_users <- sample(available_users, n_assignments)
       print(paste0("users: ", these_users))
+      for (this_user in these_users){
+        assign_dat <- bind_rows(assign_dat,
+                                data.frame(document_id=document_id, user_id=this_user))
+
+      }
     }
 
 
   }
+  assign_dat
 }
