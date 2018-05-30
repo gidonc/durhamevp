@@ -66,7 +66,7 @@ expand_out_ors <- function(col_name, vals){
   res
 }
 
-get_allocation <- function(con=connect, user_id = "all", allocation_type="all", document_id="all"){
+get_allocation <- function(con, user_id = "all", allocation_type="all", document_id="all"){
   #' Get the articles currently allocated to the user.
   #' @param con The database connection to .
   #' @param user_id The user_id to check in the database.
@@ -173,7 +173,7 @@ get_document<-function(con, document_id){
 }
 
 users_to_actual<-function(con, user_id){
-
+  #' @export
   users_from_db<-get_user(con, user_id)$id
   actual_users <- user_id[user_id %in% users_from_db]
   if (length(actual_users)<length(user_id)){
@@ -184,6 +184,7 @@ users_to_actual<-function(con, user_id){
 }
 
 documents_to_actual<-function(con, document_id){
+  #' @export
 
   docs_from_db<-get_document(con, document_id)$id
   actual_docs <- document_id[document_id %in% docs_from_db]
