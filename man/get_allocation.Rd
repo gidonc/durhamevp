@@ -4,7 +4,7 @@
 \alias{get_allocation}
 \title{Get the articles currently allocated to the user.}
 \usage{
-get_allocation(con = connect, user_id = "all", allocation_type = "all",
+get_allocation(con, user_id = "all", allocation_type = "all",
   document_id = "all")
 }
 \arguments{

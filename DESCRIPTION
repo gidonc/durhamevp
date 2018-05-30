@@ -14,11 +14,13 @@ Imports:
     DBI,
     RMySQL,
     tidyverse,
-    config
+    config,
+    keyring,
+    stringr,
+    stats
 RoxygenNote: 6.0.1
 Suggests: knitr,
-    rmarkdown,
-    keychain
+    rmarkdown
 VignetteBuilder: knitr
 URL: http://github.com/gidonc/durhamevp
 BugReports: http://github.com/gidonc/durhamevp/issues
