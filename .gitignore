@@ -4,3 +4,4 @@ packrat/lib*/
 config.yml
 .Rhistory
 .Rprofile
+packrat
