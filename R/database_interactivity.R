@@ -194,3 +194,54 @@ documents_to_actual<-function(con, document_id){
 
   actual_docs
 }
+
+get_user_mode <- function(con, user_id="all"){
+  #' Returns table of current user modes
+  #'
+  #' Returns the table of current user modes.
+  #' @param con The connection to the election violence database.
+  #' @param user_id Id of the user whose mode to check or a vector of user ids. The default ("all") selects all users.
+  #' @export
+  this_sql<-"SELECT * FROM portal_userprofile"
+
+  res<-build_where_condition("user_id", user_id, this_sql, NULL)
+  res[["condition"]] <- paste(res[["condition"]], ";")
+  this_sql<-res[["condition"]]
+  interpolate_list <- res[["interpolate_list"]]
+  this_safe_sql<-DBI::sqlInterpolate(DBI::ANSI(), this_sql,
+                                     .dots = interpolate_list)
+
+  profiles<-DBI::dbGetQuery(con, this_safe_sql)
+
+  profiles
+}
+
+set_user_mode <- function (con, user_id, new_mode){
+  #' Sets user mode
+  #'
+  #' Sets the users mode to a new value (training, testing, coding, checking, ideal).
+  #' @param con The connection to the election violence database.
+  #' @param user_id Id of the user whose mode to set or a vector of user ids.
+  #' @param new_mode The new mode (one of: training, testing, coding, checking, ideal) to set as the users mode(s). For multiple users either a single value should be given to be assigned to all identified users, or a vector of values should be given of the same length as the vector of user_ids.
+  #' @export
+  if(length(new_mode)==1) new_mode <- rep(new_mode, length(user_id))
+  if(length(new_mode)!=length(user_id)) warning("length (mode) not equal to length(user_id))")
+
+  current_modes <- get_user_mode(con, user_id) %>%
+    mutate(new_mode=new_mode)
+  for (this_user in user_id){
+    this_data <- current_modes %>%
+      filter(user_id==this_user) %>%
+      top_n(1)
+    this_id<-this_data$id
+    this_mode<-this_data$new_mode
+
+    this_sql<-"UPDATE portal_userprofile set mode=?new_mode WHERE id=?id"
+    this_safe_sql<-DBI::sqlInterpolate(DBI::ANSI(), this_sql,
+                                       id = this_id,
+                                       new_mode=this_mode)
+    documents<-DBI::dbGetQuery(con, this_safe_sql)
+
+
+  }
+}
