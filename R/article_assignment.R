@@ -124,8 +124,8 @@ regular_random_assignment <- function (con, user_ids, set, min_coders=1, additio
     set<-documents_to_actual(con, set)
     user_ids<-users_to_actual(con, user_ids)
   }
-  print(set)
-  print(user_ids)
+  #print(set)
+  #print(user_ids)
 
   assign_dat <- data.frame(matrix(ncol=2, nrow=0))
   names(assign_dat) <- c("document_id", "user_id")
