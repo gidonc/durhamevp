@@ -103,7 +103,7 @@ assign_initalsets_to_users <- function(con, user_ids){
 }
 
 
-regular_random_assignment <- function (con, user_ids, set, min_coders=1, additional_coder_rate=.1, allocation_type="coding", allocated_by="regular_random_assignment", restrict_to_actual=TRUE){
+allocate_randomly <- function (con, user_ids, set, coder_rate=1.1, allocation_type="coding", allocated_by="regular_random_assignment", restrict_to_actual=TRUE, make_assignments=TRUE){
   #' Randomly assign a set of articles amongst a set of users for coding
   #'
   #' \code{regular_random_assignment} assigns a set of articles amongst a set of users for them to code in the election violence database.
@@ -111,11 +111,11 @@ regular_random_assignment <- function (con, user_ids, set, min_coders=1, additio
   #' @param con The database connection to the election violence database.
   #' @param user_ids The users to allocate the articles amongst (vector with single or multiple user_ids).
   #' @param set The set of documents which are to be allocated (vector with single or multiple of document_ids).
-  #' @param min_coders The minimum number of coders to allocated to code any document.
-  #' @param additional_coder_rate The average number of additional coders (on top of the minimum number of coders) to allocate to code each document.
+  #' @param coder_rate The average number of coders to be allocated to a document.
   #' @param allocation_type The value to write to the allocation_type field in the database document_allocations table (training, testing, coding, checking, ideal).
   #' @param allocated_by The value to write to the allocated_by field in the database document_allocations table.
   #' @param restrict_to_actual Should the restriction to actual users and documents be enforced. Should only be set to FALSE for debugging purposes.
+  #' @param make_assignments Actually make changes to the database (TRUE) or only create a proposed set of changes as a dataframe (FALSE)
   #'
   #' @export
 
@@ -124,6 +124,9 @@ regular_random_assignment <- function (con, user_ids, set, min_coders=1, additio
     set<-documents_to_actual(con, set)
     user_ids<-users_to_actual(con, user_ids)
   }
+  min_coders <- floor(coder_rate)
+  additional_coder_rate <- coder_rate - min_coders
+
   #print(set)
   #print(user_ids)
 
@@ -145,5 +148,26 @@ regular_random_assignment <- function (con, user_ids, set, min_coders=1, additio
       }
     }
   }
+  if(make_assignments){
+    make_assignment_fromdf(con, assign_dat, allocation_type, allocated_by)
+  }
   assign_dat
+}
+
+allocate_from_df<-function(con, assign_dat, allocation_type, allocated_by){
+  #' Assign users to documents from a dataframe
+  #'
+  #' Assign users to documents from a dataframe where dataframe has a user_id column and and a document_id column
+  #' @param con The connection to the election violence database
+  #' @param assign_dat A dataframe (or tibble) with a user_id column and a document_id column
+  #' @param allocation_type The allocation type to write to the database
+  #' @param allocated_by The allocated by to write to the database
+  #' @export
+
+  apply(assign_dat, 1, function (x)
+    assign_article_to_user(con,
+                           x[["document_id"]],
+                           x[["user_id"]],
+                           allocation_type = allocation_type,
+                           allocated_by = allocated_by))
 }
