@@ -1,0 +1,66 @@
+---
+title: "Package Setup and Connection to Durham Election Violence Database"
+author: "Gidon Cohen"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Package Setup and Connection to Durham Election Violence Database}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+## Introduction
+
+This vignette documents how to interact with the Durham election violence database using R. The package can be installed from the repository on github. If the package has previously been installed, reinstalling the package from github will also get the latest updates: 
+```{r message-FALSE, eval=FALSE}
+devtools::install_github("gidonc/durhamevp")
+
+```
+
+
+
+You can then load all the functions with the following command:
+
+```{r message=FALSE, warning=FALSE}
+library(durhamevp)
+
+```
+
+
+## Connecting to the Database
+
+To connect to the database use the `evdb_connect` function. The function needs to pass the password to the database. The default option (password_method = "ask") will prompt you for the password. This "ask" method for obtaining the password only works in RStudio  and only in interactive mode (e.g. not when writing Rnw or Rmd files).
+
+```{r eval=FALSE}
+con <- evdb_connect()
+```
+
+Once you have given the connection a name (here `con`) you will pass this as a parameter to the other database function.
+
+### Avoid Rentering the Database Password Repeatedly
+
+You don't want to always have to re-enter the database password, so it is more convinient to store the password on your computer and pass it automatically to the database. This can be done using either the "config" package or the "keyring" package ("keyring" is more secure and should be the first option). These methods might be more useful long-term as the password only has to be entered once per computer, and these methods work without user interaction (e.g. when using knitr).
+
+To use the database password needs to be stored on your computer. This can be done using the key_set command from keyring package: 
+
+```{r eval=FALSE}
+keyring::key_set(service="evp", user="data_writer")
+```
+
+You will then be prompted to enter the password. Once entered in this way the password will be securely stored on your computer and should not need to be rentered (the password can be reset using the command above if e.g. the password changes).
+
+To connect to the database as the default ("data_writer") user, using the password stored in the keyring use password_method="keyring"
+
+
+```{r}
+con <- evdb_connect(password_method="keyring")
+
+```
+
