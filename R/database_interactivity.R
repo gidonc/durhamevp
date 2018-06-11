@@ -172,6 +172,25 @@ get_document<-function(con, document_id){
   documents
 }
 
+get_candidate_documents<-function(con, cand_document_id){
+  #' Returns the document table filtered by document id
+  #'
+  #' @param con The connection to the election violence database.
+  #' @param cand)document_id Document id or ids to filter by.
+  #' @export
+  this_sql<-"SELECT * FROM portal_candidatedocument" # base query
+
+  res<-build_where_condition("id", cand_document_id, this_sql, NULL)
+  res[["condition"]] <- paste(res[["condition"]], ";")
+  this_sql<-res[["condition"]]
+  interpolate_list <- res[["interpolate_list"]]
+  this_safe_sql<-DBI::sqlInterpolate(DBI::ANSI(), this_sql,
+                                     .dots = interpolate_list)
+  cand_documents<-DBI::dbGetQuery(con, this_safe_sql)
+
+  cand_documents
+}
+
 users_to_actual<-function(con, user_id){
   #' @export
   users_from_db<-get_user(con, user_id)$id
