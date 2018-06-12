@@ -176,7 +176,7 @@ get_candidate_documents<-function(con, cand_document_id){
   #' Returns the document table filtered by document id
   #'
   #' @param con The connection to the election violence database.
-  #' @param cand)document_id Document id or ids to filter by.
+  #' @param cand_document_id Document id or ids to filter by.
   #' @export
   this_sql<-"SELECT * FROM portal_candidatedocument" # base query
 
