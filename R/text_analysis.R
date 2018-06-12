@@ -27,6 +27,7 @@ split_corpus<-function(the_corpus, n_train){
   return(list(training_set=training_set, testing_set=testing_set))
 }
 my_naivebayes<-function(train, test){
+  #' @export
   nb<-textmodel_nb(train, y=docvars(train, "EV_article"), prior="docfreq")
   prob_nb<-predict(nb, newdata = test, type="probability")
   pred_nb<-data.frame(predict(nb, newdata = test, type="class"))
@@ -36,11 +37,13 @@ my_naivebayes<-function(train, test){
 }
 
 my_affinity<-function(train, test){
+  #' @export
   aff<-textmodel_affinity(train, y=docvars(train, "EV_article"))
   pred_aff<-predict(aff, newdata = test)
 }
 
 my_wordscores<-function(train, test){
+  #' @export
   this_wordscores<-textmodel_wordscores(train, y=docvars(train, "EV_article"))
   pred_wordscores<-predict(this_wordscores, newdata = test, force=TRUE)
   pred_wordscores
