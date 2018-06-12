@@ -140,7 +140,11 @@ allocate_randomly <- function (con, user_ids, set, coder_rate=1.1, allocation_ty
     if (length(available_users)< n_assignments) {
       warning(paste0("insufficient available users: for document ", this_article, " aim to code document ", n_assignments, " times with only ", length(available_users), " coder(s) available. No assignments made for this document."))
     } else {
-      these_users <- sample(available_users, n_assignments)
+      if (length(available_users)==1){ # prevent single number behaviour of sample function
+        these_users <- available_users
+      } else{
+        these_users <- sample(available_users, n_assignments)
+      }
       for (this_user in these_users){
         assign_dat <- dplyr::bind_rows(assign_dat,
                                 data.frame(document_id=this_article, user_id=this_user))
