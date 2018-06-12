@@ -46,15 +46,33 @@ my_wordscores<-function(train, test){
 }
 organise_results <- function (testset, pred_nb, pred_aff, pred_wordscores=NULL){
   this_res<-as.tbl(data.frame(actual=docvars(testset, "EV_article"),
+                              actual_f=factor(docvars(testset, "EV_article")),
                               nb_ev_cat=pred_nb$predict_nb,
                               nb_ev_prob=pred_nb$prob_ev,
                               nb_notev_prob=pred_nb$prob_notev,
                               aff_ev_prob=pred_aff$coefficients[,2],
                               aff_notev_prob=pred_aff$coefficients[,1],
-                              aff_ev_cat=as.numeric(pred_aff$coefficients[,2]>pred_aff$coefficients[,1])))
+                              aff_ev_cat=as.numeric(pred_aff$coefficients[,2]>pred_aff$coefficients[,1]),
+                              aff_ev_cat_f=factor(as.numeric(pred_aff$coefficients[,2]>pred_aff$coefficients[,1]))
+                                ))
   if(!is.null(pred_wordscores)){
     this_res$wordscore_prob<-pred_wordscores
   }
 
   this_res
+}
+
+assess_classification <- function(res_data){
+  nb_assess<-as.data.frame(caret::confusionMatrix(data=this_res$nb_ev_cat, reference=this_res$actual_f, mode="everything", positive="1")$byClass)
+  names(nb_assess)<-"value"
+  nb_assess <- tibble::rownames_to_column(nb_assess) %>%
+    mutate(model="naive bayes")
+  aff_assess<-as.data.frame(caret::confusionMatrix(data=this_res$aff_ev_cat_f, reference=this_res$actual_f, mode="everything", positive="1")$byClass)
+  names(aff_assess)<-"value"
+  aff_assess <- rownames_to_column(aff_assess) %>%
+    mutate(model="affinity")
+
+  this_assess<- bind_rows(aff_assess, nb_assess)
+
+  this_assess
 }
