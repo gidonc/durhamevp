@@ -149,7 +149,7 @@ allocate_randomly <- function (con, user_ids, set, coder_rate=1.1, allocation_ty
     }
   }
   if(make_assignments){
-    make_assignment_fromdf(con, assign_dat, allocation_type, allocated_by)
+    allocate_from_df(con, assign_dat, allocation_type, allocated_by)
   }
   assign_dat
 }
