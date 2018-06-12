@@ -50,6 +50,7 @@ my_wordscores<-function(train, test){
 
 }
 organise_results <- function (testset, pred_nb, pred_aff, pred_wordscores=NULL){
+  #' @export
   this_res<-as.tbl(data.frame(actual=docvars(testset, "EV_article"),
                               actual_f=factor(docvars(testset, "EV_article")),
                               nb_ev_cat=pred_nb$predict_nb,
