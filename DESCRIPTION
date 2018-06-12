@@ -17,7 +17,9 @@ Imports:
     config,
     keyring,
     stringr,
-    stats
+    stats,
+    quanteda,
+    tidytext
 RoxygenNote: 6.0.1
 Suggests: knitr,
     rmarkdown
