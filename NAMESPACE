@@ -2,6 +2,7 @@
 
 export(allocate_from_df)
 export(allocate_randomly)
+export(assess_classification)
 export(assign_article_to_user)
 export(assign_initalsets_to_users)
 export(assign_set)

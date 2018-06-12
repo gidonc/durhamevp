@@ -69,6 +69,7 @@ organise_results <- function (testset, pred_nb, pred_aff, pred_wordscores=NULL){
 }
 
 assess_classification <- function(res_data){
+  #' @export
   nb_assess<-as.data.frame(caret::confusionMatrix(data=this_res$nb_ev_cat, reference=this_res$actual_f, mode="everything", positive="1")$byClass)
   names(nb_assess)<-"value"
   nb_assess <- tibble::rownames_to_column(nb_assess) %>%
