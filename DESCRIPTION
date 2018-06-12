@@ -19,7 +19,8 @@ Imports:
     stringr,
     stats,
     quanteda,
-    tidytext
+    tidytext,
+    caret
 RoxygenNote: 6.0.1
 Suggests: knitr,
     rmarkdown
