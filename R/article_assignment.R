@@ -1,5 +1,5 @@
 
-assign_article_to_user <- function (document_id, user_id, allocation_type, allocated_by, allocation_date=as.character(Sys.Date()), status="NEW", coding_complete=0, con="make", password_method="keyring"){
+assign_article_to_user <- function (document_id, user_id, allocation_type, allocated_by, allocation_date=as.character(Sys.Date()), status="NEW", coding_complete=0){
   #' Assign article to a user.
   #'
   #' \code{assign_article_to_user} assigns a specific article or set of articles to a specific user or set of users. Other document assignment functions are convenience wrappers around this funciton with arguments set appropriately.
@@ -8,8 +8,7 @@ assign_article_to_user <- function (document_id, user_id, allocation_type, alloc
   #' @param allocation_type Type of allocation (training, testing, coding, checking, ideal).
   #' @param allocation_date Date allocation made (usually today).
   #' @param status Status of document coding (generally 'NEW' for newly assigned documents).
-  #' @param con The database connection to the election violence database (this argument is ignored in current implementations with database connections handled silently within the functions).
-  #' @param password_method (this argument is ignored in current implementations with database connections handled silently within the functions).
+
   #' @export
 
   con <- manage_dbcons()
@@ -125,8 +124,8 @@ allocate_randomly <- function (user_ids, set, coder_rate=1.1, allocation_type="c
 
   # restrict to actual articles and actual users (both must already be in the database)
   if(restrict_to_actual){
-    set<-documents_to_actual(set, con=con, password_method=password_method)
-    user_ids<-users_to_actual(user_ids, con=con, password_method=password_method)
+    set<-documents_to_actual(set)
+    user_ids<-users_to_actual(user_ids)
   }
   min_coders <- floor(coder_rate)
   additional_coder_rate <- coder_rate - min_coders
@@ -139,7 +138,7 @@ allocate_randomly <- function (user_ids, set, coder_rate=1.1, allocation_type="c
 
   for (this_article in set){
     n_assignments = min_coders + stats::rpois(1, additional_coder_rate)
-    users_already_coding <- get_allocation(document_id=this_article, con=con, password_method=password_method)$user_id
+    users_already_coding <- get_allocation(document_id=this_article)$user_id
     available_users <- user_ids [!user_ids %in% users_already_coding]
     if (length(available_users)< n_assignments) {
       warning(paste0("insufficient available users: for document ", this_article, " aim to code document ", n_assignments, " times with only ", length(available_users), " coder(s) available. No assignments made for this document."))
