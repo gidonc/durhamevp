@@ -21,9 +21,9 @@ Returns the elements of a set of documents which are allocated (or not allocated
 }
 \examples{
 # returns the trainingset documents allocated to user 1
-user_allocated_fromset(con, 1, set=define_trainingset())
+user_allocated_fromset(1, set=define_trainingset())
 
 # returns the trainingset documents not allocated to user 1
-user_allocated_fromset(con, 1, set=define_trainingset(), not_allocated=TRUE)
+user_allocated_fromset(1, set=define_trainingset(), not_allocated=TRUE)
 
 }

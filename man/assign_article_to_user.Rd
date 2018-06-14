@@ -10,7 +10,7 @@
 \usage{
 assign_article_to_user(document_id, user_id, allocation_type, allocated_by,
   allocation_date = as.character(Sys.Date()), status = "NEW",
-  coding_complete = 0, con = "make", password_method = "keyring")
+  coding_complete = 0)
 
 assign_set(user_id, set, allocation_type, allocated_by = "assign_set",
   status = "NEW")
@@ -33,13 +33,9 @@ assign_initalsets_to_users(user_ids)
 \item{allocation_date}{Date allocation made (usually today).}
 
 \item{status}{Status of document coding (generally 'NEW' for newly assigned documents).}
-
-\item{con}{The database connection to the election violence database (this argument is ignored in current implementations with database connections handled silently within the functions).}
-
-\item{password_method}{(this argument is ignored in current implementations with database connections handled silently within the functions).}
 }
 \description{
-\code{assign_article_to_user} assigns a specific article or set of articles to a specific user or set of users. Other document assignment functions are convenience wrappers around this funciton with arguments set appropriately.
+\code{assign_article_to_user} assigns a specific article or set of articles to a specific user or set of users. Other document assignment functions are convenience wrappers around this function with arguments set appropriately.
 
 \code{assign_set} assigns a whole set of articles to a user (articles which are already allocated to a user are not allocated again).
 

@@ -2,7 +2,7 @@
 assign_article_to_user <- function (document_id, user_id, allocation_type, allocated_by, allocation_date=as.character(Sys.Date()), status="NEW", coding_complete=0){
   #' Assign article to a user.
   #'
-  #' \code{assign_article_to_user} assigns a specific article or set of articles to a specific user or set of users. Other document assignment functions are convenience wrappers around this funciton with arguments set appropriately.
+  #' \code{assign_article_to_user} assigns a specific article or set of articles to a specific user or set of users. Other document assignment functions are convenience wrappers around this function with arguments set appropriately.
   #' @param document_id Id of the document to be assigned or a vector of document ids.
   #' @param user_id Id of the user the document is to be assigned to or a vector of user ids.
   #' @param allocation_type Type of allocation (training, testing, coding, checking, ideal).
