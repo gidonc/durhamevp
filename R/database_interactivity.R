@@ -1,4 +1,48 @@
+keyring_evp_available<-function(username="not implemented"){
 
+  #' Checks if an evp password is available.
+  #'
+  #' Checks if an evp password is available on this computer.
+  #' @export
+  these_keys<-keyring::key_list()
+  needed_key<- dplyr::filter(these_keys, service=="evp", username=="data_writer")
+  if(nrow(needed_key)==0){
+    available <- FALSE
+  } else if(nrow(needed_key)>0){
+    available <- TRUE
+  } else {
+    warning(paste0("There are an unexpected number of entries in the keyring: ", nrow(needed_key)))
+    available <- FALSE
+  }
+
+  return(available)
+}
+
+manage_dbcons <- function(){
+  #' Returns a connection to the election violence database
+  #'
+  #' This function is primarily for use within other functions.
+  #' Returns an active connection to the the election violence database, choosing the first open valid connection to the database. If there is no open valid connection to the database then a connection will be made. Running the function will also close all invalid (e.g. expired) database connections.
+  #' Database password is obtained from the keyring if there is a password for the database in the keyring. Otherwise the user is prompted for the database password.
+  #' @export
+  if(keyring_evp_available()){
+    password_method <- "keyring"
+  } else {
+    password_method <- "ask"
+  }
+  all_cons <- DBI::dbListConnections(RMySQL::MySQL())
+  valid_idx <- sapply(all_cons, DBI::dbIsValid)
+
+  for (invalid_con in all_cons[!valid_idx]){
+    DBI::dbDisconnect(invalid_con)
+  }
+  if(length(valid_idx)>0){
+    con <- all_cons[valid_idx][[1]]
+  } else {
+    con <- evdb_connect(password_method = password_method)
+  }
+  con
+}
 evdb_connect <- function(host="coders.victorianelectionviolence.uk", user="data_writer", dbname="evp", port=3306, password_method="ask"){
   #' Set connection to election violence database
   #'
@@ -13,7 +57,7 @@ evdb_connect <- function(host="coders.victorianelectionviolence.uk", user="data_
   #' # for default connection to the database
   #' con <- evdb_connect()
   #' # using alternative method of entering password information
-  #' con <- evdb_connect(password_method="config")
+  #' con <- evdb_connect(password_method="keyring")
 
   if (password_method=="keyring"){
     password <- keyring::key_get(dbname, user)
@@ -66,14 +110,14 @@ expand_out_ors <- function(col_name, vals){
   res
 }
 
-get_allocation <- function(con, user_id = "all", allocation_type="all", document_id="all"){
+get_allocation <- function(user_id = "all", allocation_type="all", document_id="all"){
   #' Get the articles currently allocated to the user.
-  #' @param con The database connection to .
   #' @param user_id The user_id to check in the database.
   #' @param document_id The set of document_ids to include in the allocation
   #' @return dataframe of the document allocations to the user.
   #' @export
 
+  con <- manage_dbcons()
   this_sql <-"SELECT * FROM portal_userdocumentallocation" # base query
 
   res<-build_where_condition("user_id", user_id, this_sql, NULL)
@@ -91,24 +135,26 @@ get_allocation <- function(con, user_id = "all", allocation_type="all", document
   allocation
 }
 
-user_allocated_fromset <- function(con, user_id, set, not_allocated=FALSE){
+user_allocated_fromset <- function(user_id, set, not_allocated=FALSE){
   #' Which items allocated (or not allocated) to user
   #'
   #' Returns the elements of a set of documents which are allocated (or not allocated) to a user.
-  #' @param con The database connection to the election violence database.
   #' @param user_id The user id to check in the database.
   #' @param set The set of documents to check.
   #' @param not_allocated If FALSE (default) returns the items allocated to the user, if TRUE returns items NOT allocated to the user.
   #' @return A vector numbers representing the document ids from the set which are allocated to the user (or which are not allocated to the user if not_allocated=TRUE).
   #' @examples
   #' # returns the trainingset documents allocated to user 1
-  #' user_allocated_fromset(con, 1, set=define_trainingset())
+  #' user_allocated_fromset(1, set=define_trainingset())
   #'
   #' # returns the trainingset documents not allocated to user 1
-  #' user_allocated_fromset(con, 1, set=define_trainingset(), not_allocated=TRUE)
+  #' user_allocated_fromset(1, set=define_trainingset(), not_allocated=TRUE)
   #'
   #' @export
-  user_allocation <- get_allocation(con, user_id)
+
+  con <- manage_dbcons()
+
+  user_allocation <- get_allocation(user_id)
   training_allocation <- dplyr::filter(user_allocation, allocation_type=="training")
 
   doc_ids <- set[set %in% user_allocation$document_id] # document ids which are in training set but not allocated to the user
@@ -123,11 +169,13 @@ user_allocated_fromset <- function(con, user_id, set, not_allocated=FALSE){
 }
 
 
-get_user <- function(con, user_id){
+get_user <- function(user_id){
   #' Gets user details.
-  #' @param con The connection to the election violence database.
+
   #' @param user_id The user id.
   #' @export
+
+  con <- manage_dbcons()
 
   this_sql<-"SELECT * FROM auth_user"
 
@@ -143,7 +191,9 @@ get_user <- function(con, user_id){
   users
 }
 
-get_status<-function(con, user_id){
+get_status<-function(user_id){
+  con <- manage_dbcons()
+
   this_sql<-"SELECT * FROM auth_user WHERE id=?user_id ;"
 
   this_safe_sql<-DBI::sqlInterpolate(DBI::ANSI(), this_sql, user_id=user_id)
@@ -153,12 +203,14 @@ get_status<-function(con, user_id){
 
 }
 
-get_document<-function(con, document_id){
+get_document<-function(document_id){
   #' Returns the document table filtered by document id
   #'
-  #' @param con The connection to the election violence database.
   #' @param document_id Document id or ids to filter by.
   #' @export
+
+  con <- manage_dbcons()
+
   this_sql<-"SELECT * FROM portal_document" # base query
 
   res<-build_where_condition("id", document_id, this_sql, NULL)
@@ -169,15 +221,18 @@ get_document<-function(con, document_id){
                                      .dots = interpolate_list)
   documents<-DBI::dbGetQuery(con, this_safe_sql)
 
+
   documents
 }
 
-get_candidate_documents<-function(con, cand_document_id){
+get_candidate_documents<-function(cand_document_id){
   #' Returns the document table filtered by document id
   #'
   #' @param con The connection to the election violence database.
   #' @param cand_document_id Document id or ids to filter by.
   #' @export
+
+  con <- manage_dbcons()
   this_sql<-"SELECT * FROM portal_candidatedocument" # base query
 
   res<-build_where_condition("id", cand_document_id, this_sql, NULL)
@@ -191,9 +246,10 @@ get_candidate_documents<-function(con, cand_document_id){
   cand_documents
 }
 
-users_to_actual<-function(con, user_id){
+users_to_actual<-function(user_id){
   #' @export
-  users_from_db<-get_user(con, user_id)$id
+  con <- manage_dbcons()
+  users_from_db<-get_user(user_id)$id
   actual_users <- user_id[user_id %in% users_from_db]
   if (length(actual_users)<length(user_id)){
     warning(paste0("Some user ids not found in database and will not be used: ", paste0(user_id[!user_id %in% actual_users], collapse=", ")))
@@ -202,10 +258,11 @@ users_to_actual<-function(con, user_id){
   actual_users
 }
 
-documents_to_actual<-function(con, document_id){
+documents_to_actual<-function(document_id){
   #' @export
 
-  docs_from_db<-get_document(con, document_id)$id
+  con <- manage_dbcons()
+  docs_from_db<-get_document(document_id)$id
   actual_docs <- document_id[document_id %in% docs_from_db]
   if (length(actual_docs)<length(document_id)){
     warning(paste0("Some document ids not found in database and will not be used: ", paste0(document_id[!document_id %in% actual_docs], collapse=", ")))
@@ -214,13 +271,14 @@ documents_to_actual<-function(con, document_id){
   actual_docs
 }
 
-get_user_mode <- function(con, user_id="all"){
+get_user_mode <- function(user_id="all"){
   #' Returns table of current user modes
   #'
   #' Returns the table of current user modes.
-  #' @param con The connection to the election violence database.
   #' @param user_id Id of the user whose mode to check or a vector of user ids. The default ("all") selects all users.
   #' @export
+
+  con <- manage_dbcons()
   this_sql<-"SELECT * FROM portal_userprofile"
 
   res<-build_where_condition("user_id", user_id, this_sql, NULL)
@@ -235,18 +293,21 @@ get_user_mode <- function(con, user_id="all"){
   profiles
 }
 
-set_user_mode <- function (con, user_id, new_mode){
+set_user_mode <- function (user_id, new_mode){
   #' Sets user mode
   #'
   #' Sets the users mode to a new value (training, testing, coding, checking, ideal).
-  #' @param con The connection to the election violence database.
   #' @param user_id Id of the user whose mode to set or a vector of user ids.
   #' @param new_mode The new mode (one of: training, testing, coding, checking, ideal) to set as the users mode(s). For multiple users either a single value should be given to be assigned to all identified users, or a vector of values should be given of the same length as the vector of user_ids.
   #' @export
+
+  con <- manage_dbcons()
+  #print(con)
+
   if(length(new_mode)==1) new_mode <- rep(new_mode, length(user_id))
   if(length(new_mode)!=length(user_id)) warning("length (mode) not equal to length(user_id))")
 
-  current_modes <- get_user_mode(con, user_id) %>%
+  current_modes <- get_user_mode(user_id) %>%
     mutate(new_mode=new_mode)
   for (this_user in user_id){
     this_data <- current_modes %>%
@@ -263,4 +324,16 @@ set_user_mode <- function (con, user_id, new_mode){
 
 
   }
+}
+
+killDbConnections <- function () {
+
+  all_cons <- DBI::dbListConnections(RMySQL::MySQL())
+
+  print(all_cons)
+
+  for(con in all_cons) DBI::dbDisconnect(con)
+
+  print(paste(length(all_cons), " connections killed."))
+
 }
