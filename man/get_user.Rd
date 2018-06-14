@@ -4,11 +4,9 @@
 \alias{get_user}
 \title{Gets user details.}
 \usage{
-get_user(con, user_id)
+get_user(user_id)
 }
 \arguments{
-\item{con}{The connection to the election violence database.}
-
 \item{user_id}{The user id.}
 }
 \description{

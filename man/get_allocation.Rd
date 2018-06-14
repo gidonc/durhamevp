@@ -4,15 +4,17 @@
 \alias{get_allocation}
 \title{Get the articles currently allocated to the user.}
 \usage{
-get_allocation(con, user_id = "all", allocation_type = "all",
+get_allocation(user_id = "all", allocation_type = "all",
   document_id = "all")
 }
 \arguments{
-\item{con}{The database connection to .}
-
 \item{user_id}{The user_id to check in the database.}
 
 \item{document_id}{The set of document_ids to include in the allocation}
+
+\item{con}{The database connection to the election violence database. If "make" then the function will establish the connection.}
+
+\item{password_method}{The method for passing the password to the database (ask, keyring, config).}
 }
 \value{
 dataframe of the document allocations to the user.

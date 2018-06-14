@@ -4,11 +4,9 @@
 \alias{user_allocated_fromset}
 \title{Which items allocated (or not allocated) to user}
 \usage{
-user_allocated_fromset(con, user_id, set, not_allocated = FALSE)
+user_allocated_fromset(user_id, set, not_allocated = FALSE)
 }
 \arguments{
-\item{con}{The database connection to the election violence database.}
-
 \item{user_id}{The user id to check in the database.}
 
 \item{set}{The set of documents to check.}

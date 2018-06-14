@@ -4,11 +4,9 @@
 \alias{allocate_from_df}
 \title{Assign users to documents from a dataframe}
 \usage{
-allocate_from_df(con, assign_dat, allocation_type, allocated_by)
+allocate_from_df(assign_dat, allocation_type, allocated_by)
 }
 \arguments{
-\item{con}{The connection to the election violence database}
-
 \item{assign_dat}{A dataframe (or tibble) with a user_id column and a document_id column}
 
 \item{allocation_type}{The allocation type to write to the database}

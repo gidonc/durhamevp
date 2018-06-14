@@ -4,11 +4,9 @@
 \alias{get_document}
 \title{Returns the document table filtered by document id}
 \usage{
-get_document(con, document_id)
+get_document(document_id)
 }
 \arguments{
-\item{con}{The connection to the election violence database.}
-
 \item{document_id}{Document id or ids to filter by.}
 }
 \description{

@@ -36,15 +36,7 @@ library(durhamevp)
 
 ## Connecting to the Database
 
-To connect to the database use the `evdb_connect` function. The function needs to pass the password to the database. The default option (password_method = "ask") will prompt you for the password. This "ask" method for obtaining the password only works in RStudio  and only in interactive mode (e.g. not when writing Rnw or Rmd files).
-
-```{r eval=FALSE}
-con <- evdb_connect()
-```
-
-Once you have given the connection a name (here `con`) you will pass this as a parameter to the other database function.
-
-### Avoid Rentering the Database Password Repeatedly
+Connection to the database is implemented silently in connection functions in the package, but credentials are still needed. 
 
 You don't want to always have to re-enter the database password, so it is more convinient to store the password on your computer and pass it automatically to the database. This can be done using either the "config" package or the "keyring" package ("keyring" is more secure and should be the first option). These methods might be more useful long-term as the password only has to be entered once per computer, and these methods work without user interaction (e.g. when using knitr).
 
@@ -56,8 +48,14 @@ keyring::key_set(service="evp", user="data_writer")
 
 You will then be prompted to enter the password. Once entered in this way the password will be securely stored on your computer and should not need to be rentered (the password can be reset using the command above if e.g. the password changes).
 
-To connect to the database as the default ("data_writer") user, using the password stored in the keyring use password_method="keyring"
 
+If you need to connect to the database outside the package functions (for example to pass an SQL query to the database) use the `evdb_connect` function. The function needs to pass the password to the database. The default option (password_method = "ask") will prompt you for the password. This "ask" method for obtaining the password only works in RStudio  and only in interactive mode (e.g. not when writing Rnw or Rmd files).
+
+```{r eval=FALSE}
+con <- evdb_connect()
+```
+
+To connect to the database as the default ("data_writer") user, using the password stored in the keyring use password_method="keyring"
 
 ```{r}
 con <- evdb_connect(password_method="keyring")

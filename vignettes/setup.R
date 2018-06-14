@@ -13,10 +13,10 @@ library(durhamevp)
 
 
 ## ----eval=FALSE----------------------------------------------------------
-#  con <- evdb_connect()
+#  keyring::key_set(service="evp", user="data_writer")
 
 ## ----eval=FALSE----------------------------------------------------------
-#  keyring::key_set(service="evp", user="data_writer")
+#  con <- evdb_connect()
 
 ## ------------------------------------------------------------------------
 con <- evdb_connect(password_method="keyring")

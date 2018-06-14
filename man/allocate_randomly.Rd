@@ -4,13 +4,11 @@
 \alias{allocate_randomly}
 \title{Randomly assign a set of articles amongst a set of users for coding}
 \usage{
-allocate_randomly(con, user_ids, set, coder_rate = 1.1,
+allocate_randomly(user_ids, set, coder_rate = 1.1,
   allocation_type = "coding", allocated_by = "regular_random_assignment",
   restrict_to_actual = TRUE, make_assignments = TRUE)
 }
 \arguments{
-\item{con}{The database connection to the election violence database.}
-
 \item{user_ids}{The users to allocate the articles amongst (vector with single or multiple user_ids).}
 
 \item{set}{The set of documents which are to be allocated (vector with single or multiple of document_ids).}
@@ -26,6 +24,6 @@ allocate_randomly(con, user_ids, set, coder_rate = 1.1,
 \item{make_assignments}{Actually make changes to the database (TRUE) or only create a proposed set of changes as a dataframe (FALSE)}
 }
 \description{
-\code{regular_random_assignment} assigns a set of articles amongst a set of users for them to code in the election violence database.
+\code{allocate_randomly} assigns a set of articles amongst a set of users for them to code in the election violence database.
 By default the articles and user ids are checked against the database and codes which do not correspond to existing documents and/or users are ignored.
 }

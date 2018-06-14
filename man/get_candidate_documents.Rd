@@ -4,12 +4,12 @@
 \alias{get_candidate_documents}
 \title{Returns the document table filtered by document id}
 \usage{
-get_candidate_documents(con, cand_document_id)
+get_candidate_documents(cand_document_id)
 }
 \arguments{
-\item{con}{The connection to the election violence database.}
-
 \item{cand_document_id}{Document id or ids to filter by.}
+
+\item{con}{The connection to the election violence database.}
 }
 \description{
 Returns the document table filtered by document id

@@ -29,5 +29,5 @@ Set connection to election violence database
 # for default connection to the database
 con <- evdb_connect()
 # using alternative method of entering password information
-con <- evdb_connect(password_method="config")
+con <- evdb_connect(password_method="keyring")
 }

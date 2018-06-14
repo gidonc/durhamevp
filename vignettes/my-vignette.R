@@ -18,17 +18,17 @@ con <- evdb_connect(password_method="keyring")
 
 
 ## ------------------------------------------------------------------------
-assign_initalsets_to_users(con, 3)
+assign_initalsets_to_users(3)
 
 ## ------------------------------------------------------------------------
-assign_initalsets_to_users(con, c(3, 4, 5, 6))
+assign_initalsets_to_users(c(3, 4, 5, 6))
 
 ## ------------------------------------------------------------------------
-get_allocation(con, user_id = 1)%>%
+get_allocation(user_id = 1)%>%
   dplyr::select(user_id, document_id, allocation_type, allocation_date) 
 
 
 ## ------------------------------------------------------------------------
-get_allocation(con, user_id = 1, allocation_type="ideal") %>%
+get_allocation(user_id = 1, allocation_type="ideal") %>%
   dplyr::select(user_id, document_id, allocation_type, allocation_date) 
 

@@ -8,24 +8,22 @@
 \alias{assign_initalsets_to_users}
 \title{Assign article to a user.}
 \usage{
-assign_article_to_user(con, document_id, user_id, allocation_type, allocated_by,
+assign_article_to_user(document_id, user_id, allocation_type, allocated_by,
   allocation_date = as.character(Sys.Date()), status = "NEW",
-  coding_complete = 0)
+  coding_complete = 0, con = "make", password_method = "keyring")
 
-assign_set(con, user_id, set, allocation_type, allocated_by = "assign_set",
+assign_set(user_id, set, allocation_type, allocated_by = "assign_set",
   status = "NEW")
 
-assign_testset_to_user(con, user_id, allocation_type = "testing",
+assign_testset_to_user(user_id, allocation_type = "testing",
   allocated_by = "assign_testset_to_user")
 
-assign_trainingset_to_user(con, user_id, allocation_type = "training",
+assign_trainingset_to_user(user_id, allocation_type = "training",
   allocated_by = "assign_trainingset_to_user")
 
-assign_initalsets_to_users(con, user_ids)
+assign_initalsets_to_users(user_ids)
 }
 \arguments{
-\item{con}{The database connection to the election violence database.}
-
 \item{document_id}{Id of the document to be assigned or a vector of document ids.}
 
 \item{user_id}{Id of the user the document is to be assigned to or a vector of user ids.}
@@ -35,6 +33,10 @@ assign_initalsets_to_users(con, user_ids)
 \item{allocation_date}{Date allocation made (usually today).}
 
 \item{status}{Status of document coding (generally 'NEW' for newly assigned documents).}
+
+\item{con}{The database connection to the election violence database (this argument is ignored in current implementations with database connections handled silently within the functions).}
+
+\item{password_method}{(this argument is ignored in current implementations with database connections handled silently within the functions).}
 }
 \description{
 \code{assign_article_to_user} assigns a specific article or set of articles to a specific user or set of users. Other document assignment functions are convenience wrappers around this funciton with arguments set appropriately.

@@ -53,12 +53,12 @@ con <- evdb_connect(password_method="keyring")
 Most new users will need both the training set and the test set allocated to them. The function `assign_initialsets_to_user` performs this function for a single user or for groups of users. The first argument is the database connection and the second is the user id or user ids. Thus, to allocate the testset and the training set to user 3: 
 
 ```{r}
-assign_initalsets_to_users(con, 3)
+assign_initalsets_to_users(3)
 ```
 
 Or to allocate the testset and training set to user 3, 4, 5 and 6:
 ```{r}
-assign_initalsets_to_users(con, c(3, 4, 5, 6))
+assign_initalsets_to_users(c(3, 4, 5, 6))
 ```
 
 Note that if a user already has an item from the testset or the training set allocated to them this function does not allocate the article again. Thus, in the above example all the users already had the full training and test sets allocated to them so running the function did not alter the data.
@@ -74,9 +74,9 @@ The function `assign_trainingset_to_user` and `assign_testset_to_user` make it e
 
 ### View Allocations
 
-To see the whole set of allocations belonging to a user use the `get_allocation` function. The function has an `allocation_type` parameter which can take the values `training`, `testing`, `coding`, `checking` and `ideal` (where `ideal` is for the gold standard coding) which restrict the results to allocations of that type. The default allocation type is '%' (the database wildcard) which returns all allocation_types. Thus, to view the whole allocation for user 1 (the `select` command just reduces the columns for display: 
+To see the whole set of allocations belonging to a user use the `get_allocation` function. The function has an `allocation_type` parameter which can take the values `training`, `testing`, `coding`, `checking` and `ideal` (where `ideal` is for the gold standard coding) which restrict the results to allocations of that type. The default allocation type is "all" which returns all allocation_types. Thus, to view the whole allocation for user 1 (the `select` command just reduces the columns for display: 
 ```{r}
-get_allocation(con, user_id = 1)%>%
+get_allocation(user_id = 1)%>%
   dplyr::select(user_id, document_id, allocation_type, allocation_date) 
 
 ```
@@ -84,7 +84,7 @@ get_allocation(con, user_id = 1)%>%
 To view their allocation where the allocation type is `ideal`:
 
 ```{r}
-get_allocation(con, user_id = 1, allocation_type="ideal") %>%
+get_allocation(user_id = 1, allocation_type="ideal") %>%
   dplyr::select(user_id, document_id, allocation_type, allocation_date) 
 ```
 

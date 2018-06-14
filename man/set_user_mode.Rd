@@ -4,11 +4,9 @@
 \alias{set_user_mode}
 \title{Sets user mode}
 \usage{
-set_user_mode(con, user_id, new_mode)
+set_user_mode(user_id, new_mode)
 }
 \arguments{
-\item{con}{The connection to the election violence database.}
-
 \item{user_id}{Id of the user whose mode to set or a vector of user ids.}
 
 \item{new_mode}{The new mode (one of: training, testing, coding, checking, ideal) to set as the users mode(s). For multiple users either a single value should be given to be assigned to all identified users, or a vector of values should be given of the same length as the vector of user_ids.}

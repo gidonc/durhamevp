@@ -4,11 +4,9 @@
 \alias{get_user_mode}
 \title{Returns table of current user modes}
 \usage{
-get_user_mode(con, user_id = "all")
+get_user_mode(user_id = "all")
 }
 \arguments{
-\item{con}{The connection to the election violence database.}
-
 \item{user_id}{Id of the user whose mode to check or a vector of user ids. The default ("all") selects all users.}
 }
 \description{
