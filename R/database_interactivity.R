@@ -226,10 +226,9 @@ get_document<-function(document_id){
 }
 
 get_candidate_documents<-function(cand_document_id){
-  #' Returns the document table filtered by document id
+  #' Returns the candidate document table filtered by candidate document id
   #'
-  #' @param con The connection to the election violence database.
-  #' @param cand_document_id Document id or ids to filter by.
+  #' @param cand_document_id Candidate document id or ids to filter by.
   #' @export
 
   con <- manage_dbcons()
@@ -247,6 +246,7 @@ get_candidate_documents<-function(cand_document_id){
 }
 
 users_to_actual<-function(user_id){
+  #' Restrict a vector to user ids actually existing in the the database.
   #' @export
   con <- manage_dbcons()
   users_from_db<-get_user(user_id)$id
@@ -259,6 +259,7 @@ users_to_actual<-function(user_id){
 }
 
 documents_to_actual<-function(document_id){
+  #' Restrict a vector to document ids actually existing in the database.
   #' @export
 
   con <- manage_dbcons()
@@ -327,6 +328,9 @@ set_user_mode <- function (user_id, new_mode){
 }
 
 killDbConnections <- function () {
+  #' Kills all current database connections
+  #'
+  #' @export
 
   all_cons <- DBI::dbListConnections(RMySQL::MySQL())
 
