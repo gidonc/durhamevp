@@ -4,10 +4,11 @@
 \alias{manage_dbcons}
 \title{Returns a connection to the election violence database}
 \usage{
-manage_dbcons()
+manage_dbcons(host = "coders.victorianelectionviolence.uk",
+  username = "data_writer", dbname = "evp", port = 3306)
 }
 \description{
 This function is primarily for use within other functions.
-Returns an active connection to the the election violence database, choosing the first open valid connection to the database. If there is no open valid connection to the database then a connection will be made. Running the function will also close all invalid (e.g. expired) database connections.
+This is now a wrapper function around pool::dbPool to handle connections to the database.
 Database password is obtained from the keyring if there is a password for the database in the keyring. Otherwise the user is prompted for the database password.
 }

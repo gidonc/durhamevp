@@ -2,15 +2,13 @@
 % Please edit documentation in R/database_interactivity.R
 \name{get_candidate_documents}
 \alias{get_candidate_documents}
-\title{Returns the document table filtered by document id}
+\title{Returns the candidate document table filtered by candidate document id}
 \usage{
 get_candidate_documents(cand_document_id)
 }
 \arguments{
-\item{cand_document_id}{Document id or ids to filter by.}
-
-\item{con}{The connection to the election violence database.}
+\item{cand_document_id}{Candidate document id or ids to filter by.}
 }
 \description{
-Returns the document table filtered by document id
+Returns the candidate document table filtered by candidate document id
 }

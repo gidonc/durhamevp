@@ -27,7 +27,8 @@ assign_article_to_user <- function (document_id, user_id, allocation_type, alloc
                                          status=status,
                                          coding_complete=coding_complete,
                                          allocated_at=allocated_at)
-      DBI::dbSendStatement(con, this_safe_sql)
+      #DBI::dbSendStatement(con, this_safe_sql)
+      DBI::dbExecute(con, this_safe_sql)
 
 
     }

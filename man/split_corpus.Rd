@@ -4,7 +4,9 @@
 \alias{split_corpus}
 \title{Divide a text corpus into training and testing sets based on number of training items}
 \usage{
-split_corpus(the_corpus, n_train)
+split_corpus(the_corpus, n_train, min_termfreq = 2, min_docfreq = 2,
+  remove_punct = TRUE, remove_numbers = TRUE, remove_hyphens = TRUE,
+  dfm_tfidf = TRUE)
 }
 \description{
 Divide a text corpus into training and testing sets based on number of training items

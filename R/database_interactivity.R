@@ -18,11 +18,11 @@ keyring_evp_available<-function(username="not implemented"){
   return(available)
 }
 
-manage_dbcons <- function(){
+manage_dbcons <- function(host="coders.victorianelectionviolence.uk", username="data_writer", dbname="evp", port=3306){
   #' Returns a connection to the election violence database
   #'
   #' This function is primarily for use within other functions.
-  #' Returns an active connection to the the election violence database, choosing the first open valid connection to the database. If there is no open valid connection to the database then a connection will be made. Running the function will also close all invalid (e.g. expired) database connections.
+  #' This is now a wrapper function around pool::dbPool to handle connections to the database.
   #' Database password is obtained from the keyring if there is a password for the database in the keyring. Otherwise the user is prompted for the database password.
   #' @export
   if(keyring_evp_available()){
@@ -30,18 +30,22 @@ manage_dbcons <- function(){
   } else {
     password_method <- "ask"
   }
-  all_cons <- DBI::dbListConnections(RMySQL::MySQL())
-  valid_idx <- sapply(all_cons, DBI::dbIsValid)
 
-  for (invalid_con in all_cons[!valid_idx]){
-    DBI::dbDisconnect(invalid_con)
+  if (password_method=="keyring"){
+    password <- keyring::key_get(dbname, username)
+  } else if (password_method=="config"){
+    password<-config::get()$datawarehouse$pwd
+  } else{
+    password<- rstudioapi::askForPassword("Database password")
   }
-  if(length(valid_idx)>0){
-    con <- all_cons[valid_idx][[1]]
-  } else {
-    con <- evdb_connect(password_method = password_method)
-  }
-  con
+
+  my_pool<- pool::dbPool(drv=RMySQL::MySQL(),
+                         host=host,
+                         dbname = dbname,
+                         port=port,
+                         username = username,
+                         password = password)
+  my_pool
 }
 evdb_connect <- function(host="coders.victorianelectionviolence.uk", user="data_writer", dbname="evp", port=3306, password_method="ask"){
   #' Set connection to election violence database
