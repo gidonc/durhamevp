@@ -18,10 +18,16 @@ status_to_text<-function(status){
   )
 }
 
-split_corpus<-function(the_corpus, n_train){
+split_corpus<-function(the_corpus, n_train, min_termfreq=2, min_docfreq=2,
+                       remove_punct=TRUE, remove_numbers=TRUE, remove_hyphens=TRUE,
+                       dfm_tfidf=TRUE){
   #' Divide a text corpus into training and testing sets based on number of training items
   #' @export
-  the_dfm <- dfm(the_corpus, stem=TRUE, remove=stopwords("english"), remove_punct=TRUE)
+  the_dfm <- dfm(the_corpus, stem=TRUE, remove=stopwords("english"), remove_punct=remove_punct, remove_numbers=remove_numbers, remove_hyphens=remove_hyphens)
+  the_dfm <- dfm_trim(the_dfm, min_termfreq=min_termfreq, min_docfreq = min_docfreq)
+  if(dfm_tfidf){
+    the_dfm<-dfm_tfidf(the_dfm)
+  }
   training_set <- dfm_sample(the_dfm, n_train)
   testing_set <- the_dfm[setdiff(docnames(the_dfm), docnames(training_set))]
   return(list(training_set=training_set, testing_set=testing_set))
@@ -49,18 +55,20 @@ my_wordscores<-function(train, test){
   pred_wordscores
 
 }
-organise_results <- function (testset, pred_nb, pred_aff, pred_wordscores=NULL){
+organise_results <- function (testset, pred_nb, pred_aff=NULL, pred_wordscores=NULL){
   #' @export
   this_res<-as.tbl(data.frame(actual=docvars(testset, "EV_article"),
                               actual_f=factor(docvars(testset, "EV_article")),
                               nb_ev_cat=pred_nb$predict_nb,
                               nb_ev_prob=pred_nb$prob_ev,
-                              nb_notev_prob=pred_nb$prob_notev,
-                              aff_ev_prob=pred_aff$coefficients[,2],
-                              aff_notev_prob=pred_aff$coefficients[,1],
-                              aff_ev_cat=as.numeric(pred_aff$coefficients[,2]>pred_aff$coefficients[,1]),
-                              aff_ev_cat_f=factor(as.numeric(pred_aff$coefficients[,2]>pred_aff$coefficients[,1]))
-                                ))
+                              nb_notev_prob=pred_nb$prob_notev
+                              ))
+  if(!is.null(pred_aff)){
+    this_res$aff_ev_prob=pred_aff$coefficients[,2]
+    this_res$aff_notev_prob=pred_aff$coefficients[,1]
+    this_res$aff_ev_cat=as.numeric(pred_aff$coefficients[,2]>pred_aff$coefficients[,1])
+    this_res$aff_ev_cat_f=factor(as.numeric(pred_aff$coefficients[,2]>pred_aff$coefficients[,1]))
+  }
   if(!is.null(pred_wordscores)){
     this_res$wordscore_prob<-pred_wordscores
   }
