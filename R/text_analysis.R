@@ -18,10 +18,35 @@ status_to_text<-function(status){
   )
 }
 
+preprocess_corpus<-function(the_corpus, min_termfreq=2, min_docfreq=2,
+                            remove_punct=TRUE, remove_numbers=TRUE, remove_hyphens=TRUE,
+                            dfm_tfidf=FALSE){
+  #' Preprocess a text corpus and return a document feature matrix (wrapper round quanteda functions).
+  #' @param the_corpus The text corpus to split.
+  #' @export
+  the_dfm <- dfm(the_corpus, stem=TRUE, remove=stopwords("english"), remove_punct=remove_punct, remove_numbers=remove_numbers, remove_hyphens=remove_hyphens)
+  the_dfm <- dfm_trim(the_dfm, min_termfreq=min_termfreq, min_docfreq = min_docfreq)
+  if(dfm_tfidf){
+    the_dfm<-dfm_tfidf(the_dfm)
+  }
+  the_dfm
+}
+
+split_dfm <- function(dfm, n_train){
+  #' Divide a document feature matrix into training and testing sets based on number of training items
+  #' @param dfm The document feature matrix to split.
+  #' @param n_train The number of documents in the training set.
+  #' @export
+  training_set <- quanteda::dfm_sample(dfm, n_train)
+  testing_set <- the_dfm[setdiff(docnames(dfm), docnames(training_set))]
+  return(list(training_set=training_set, testing_set=testing_set))
+}
+
 split_corpus<-function(the_corpus, n_train, min_termfreq=2, min_docfreq=2,
                        remove_punct=TRUE, remove_numbers=TRUE, remove_hyphens=TRUE,
-                       dfm_tfidf=TRUE){
-  #' Divide a text corpus into training and testing sets based on number of training items
+                       dfm_tfidf=FALSE){
+  #' Preprocess a text corpus and divide it into training and testing sets based on number of training items.
+  #' Note: it is more efficient to preprocess and split separately, especially if running in a loop.
   #' @export
   the_dfm <- dfm(the_corpus, stem=TRUE, remove=stopwords("english"), remove_punct=remove_punct, remove_numbers=remove_numbers, remove_hyphens=remove_hyphens)
   the_dfm <- dfm_trim(the_dfm, min_termfreq=min_termfreq, min_docfreq = min_docfreq)
