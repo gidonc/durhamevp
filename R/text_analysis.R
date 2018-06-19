@@ -78,14 +78,24 @@ organise_results <- function (testset, pred_nb, pred_aff=NULL, pred_wordscores=N
 
 assess_classification <- function(res_data){
   #' @export
-  nb_assess<-as.data.frame(caret::confusionMatrix(data=this_res$nb_ev_cat, reference=this_res$actual_f, mode="everything", positive="1")$byClass)
-  names(nb_assess)<-"value"
-  nb_assess <- tibble::rownames_to_column(nb_assess) %>%
-    mutate(model="naive bayes")
-  aff_assess<-as.data.frame(caret::confusionMatrix(data=this_res$aff_ev_cat_f, reference=this_res$actual_f, mode="everything", positive="1")$byClass)
-  names(aff_assess)<-"value"
-  aff_assess <- rownames_to_column(aff_assess) %>%
-    mutate(model="affinity")
+  if("nb_ev_cat" %in% names(res_data)){
+    nb_assess<-as.data.frame(caret::confusionMatrix(data=this_res$nb_ev_cat, reference=this_res$actual_f, mode="everything", positive="1")$byClass)
+    names(nb_assess)<-"value"
+    nb_assess <- tibble::rownames_to_column(nb_assess) %>%
+      mutate(model="naive bayes")
+  } else {
+    nb_assess<-data.frame(matrix(nrow=0, ncol=3))
+    names(nb_assess)<-c("rowname", "value", "model")
+  }
+  if("aff_ev_cat_f" %in% names(res_data)){
+    aff_assess<-as.data.frame(caret::confusionMatrix(data=this_res$aff_ev_cat_f, reference=this_res$actual_f, mode="everything", positive="1")$byClass)
+    names(aff_assess)<-"value"
+    aff_assess <- rownames_to_column(aff_assess) %>%
+      mutate(model="affinity")
+  } else{
+    aff_assess<-data.frame(matrix(nrow=0, ncol=3))
+    names(aff_assess)<-c("rowname", "value", "model")
+  }
 
   this_assess<- bind_rows(aff_assess, nb_assess)
 
