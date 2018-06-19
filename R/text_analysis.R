@@ -38,7 +38,7 @@ split_dfm <- function(dfm, n_train){
   #' @param n_train The number of documents in the training set.
   #' @export
   training_set <- quanteda::dfm_sample(dfm, n_train)
-  testing_set <- the_dfm[setdiff(docnames(dfm), docnames(training_set))]
+  testing_set <- dfm[setdiff(docnames(dfm), docnames(training_set))]
   return(list(training_set=training_set, testing_set=testing_set))
 }
 
