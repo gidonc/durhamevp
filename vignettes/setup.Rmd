@@ -38,7 +38,7 @@ library(durhamevp)
 
 Connection to the database is implemented silently in connection functions in the package, but credentials are still needed. 
 
-You don't want to always have to re-enter the database password, so it is more convinient to store the password on your computer and pass it automatically to the database. This can be done using either the "config" package or the "keyring" package ("keyring" is more secure and should be the first option). These methods might be more useful long-term as the password only has to be entered once per computer, and these methods work without user interaction (e.g. when using knitr).
+You don't want to always have to re-enter the database password, so it is more convinient to store the password on your computer and pass it automatically to the database. This can be done using either the "config" package or the "keyring" package ("keyring" is more secure and should be the first option). These methods useful not only because the password only has to be entered once per computer, but also because they work without user interaction (e.g. when using knitr).
 
 To use the database password needs to be stored on your computer. This can be done using the key_set command from keyring package: 
 
