@@ -38,14 +38,21 @@ manage_dbcons <- function(host="coders.victorianelectionviolence.uk", username="
   } else{
     password<- rstudioapi::askForPassword("Database password")
   }
+  env<-globalenv()
 
-  my_pool<- pool::dbPool(drv=RMySQL::MySQL(),
-                         host=host,
-                         dbname = dbname,
-                         port=port,
-                         username = username,
-                         password = password)
-  my_pool
+  poolproblem<-!exists(".evp_db_pool", envir=env) | class(env$.evp_db_pool)[1]!="Pool"
+
+  if(poolproblem){
+    .evp_db_pool<<- pool::dbPool(drv=RMySQL::MySQL(),
+                                 host=host,
+                                 dbname = dbname,
+                                 port=port,
+                                 username = username,
+                                 password = password)
+
+  }
+
+ env$.evp_db_pool
 }
 evdb_connect <- function(host="coders.victorianelectionviolence.uk", user="data_writer", dbname="evp", port=3306, password_method="ask"){
   #' Set connection to election violence database
