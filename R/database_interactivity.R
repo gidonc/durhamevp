@@ -142,7 +142,7 @@ get_allocation <- function(user_id = "all", allocation_type="all", document_id="
                                      .dots = interpolate_list)
 
   allocation<-DBI::dbGetQuery(con, this_safe_sql)
-  close(con)
+  pool::poolReturn(con)
 
   allocation
 }
@@ -198,7 +198,7 @@ get_user <- function(user_id){
                                      .dots = interpolate_list)
 
   users<-DBI::dbGetQuery(con, this_safe_sql)
-  close(con)
+  pool::poolReturn(con)
 
   users
 }
@@ -210,7 +210,7 @@ get_status<-function(user_id){
 
   this_safe_sql<-DBI::sqlInterpolate(DBI::ANSI(), this_sql, user_id=user_id)
   users<-DBI::dbGetQuery(con, this_safe_sql)
-  close(con)
+  pool::poolReturn(con)
 
   users
 
@@ -233,7 +233,7 @@ get_document<-function(document_id){
   this_safe_sql<-DBI::sqlInterpolate(DBI::ANSI(), this_sql,
                                      .dots = interpolate_list)
   documents<-DBI::dbGetQuery(con, this_safe_sql)
-  close(con)
+  pool::poolReturn(con)
 
 
   documents
@@ -255,7 +255,7 @@ get_candidate_documents<-function(cand_document_id){
   this_safe_sql<-DBI::sqlInterpolate(DBI::ANSI(), this_sql,
                                      .dots = interpolate_list)
   cand_documents<-DBI::dbGetQuery(con, this_safe_sql)
-  close(con)
+  pool::poolReturn(con)
 
   cand_documents
 }
@@ -304,7 +304,7 @@ get_user_mode <- function(user_id="all"){
                                      .dots = interpolate_list)
 
   profiles<-DBI::dbGetQuery(con, this_safe_sql)
-  close(con)
+  pool::poolReturn(con)
 
   profiles
 }
@@ -337,7 +337,7 @@ set_user_mode <- function (user_id, new_mode){
                                        id = this_id,
                                        new_mode=this_mode)
     documents<-DBI::dbGetQuery(con, this_safe_sql)
-    close(con)
+    pool::poolReturn(con)
 
 
   }
