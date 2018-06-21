@@ -142,6 +142,7 @@ get_allocation <- function(user_id = "all", allocation_type="all", document_id="
                                      .dots = interpolate_list)
 
   allocation<-DBI::dbGetQuery(con, this_safe_sql)
+  close(con)
 
   allocation
 }
@@ -163,7 +164,6 @@ user_allocated_fromset <- function(user_id, set, not_allocated=FALSE){
   #'
   #' @export
 
-  con <- manage_dbcons()
 
   user_allocation <- get_allocation(user_id)
   training_allocation <- dplyr::filter(user_allocation, allocation_type=="training")
@@ -198,6 +198,7 @@ get_user <- function(user_id){
                                      .dots = interpolate_list)
 
   users<-DBI::dbGetQuery(con, this_safe_sql)
+  close(con)
 
   users
 }
@@ -209,6 +210,7 @@ get_status<-function(user_id){
 
   this_safe_sql<-DBI::sqlInterpolate(DBI::ANSI(), this_sql, user_id=user_id)
   users<-DBI::dbGetQuery(con, this_safe_sql)
+  close(con)
 
   users
 
@@ -231,6 +233,7 @@ get_document<-function(document_id){
   this_safe_sql<-DBI::sqlInterpolate(DBI::ANSI(), this_sql,
                                      .dots = interpolate_list)
   documents<-DBI::dbGetQuery(con, this_safe_sql)
+  close(con)
 
 
   documents
@@ -252,6 +255,7 @@ get_candidate_documents<-function(cand_document_id){
   this_safe_sql<-DBI::sqlInterpolate(DBI::ANSI(), this_sql,
                                      .dots = interpolate_list)
   cand_documents<-DBI::dbGetQuery(con, this_safe_sql)
+  close(con)
 
   cand_documents
 }
@@ -259,7 +263,7 @@ get_candidate_documents<-function(cand_document_id){
 users_to_actual<-function(user_id){
   #' Restrict a vector to user ids actually existing in the the database.
   #' @export
-  con <- manage_dbcons()
+
   users_from_db<-get_user(user_id)$id
   actual_users <- user_id[user_id %in% users_from_db]
   if (length(actual_users)<length(user_id)){
@@ -273,7 +277,6 @@ documents_to_actual<-function(document_id){
   #' Restrict a vector to document ids actually existing in the database.
   #' @export
 
-  con <- manage_dbcons()
   docs_from_db<-get_document(document_id)$id
   actual_docs <- document_id[document_id %in% docs_from_db]
   if (length(actual_docs)<length(document_id)){
@@ -301,6 +304,7 @@ get_user_mode <- function(user_id="all"){
                                      .dots = interpolate_list)
 
   profiles<-DBI::dbGetQuery(con, this_safe_sql)
+  close(con)
 
   profiles
 }
@@ -333,6 +337,7 @@ set_user_mode <- function (user_id, new_mode){
                                        id = this_id,
                                        new_mode=this_mode)
     documents<-DBI::dbGetQuery(con, this_safe_sql)
+    close(con)
 
 
   }
