@@ -30,6 +30,8 @@ assign_article_to_user <- function (document_id, user_id, allocation_type, alloc
       #DBI::dbSendStatement(con, this_safe_sql)
       DBI::dbExecute(con, this_safe_sql)
 
+      close(con)
+
 
     }
   }
@@ -45,8 +47,6 @@ assign_set <- function(user_id, set, allocation_type, allocated_by = "assign_set
   #' @describeIn assign_article_to_user Assign set of articles to user
 
   # restrict assignment of set to items not already allocated to the user
-
-  con <- manage_dbcons()
 
   items_needed <- user_allocated_fromset(user_id, set=set, not_allocated = TRUE)
 
@@ -121,7 +121,6 @@ allocate_randomly <- function (user_ids, set, coder_rate=1.1, allocation_type="c
   #' @param make_assignments Actually make changes to the database (TRUE) or only create a proposed set of changes as a dataframe (FALSE)
   #' @export
 
-  con <- manage_dbcons()
 
   # restrict to actual articles and actual users (both must already be in the database)
   if(restrict_to_actual){
