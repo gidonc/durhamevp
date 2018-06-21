@@ -30,9 +30,6 @@ assign_article_to_user <- function (document_id, user_id, allocation_type, alloc
       #DBI::dbSendStatement(con, this_safe_sql)
       DBI::dbExecute(con, this_safe_sql)
 
-      pool::poolReturn(con)
-
-
     }
   }
 
