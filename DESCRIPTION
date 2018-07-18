@@ -21,7 +21,8 @@ Imports:
     quanteda,
     tidytext,
     caret,
-    pool
+    pool,
+    hunspell
 RoxygenNote: 6.0.1
 Suggests: knitr,
     rmarkdown,

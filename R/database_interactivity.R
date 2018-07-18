@@ -259,6 +259,70 @@ get_candidate_documents<-function(cand_document_id){
   cand_documents
 }
 
+get_event_report<-function(event_report_id){
+  #' Returns the event_report table filtered by event report id
+  #'
+  #' @param event_report_id Event report id or ids to filter by.
+  #' @export
+
+  con <- manage_dbcons()
+  this_sql<-"SELECT * FROM portal_eventreport" # base query
+
+  res<-build_where_condition("id", event_report_id, this_sql, NULL)
+  res[["condition"]] <- paste(res[["condition"]], ";")
+  this_sql<-res[["condition"]]
+  interpolate_list <- res[["interpolate_list"]]
+  this_safe_sql<-DBI::sqlInterpolate(DBI::ANSI(), this_sql,
+                                     .dots = interpolate_list)
+  eventreport<-DBI::dbGetQuery(con, this_safe_sql)
+
+  eventreport
+}
+
+get_tag<-function(tag_id="all", event_report_id="all"){
+  #' Returns the tag table filtered by either tag_id (primary key) or event report id
+  #'
+  #' @param tag_id Primary key from tag table
+  #' @param event_report_id Event report id or ids to filter by.
+  #' @export
+
+  con <- manage_dbcons()
+  this_sql<-"SELECT * FROM portal_tag" # base query
+
+  res<-build_where_condition("id", tag_id, this_sql, NULL)
+  res<-build_where_condition("event_report_id", event_report_id, res$condition, res$interpolate_list)
+  res[["condition"]] <- paste(res[["condition"]], ";")
+  this_sql<-res[["condition"]]
+  interpolate_list <- res[["interpolate_list"]]
+  this_safe_sql<-DBI::sqlInterpolate(DBI::ANSI(), this_sql,
+                                     .dots = interpolate_list)
+  tag<-DBI::dbGetQuery(con, this_safe_sql)
+
+  tag
+}
+
+get_attribute<-function(attribute_id="all", tag_id="all"){
+  #' Returns the tag table filtered by either attribute_id (primary key) or tag_id
+  #'
+  #' @param attribute_id attribute id or ids to filter by.
+  #' @param tag_id Foreign key from tag table
+  #' @export
+
+  con <- manage_dbcons()
+  this_sql<-"SELECT * FROM portal_attribute" # base query
+
+  res<-build_where_condition("id", attribute_id, this_sql, NULL)
+  res<-build_where_condition("tag_id", tag_id, res$condition, res$interpolate_list)
+  res[["condition"]] <- paste(res[["condition"]], ";")
+  this_sql<-res[["condition"]]
+  interpolate_list <- res[["interpolate_list"]]
+  this_safe_sql<-DBI::sqlInterpolate(DBI::ANSI(), this_sql,
+                                     .dots = interpolate_list)
+  attribute<-DBI::dbGetQuery(con, this_safe_sql)
+
+  attribute
+}
+
 users_to_actual<-function(user_id){
   #' Restrict a vector to user ids actually existing in the the database.
   #' @export
