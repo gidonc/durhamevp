@@ -5,8 +5,9 @@
 \title{Preprocess a text corpus and return a document feature matrix (wrapper round quanteda functions).}
 \usage{
 preprocess_corpus(the_corpus, min_termfreq = 2, min_docfreq = 2,
-  remove_punct = TRUE, remove_numbers = TRUE, remove_hyphens = TRUE,
-  dfm_tfidf = FALSE)
+  max_termfreq = NULL, max_docfreq = NULL, remove_punct = TRUE,
+  remove_numbers = TRUE, remove_hyphens = TRUE, termfreq_type = "count",
+  docfreq_type = "count", dfm_tfidf = FALSE)
 }
 \arguments{
 \item{the_corpus}{The text corpus to split.}

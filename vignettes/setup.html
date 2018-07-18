@@ -12,7 +12,7 @@
 
 <meta name="author" content="Gidon Cohen" />
 
-<meta name="date" content="2018-06-14" />
+<meta name="date" content="2018-07-19" />
 
 <title>Package Setup and Connection to Durham Election Violence Database</title>
 
@@ -70,7 +70,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 
 <h1 class="title toc-ignore">Package Setup and Connection to Durham Election Violence Database</h1>
 <h4 class="author"><em>Gidon Cohen</em></h4>
-<h4 class="date"><em>2018-06-14</em></h4>
+<h4 class="date"><em>2018-07-19</em></h4>
 
 
 
@@ -84,7 +84,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <div id="connecting-to-the-database" class="section level2">
 <h2>Connecting to the Database</h2>
 <p>Connection to the database is implemented silently in connection functions in the package, but credentials are still needed.</p>
-<p>You don’t want to always have to re-enter the database password, so it is more convinient to store the password on your computer and pass it automatically to the database. This can be done using either the “config” package or the “keyring” package (“keyring” is more secure and should be the first option). These methods might be more useful long-term as the password only has to be entered once per computer, and these methods work without user interaction (e.g. when using knitr).</p>
+<p>You don’t want to always have to re-enter the database password, so it is more convinient to store the password on your computer and pass it automatically to the database. This can be done using either the “config” package or the “keyring” package (“keyring” is more secure and should be the first option). These methods useful not only because the password only has to be entered once per computer, but also because they work without user interaction (e.g. when using knitr).</p>
 <p>To use the database password needs to be stored on your computer. This can be done using the key_set command from keyring package:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">keyring<span class="op">::</span><span class="kw">key_set</span>(<span class="dt">service=</span><span class="st">&quot;evp&quot;</span>, <span class="dt">user=</span><span class="st">&quot;data_writer&quot;</span>)</code></pre></div>
 <p>You will then be prompted to enter the password. Once entered in this way the password will be securely stored on your computer and should not need to be rentered (the password can be reset using the command above if e.g. the password changes).</p>
