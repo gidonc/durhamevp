@@ -259,7 +259,7 @@ get_candidate_documents<-function(cand_document_id){
   cand_documents
 }
 
-get_event_report<-function(event_report_id){
+get_event_report<-function(event_report_id="all", user_doc_id="all"){
   #' Returns the event_report table filtered by event report id
   #'
   #' @param event_report_id Event report id or ids to filter by.
@@ -269,6 +269,7 @@ get_event_report<-function(event_report_id){
   this_sql<-"SELECT * FROM portal_eventreport" # base query
 
   res<-build_where_condition("id", event_report_id, this_sql, NULL)
+  res<-build_where_condition("user_doc_id", user_doc_id, res$condition, res$interpolate_list)
   res[["condition"]] <- paste(res[["condition"]], ";")
   this_sql<-res[["condition"]]
   interpolate_list <- res[["interpolate_list"]]
