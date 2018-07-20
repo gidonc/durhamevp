@@ -121,7 +121,7 @@ expand_out_ors <- function(col_name, vals){
   res
 }
 
-get_allocation <- function(user_id = "all", allocation_type="all", document_id="all"){
+get_allocation <- function(user_id = "all", allocation_type="all", document_id="all", user_doc_id="all"){
   #' Get the articles currently allocated to the user.
   #' @param user_id The user_id to check in the database.
   #' @param document_id The set of document_ids to include in the allocation
@@ -134,6 +134,7 @@ get_allocation <- function(user_id = "all", allocation_type="all", document_id="
   res<-build_where_condition("user_id", user_id, this_sql, NULL)
   res<-build_where_condition("allocation_type", allocation_type, res[[1]], res[[2]])
   res<-build_where_condition("document_id", document_id, res[[1]], res[[2]])
+  res<-build_where_condition("id", user_doc_id, res[[1]], res[[2]])
 
   res[["condition"]] <- paste(res[["condition"]], ";")
   this_sql<-res[["condition"]]
