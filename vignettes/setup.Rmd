@@ -55,7 +55,7 @@ If you need to connect to the database outside the package functions (for exampl
 con <- evdb_connect()
 ```
 
-To connect to the database as the default ("data_writer") user, using the password stored in the keyring use password_method="keyring"
+To connect to the database as the default ("data_writer") user, using the password stored in the keyring use password_method="keyring":
 
 ```{r}
 con <- evdb_connect(password_method="keyring")
