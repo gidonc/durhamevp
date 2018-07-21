@@ -103,6 +103,55 @@ assign_initalsets_to_users <- function(user_ids){
   }
 }
 
+split_allocation_randomly <- function (user_ids, set, allocation_type="coding", allocated_by="split_random_assignment", restrict_to_actual=TRUE, make_assignments=FALSE){
+  #' Divide a set of N*P articles amongst P users, giving N articles each user for coding.
+  #'
+  #' \code{allocate_number_randomly} divides a set of articles amongst a set of users all users get the same number of articles to code, with the articles being divided randomly amongst users. Each article is coded exactly once, and all users receive the same number of articles for coding (the function checks that the number of articles is a multiple of the number of users).
+  #' By default the articles and user ids are checked against the database and codes which do not correspond to existing documents and/or users are ignored.
+  #' @param user_ids The users to allocate the articles amongst (vector with single or multiple user_ids).
+  #' @param set The set of documents which are to be allocated (vector with single or multiple of document_ids).
+  #' @param allocation_type The value to write to the allocation_type field in the database document_allocations table (training, testing, coding, checking, ideal).
+  #' @param allocated_by The value to write to the allocated_by field in the database document_allocations table.
+  #' @param restrict_to_actual Should the restriction to actual users and documents be enforced. Should only be set to FALSE for debugging purposes.
+  #' @param make_assignments Actually make changes to the database (TRUE) or only create a proposed set of changes as a dataframe (FALSE)
+  #' @export
+
+
+  # restrict to actual articles and actual users (both must already be in the database)
+  if(restrict_to_actual){
+    set<-documents_to_actual(set)
+    user_ids<-users_to_actual(user_ids)
+  }
+
+  n_articles_each <- length(set) %/% length(user_ids)
+
+  if(n_articles_each * length(user_ids) != length(set)){
+    phrase<-""
+    if(restrict_to_actual){
+      phrase <- "Possibly because restrict_to_actual=TRUE."
+    }
+
+    stop(paste("Number of articles is not a multiple of number of users.", phrase))
+  }
+  assign_dat <- data.frame(matrix(ncol=2, nrow=0))
+  names(assign_dat) <- c("document_id", "user_id")
+  left <- set
+  for(this_user in user_ids){
+    if(length(left) == 1){ # prevent single number behaviour of sample function
+      these_articles <- left
+    } else {
+      these_articles <- sample(left, n_articles_each, replace = FALSE)
+    }
+    left <- left[!(left %in% these_articles)]
+    for(this_article in these_articles)
+    assign_dat <- dplyr::bind_rows(assign_dat,
+                                   data.frame(document_id=this_article, user_id=this_user))
+  }
+  if(make_assignments){
+    allocate_from_df(assign_dat, allocation_type, allocated_by)
+  }
+  assign_dat
+}
 
 allocate_randomly <- function (user_ids, set, coder_rate=1.1, allocation_type="coding", allocated_by="regular_random_assignment", restrict_to_actual=TRUE, make_assignments=TRUE){
   #' Randomly assign a set of articles amongst a set of users for coding
@@ -152,6 +201,50 @@ allocate_randomly <- function (user_ids, set, coder_rate=1.1, allocation_type="c
       }
     }
   }
+  if(make_assignments){
+    allocate_from_df(assign_dat, allocation_type, allocated_by)
+  }
+  assign_dat
+}
+
+allocate_randomly_with_some_double_assignment <- function (double_coding_user_ids, other_user_ids, set, n_double_coding, coder_rate=1.1, allocation_type="coding", allocated_by="regular_random_assignment_with_some_double_assignment", restrict_to_actual=TRUE, make_assignments=TRUE) {
+  #' Assigns articles to users with some double coding and some another coding rate. Some users have a specified number of articles also assigned to another user (double coding). Remaining assignments are randomly allocated across all users.
+  #'
+  #' \code{allocate_randomly_with_some_double_assignment} assigns articles to some users with a specified number of articles to be double coded by the other users. Articles which are not used in this double coding are allocated amongst all users at the specified coding rate.
+  #' By default the articles and user ids are checked against the database and codes which do not correspond to existing documents and/or users are ignored.
+  #' @param double_coding_user_ids The users who will have a specified number of their articles double coded. to allocate the articles amongst (vector with single or multiple user_ids).
+  #' @param other_user_ids The other users to allocate the articles amongst (vector with single or multiple user_ids).
+  #' @param set The set of documents which are to be allocated (vector with single or multiple of document_ids).
+  #' @param n_double_coding Number of articles (per user) that should be doubled coded (by those users undertaking double coding).
+  #' @param coder_rate The average number of coders to be allocated to a document.
+  #' @param allocation_type The value to write to the allocation_type field in the database document_allocations table (training, testing, coding, checking, ideal).
+  #' @param allocated_by The value to write to the allocated_by field in the database document_allocations table.
+  #' @param restrict_to_actual Should the restriction to actual users and documents be enforced. Should only be set to FALSE for debugging purposes.
+  #' @param make_assignments Actually make changes to the database (TRUE) or only create a proposed set of changes as a dataframe (FALSE)
+  #' @export
+
+  n_double_coding_users<-length(double_coding_user_ids)
+  n_articles_required_for_double_coding <- n_double_coding_users * n_double_coding
+
+  if(n_articles_required_for_double_coding > length(set)) {
+    stop("Insufficient articles for double coding.")
+  }
+  if(length(other_user_ids)<1){
+    stop("Insufficient other users to allow double coding.")
+  }
+
+  double_coding_articles <- sample(set, n_articles_required_for_double_coding, replace = FALSE)
+  other_articles <- set[!(set %in% double_coding_articles)]
+
+  # First split a subset of the documents randomly amongst the new users (these documents will all be allocated to another user for coding)
+  df1<-split_allocation_randomly(user_ids = double_coding_user_ids, double_coding_articles, allocation_type = allocation_type, allocated_by=allocated_by, restrict_to_actual = restrict_to_actual, make_assignments = FALSE)
+
+  # Now allocate the same subset of the documents randomly to amongst the other users (this ensures the double coding)
+  df2 <- allocate_randomly(user_ids = other_user_ids, double_coding_articles, coder_rate=1, allocation_type = allocation_type, allocated_by=allocated_by, restrict_to_actual = restrict_to_actual, make_assignments = FALSE)
+
+  # Then allocate the rest of the documents randomly at the specified rate
+  df3 <- allocate_randomly(user_ids = c(double_coding_user_ids, other_user_ids), other_articles, coder_rate=coder_rate, allocation_type = allocation_type, allocated_by=allocated_by, restrict_to_actual = restrict_to_actual, make_assignments = FALSE)
+  assign_dat <- dplyr::bind_rows(df1, df2, df3)
   if(make_assignments){
     allocate_from_df(assign_dat, allocation_type, allocated_by)
   }
