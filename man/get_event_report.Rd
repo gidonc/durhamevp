@@ -4,7 +4,7 @@
 \alias{get_event_report}
 \title{Returns the event_report table filtered by event report id}
 \usage{
-get_event_report(event_report_id)
+get_event_report(event_report_id = "all", user_doc_id = "all")
 }
 \arguments{
 \item{event_report_id}{Event report id or ids to filter by.}
