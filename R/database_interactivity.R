@@ -87,6 +87,17 @@ evdb_connect <- function(host="coders.victorianelectionviolence.uk", user="data_
 }
 
 build_where_condition <- function (col_name, vals, existing_condition, existing_interpolate_list){
+  #'Constructs where conditions for querying database.
+  #'
+  #'@param col_name The column name for there where condition.
+  #'@param vals The value or values to include in the query.
+  #'@param exiting_condition An existing SQL query to append this where condition to.
+  #'@param exiting_interpolate_list Existing interpolation list to add this interpolation list to.
+  #'@export
+  if (length(vals)==0){
+    warning("zero length value condition in build_where_condition. Returning existing conditions.")
+    return(list(condition= existing_condition, interpolate_list=existing_interpolate_list))
+  }
   if (identical(vals, "all")|identical(vals, "%")){
     return(list(condition= existing_condition, interpolate_list=existing_interpolate_list))
   } else {
