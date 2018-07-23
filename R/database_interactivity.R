@@ -95,8 +95,8 @@ build_where_condition <- function (col_name, vals, existing_condition, existing_
   #'@param exiting_interpolate_list Existing interpolation list to add this interpolation list to.
   #'@export
   if (length(vals)==0){
-    warning("zero length value condition in build_where_condition. Returning existing conditions.")
-    return(list(condition= existing_condition, interpolate_list=existing_interpolate_list))
+    warning("zero length value condition in build_where_condition. Query will return empty dataset.")
+    return(list(condition= paste(existing_condition, " WHERE 1=2"), interpolate_list=existing_interpolate_list))
   }
   if (identical(vals, "all")|identical(vals, "%")){
     return(list(condition= existing_condition, interpolate_list=existing_interpolate_list))
