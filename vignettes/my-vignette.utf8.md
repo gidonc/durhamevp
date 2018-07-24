@@ -1,0 +1,113 @@
+---
+title: "Interacting with the Durham Election Violence Database Using R"
+author: "Gidon Cohen"
+date: "2018-07-24"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Interacting with the Durham Election Violence Database Using R}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+
+
+## Introduction
+
+This vignette documents how to interact with the Durham election violence database using R. To use the package download it from the local repository. You can then load all the functions with the following command:
+
+
+```r
+library(durhamevp)
+
+## also using tidyverse functions
+library(tidyverse)
+```
+
+
+## Connecting to the Database
+
+To connect to the database use the `evdb_connect` function. The function needs to pass the password to the database. The default option (password_method = "ask") will prompt you for the password. This "ask" method for obtaining the password only works in RStudio  and only in interactive mode (e.g. not when writing Rnw or Rmd files).
+
+
+```r
+con <- evdb_connect()
+```
+
+Once you have given the connection a name (here `con`) you will pass this as a parameter to the other database function.
+
+To pass the password without interactive modes use either the "config" package or the "keyring" package ("keyring" is more secure and should be the first option). These methods might be more useful long-term as the password only has to be entered once per computer, and these methods work without user interaction (e.g. when using knitr).
+
+
+```r
+con <- evdb_connect(password_method="keyring")
+```
+
+
+## Allocating Documents to Users
+  
+### Allocation of the intial document sets (training and test sets)
+
+Most new users will need both the training set and the test set allocated to them. The function `assign_initialsets_to_user` performs this function for a single user or for groups of users. The first argument is the database connection and the second is the user id or user ids. Thus, to allocate the testset and the training set to user 3: 
+
+
+```r
+assign_initalsets_to_users(3)
+#> Warning: package 'bindrcpp' was built under R version 3.4.4
+#> assign_testset_to_user allocated 0 items to user 3. 20 items (of 20) were already allocated
+#> assign_trainingset_to_user allocated 0 items to user 3. 16 items (of 16) were already allocated
+```
+
+Or to allocate the testset and training set to user 3, 4, 5 and 6:
+
+```r
+assign_initalsets_to_users(c(3, 4, 5, 6))
+#> assign_testset_to_user allocated 0 items to user 3. 20 items (of 20) were already allocated
+#> assign_trainingset_to_user allocated 0 items to user 3. 16 items (of 16) were already allocated
+#> assign_testset_to_user allocated 0 items to user 4. 20 items (of 20) were already allocated
+#> assign_trainingset_to_user allocated 0 items to user 4. 16 items (of 16) were already allocated
+#> assign_testset_to_user allocated 0 items to user 5. 20 items (of 20) were already allocated
+#> assign_trainingset_to_user allocated 0 items to user 5. 16 items (of 16) were already allocated
+#> assign_testset_to_user allocated 0 items to user 6. 20 items (of 20) were already allocated
+#> assign_trainingset_to_user allocated 0 items to user 6. 16 items (of 16) were already allocated
+```
+
+Note that if a user already has an item from the testset or the training set allocated to them this function does not allocate the article again. Thus, in the above example all the users already had the full training and test sets allocated to them so running the function did not alter the data.
+
+The function will allocate the training set as type `training` and the test set as type `testing`, but it does not alter the type of existing alloctions (so if an item from the testset was allocated as type `training` this would not be altered).
+
+The function `assign_trainingset_to_user` and `assign_testset_to_user` make it easy to assign these parts of the initial document sets to users if that is desired instead (currently these functions are configured to take just a single user_id at a time). 
+
+
+
+
+## Related Database Functions
+
+### View Allocations
+
+To see the whole set of allocations belonging to a user use the `get_allocation` function. The function has an `allocation_type` parameter which can take the values `training`, `testing`, `coding`, `checking` and `ideal` (where `ideal` is for the gold standard coding) which restrict the results to allocations of that type. The default allocation type is "all" which returns all allocation_types. Thus, to view the whole allocation for user 1 (the `select` command just reduces the columns for display: 
+
+```r
+get_allocation(user_id = 1)%>%
+  dplyr::select(user_id, document_id, allocation_type, allocation_date) 
+#>   user_id document_id allocation_type allocation_date
+#> 1       1         265        training      2018-02-24
+#> 2       1           1        training      2018-02-24
+#> 3       1           1     ideal-debug      2018-04-16
+#> 4       1           1        training      2018-04-17
+#> 5       1           3        training      2018-04-25
+#> 6       1           1         testing      2018-05-23
+```
+
+To view their allocation where the allocation type is `ideal`:
+
+
+```r
+get_allocation(user_id = 1, allocation_type="ideal") %>%
+  dplyr::select(user_id, document_id, allocation_type, allocation_date) 
+#> [1] user_id         document_id     allocation_type allocation_date
+#> <0 rows> (or 0-length row.names)
+```
+
+### Check Allocations
+
+To check if a user has the training set allocated to them
