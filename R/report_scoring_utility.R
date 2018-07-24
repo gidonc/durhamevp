@@ -1,39 +1,42 @@
 
 get_data_for_comparison <- function(model_user_doc_id, user_user_doc_id){
-  #' Returns a list of directly comparable components (contained in tuples)
-  #' the tuples contain the most similar components; the similarity is measured using the 
-  #' Levenshtein distance between them using all of their fields in the serialization process.
-  #' 
-  #' for every pair of events (and consequently, for any tags and attributes associated with these events), we use the 
-  #' get_sorted method to find the best match and save them in the objects represeting user answers (such as user_event, user_violence))
+  #' Matches elements from two document allocations (presumably different codings of the same document).
+  #' Returns a list of matched event reports, tags and attributes.
+  #'
+  #' The similarity is measured using the Levenshtein distance between all of their fields of the serialized record.
+  #' For every pair of events (and consequently, for any tags and attributes associated with these events), we use the \code{get_sorted} function to find the best match.
+  #' @return A list of length 3 containing 1. dataframe of matched event report ids 2. dataframe of matched tag ids 3. dataframe of matched attributes.
+  #' @param model_user_doc_id the user_doc_id of the first set of codings to compare
+  #' @param user_user_doc_id the user_doc_id of the second set of codings to compare
+  #' @export
   model_document_allocation<-durhamevp::get_allocation(user_doc_id = model_user_doc_id)
   user_document_allocation<-durhamevp::get_allocation(user_doc_id = user_user_doc_id)
-  
-  
+
+
   model_event_report <- durhamevp::get_event_report(user_doc_id=dplyr::pull(model_document_allocation, "id"))
   #model_event_report <- durhamevp::get_event_report(model_event_report_id)
   model_tags<-durhamevp::get_tag(event_report_id = dplyr::pull(model_event_report, "id"))
   model_attributes<-durhamevp::get_attribute(tag_id = model_tags$id)
-  
+
   user_event_report <- durhamevp::get_event_report(user_doc_id=dplyr::pull(user_document_allocation, "id"))
   #user_event_report <- durhamevp::get_event_report(user_event_report_id)
   user_tags<-dplyr::as_tibble(durhamevp::get_tag(event_report_id = user_event_report$id))
   user_attributes<-dplyr::as_tibble(durhamevp::get_attribute(tag_id = user_tags$id))
   # print(user_attributes)
-  
+
   sorted_event_reports<-get_sorted(model_event_report, user_event_report)
   sorted_tags<-NULL
   sorted_attributes<-NULL
-  
+
   for (the_pair in 1:nrow(sorted_event_reports)){
     user_event_report_id <- sorted_event_reports[the_pair, "user_var"]
     model_event_report_id<- sorted_event_reports[the_pair, "model_var"]
     user_event_report_tags <- user_tags[user_tags$event_report_id %in% as.numeric(user_event_report_id), ]
     model_event_report_tags <- model_tags[model_tags$event_report_id %in% as.numeric(model_event_report_id), ]
-    
+
     # process by tag type
     # tag types location, action (violence), action (cause, cause_association, consequence), actors, others
-    
+
     for (type_n in 1:5){
       if (type_n ==1){
         user_this_type <- user_event_report_tags[user_event_report_tags$tag_table=="location",]
@@ -57,7 +60,7 @@ get_data_for_comparison <- function(model_user_doc_id, user_user_doc_id){
         # print(type_n)
         # print(sorted_tags)
       } else {
-        sorted_tags <- dplyr::bind_rows(sorted_tags, 
+        sorted_tags <- dplyr::bind_rows(sorted_tags,
                                  get_sorted(model_this_type, user_this_type, get_distance))
         # print(the_pair)
         # print(type_n)
@@ -71,15 +74,15 @@ get_data_for_comparison <- function(model_user_doc_id, user_user_doc_id){
     model_tag_id<- sorted_tags[the_pair, "model_var"]
     user_tag_attributes <- user_attributes[user_attributes$tag_id %in% as.numeric(user_tag_id), ]
     model_tag_attributes <- model_attributes[model_attributes$tag_id %in% as.numeric(model_tag_id), ]
-    
+
       if (is.null(sorted_attributes)){
         sorted_attributes<-get_sorted(model_tag_attributes, user_tag_attributes, get_distance)
       } else {
-        sorted_attributes <- dplyr::bind_rows(sorted_attributes, 
+        sorted_attributes <- dplyr::bind_rows(sorted_attributes,
                                         get_sorted(model_tag_attributes, user_tag_attributes, get_distance))
       }
     }
-  
+
   list(sorted_event_reports, sorted_tags, sorted_attributes)
 }
 
@@ -88,11 +91,14 @@ get_sorted <- function(model_vars, user_vars, get_var_score=get_distance, blank_
   #'Uses a scoring matrix to decide which model (model answer) component should be used to score
   #'every user (user answer) component
   #'throughout the function, 'lowest' scores are the ones that represent a near-perfect match
-  #'@param get_var_score I think that this is a function 
-  
+  #'@param model_vars dataframe containing the first set of codings to be matched
+  #'@param user_vars dataframe containing the second set of codings to be matched
+  #'@param get_var_score the function to do the comparison
+  #'@export
+
   # the scoring matrix is initialized and filled with values
   # the first entry of each row is the index of the user_var that is scored in that row
-  
+
   n_user_vars <- nrow(user_vars)
   n_model_vars <- nrow(model_vars)
   scoring_matrix = data.frame(matrix(nrow=n_user_vars * n_model_vars, ncol=3))
@@ -124,7 +130,7 @@ get_sorted <- function(model_vars, user_vars, get_var_score=get_distance, blank_
   for(i in seq_along(1:n_user_vars)){
     for(j in seq_along(1:n_model_vars)){
       scoring_matrix[counter, 1] <- user_vars[i, 1]
-      scoring_matrix[counter, 2] <- model_vars[j, 1] 
+      scoring_matrix[counter, 2] <- model_vars[j, 1]
       scoring_matrix[counter, 3] <- get_var_score(model_vars[j,], user_vars[i,])
       counter<- counter + 1
     }
@@ -135,7 +141,7 @@ get_sorted <- function(model_vars, user_vars, get_var_score=get_distance, blank_
   scoring_matrix$score_order <- order(scoring_matrix[,"score"])
   model_var_indexes_to_match = seq_along(1:n_model_vars)
   user_var_indexes_to_match = seq_along(1:n_user_vars)
-  
+
   matched_vars = matrix()
   counter = 1
 
@@ -167,42 +173,37 @@ if (length(unmatched_user_vars)>0){
   matched_tuple
 }
 
-get_event_distance <- function(model_event, user_event){
-  serialized_model <- serialize_row(model_event, "primitive")
-  serialized_user <- serialize_row(user_event, "primitive")
-  
-  get_similarity_score(serialized_model, serialized_user)
-}
-
-get_event_distance <- function(model_event, user_event){
-  serialized_model <- serialize_primitive_fields(model_event)
-  serialized_user <- serialize_primitive_fields(user_event)
-  
-  get_similarity_score(serialized_model, serialized_user)
-}
-
 get_distance<- function(model, user, type="primitive"){
+  #' Gets the Levenshtein distance between two separate rows after serializing them.
+  #' @param model the first row
+  #' @param user the second row
+  #' @param type the type of comparison to conduction (implying which fields are included in the comparison)
+  #' @export
   s_model <- serialize_row(model, type)
   s_user <- serialize_row(user, type)
-  
+
   get_similarity_score(s_model, s_user)
 }
 
 
 
 serialize_row<- function(df_row, serialization_type="primitive"){
+  #' Turns a database row into a string
+  #' @param df_row the database row
+  #' @param serialization_type defines which columns to serialize ("primitive", "testing", "coding")
+  #' @export
   if(serialization_type=="primitive"){
     all_columns <- c(
-      c("article_date_man_verify", "article_type", "geo_relevant", "time_relevant", "recommend_qualitative", 
+      c("article_date_man_verify", "article_type", "geo_relevant", "time_relevant", "recommend_qualitative",
         "electoral_nature", "violent_nature", "violent_focus"),
       c("environment", "meeting", "event_date", "election_point", "comment", "summary"),
       c("tag_variable", "tag_value", "contested"),
       c("attribute", "attribute_values")
     )
-      
+
   } else if (serialization_type=="testing"){
     all_columns <- c(
-      c("geo_relevant", "time_relevant", 
+      c("geo_relevant", "time_relevant",
         "electoral_nature", "violent_nature", "violent_focus"),
       c("environment", "meeting", "election_point"),
       c("tag_variable", "tag_value", "contested"),
@@ -210,7 +211,7 @@ serialize_row<- function(df_row, serialization_type="primitive"){
     )
   } else if (serialization_type=="coding"){
     all_columns <- c(
-      c("geo_relevant", "time_relevant", 
+      c("geo_relevant", "time_relevant",
         "electoral_nature", "violent_nature", "violent_focus"),
       c("environment", "meeting", "election_point"),
       c("tag_variable", "tag_value", "contested"),
@@ -222,5 +223,15 @@ serialize_row<- function(df_row, serialization_type="primitive"){
   paste(df_row[,relevant_cols], collapse="")
 }
 
-
+get_similarity_score <- function(a, b){
+  #' Gets a similarity score between two strings
+  #'
+  #' @param a string 1
+  #' @param b string 2
+  #' @return Returns a similarity score between 0.0 (completely identical) and 1.0 (completely different)
+  #' @export
+  #'
+  init <- fuzzywuzzyR::SequenceMatcher$new(a, b)
+  1 - init$ratio()
+}
 
