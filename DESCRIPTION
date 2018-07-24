@@ -22,7 +22,8 @@ Imports:
     tidytext,
     caret,
     pool,
-    hunspell
+    hunspell,
+    fuzzywuzzyR
 RoxygenNote: 6.0.1
 Suggests: knitr,
     rmarkdown,
