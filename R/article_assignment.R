@@ -207,7 +207,7 @@ allocate_randomly <- function (user_ids, set, coder_rate=1.1, allocation_type="c
   assign_dat
 }
 
-allocate_randomly_with_some_double_assignment <- function (double_coding_user_ids, other_user_ids, set, n_double_coding, coder_rate=1.1, allocation_type="coding", allocated_by="regular_random_assignment_with_some_double_assignment", restrict_to_actual=TRUE, make_assignments=TRUE) {
+allocate_randomly_with_some_double_assignment <- function (double_coding_user_ids, other_user_ids, set, n_double_coding, coder_rate=1.1, allocation_type="coding", allocated_by="irregular_random_assignment", restrict_to_actual=TRUE, make_assignments=TRUE) {
   #' Assigns articles to users with some double coding and some another coding rate. Some users have a specified number of articles also assigned to another user (double coding). Remaining assignments are randomly allocated across all users.
   #'
   #' \code{allocate_randomly_with_some_double_assignment} assigns articles to some users with a specified number of articles to be double coded by the other users. Articles which are not used in this double coding are allocated amongst all users at the specified coding rate.
