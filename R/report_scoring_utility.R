@@ -309,3 +309,42 @@ extract_matches <- function(){
   matched_all
 }
 
+
+find_agreement_from_matches<- function (matched_all, match_type, drop_cols=c("score", "report_type", "process_point", "event_type", "event_id", "comment", "election_date", "summary", "contested", "tag_id", "event_report_id", "proximity_relative", "id", "allocated_by", "allocation_date", "allocation_type", "assigned_at", "coding_complete", "difficulty_ranking", "document_id", "score.x", "score.y", "article_date_man_verify", "ideal_coding_comments", "last_updated", "status", "user_id", "event_timeframe_quantifier", "event_end", "event_duration", "user_doc_id")){
+  #' Checks agreement on variables from dataframe of matched records.
+  #'
+  #' @param matched_all The dataframe of matches
+  #' @param match_type The type of match (i.e. the database table the match comes from "user_doc", "ev_report", "tags", "attributes")
+  #' @param drop_cols Names of columns to exclude from the comparison
+  #' @export
+  #'
+
+  if(match_type=="user_doc"){
+    the_cases <- filter(matched_all, match_type=="user_doc")
+    the_matches <- durhamevp::get_allocation()
+  } else if (match_type=="ev_report"){
+    the_cases <- filter(matched_all, match_type=="ev_report")
+    the_matches <- durhamevp::get_event_report()
+  } else if (match_type=="tags"){
+    the_cases <- filter(matched_all, match_type=="tags")
+    the_matches <- durhamevp::get_tag()
+  } else if (match_type=="attributes"){
+    the_cases <- filter(matched_all, match_type=="attributes")
+    the_matches <- durhamevp::get_attribute()
+  }
+  the_cases2 <- gather(the_cases, which_var, id, -case_no, -pair_no, -match_type, -score)
+  the_cases2 <- dplyr::left_join(the_cases2, the_matches, by="id")
+  the_cases2 <- the_cases2[,!names(the_cases2) %in% drop_cols]
+
+  if(match_type %in% c("user_doc", "ev_report")){
+    the_agreement<- tidyr::gather(the_cases2, variable, value, -pair_no, -case_no, -match_type, -which_var)
+    the_agreement <- tidyr::spread(the_agreement, which_var, value)
+  } else if (match_type=="tags"){
+    the_agreement<- dplyr::rename(the_cases2, value=tag_value, variable=tag_variable)
+    the_agreement <- tidyr::spread(the_agreement, which_var, value)
+  } else if (match_type=="attributes"){
+    the_agreement<- dplyr::rename(the_cases2, value=attribute_value, variable=attribute)
+    the_agreement <- tidyr::spread(the_agreement, which_var, value)
+  }
+  the_agreement <- dplyr::mutate(the_agreement, agree = model_var==user_var )
+}
