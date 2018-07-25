@@ -131,13 +131,13 @@ get_classified_docs <- function (){
   #' Function to get documents from database which are classified for text analysis.
   #' @export
   all_documents<-durhamevp::get_document("all")
-  all_allocations<-get_allocation("all")
-  some_documents<-left_join(all_allocations, all_documents, by=c("document_id"="id"))
+  all_allocations<-durhamevp::get_allocation("all")
+  some_documents<-dplyr::left_join(all_allocations, all_documents, by=c("document_id"="id"))
   ev_docs<-dplyr::filter(some_documents, violent_nature=="true", user_id>7)
   election_docs<-dplyr::filter(some_documents, violent_nature=="false", electoral_nature=="true", user_id>7)
   ev_docs <- ev_docs[!duplicated(ev_docs$document_id), ]
   election_docs<-election_docs[!duplicated(election_docs$id), ]
-  nothing_docs<-get_candidate_documents(cand_document_id = c(23058:23834))
+  nothing_docs<-durhamevp::get_candidate_documents(cand_document_id = c(23058:23834))
   nothing_docs$EV_article<-election_docs$EV_article<-nothing_docs$election_article<-0
   ev_docs$EV_article<-ev_docs$election_article<-election_docs$election_article<-1
   sum(election_docs$id %in% ev_docs$id)
@@ -146,7 +146,7 @@ get_classified_docs <- function (){
   ev_docs$just_election<-nothing_docs$just_election <- 0
   nothing_docs$corpus_election<-0
   ev_docs$corpus_election<-election_docs$corpus_election<-1
-  the_corpus<-bind_rows(nothing_docs,
+  the_corpus<-dplyr::bind_rows(nothing_docs,
                         election_docs,
                         ev_docs)
   the_corpus$general_corpus<-1
