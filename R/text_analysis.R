@@ -131,7 +131,7 @@ get_classified_docs <- function (){
   #' Function to get documents from database which are classified for text analysis.
   #'
   #' \code{get_classified_docs} retrives the currently classified document set from the database. The documents have been classifed to enable machine learning.
-  #' @return A dataframe containing some general articles, some election but not violent articles and some election violence articles. The dataframe can be corpuses can be split and distinguished using dummy variables in the dataframe. \code{EV_article} is \code{1} for election violence articles and \code{0} for all other articles. \code{election_article} is \code{1} for election articles (including election violence articles) and \code{0} for all other articles. (there is an unncessary \code{just_election} indicator for convenience which is \code{1} for election but not violence articles and \code{0} for election violence and general articles). The full ocr is in the field \code{ocr} and the short two line description is in the field \code{description}.
+  #' @return A dataframe containing some general articles, some election but not violent articles and some election violence articles. The dataframe can be split into separate corpuses (if desired) and distinguished using dummy variables in the dataframe. \code{EV_article} is \code{1} for election violence articles and \code{0} for all other articles. \code{election_article} is \code{1} for election articles (including election violence articles) and \code{0} for all other articles. (there is an unncessary \code{just_election} indicator for convenience which is \code{1} for election but not violence articles and \code{0} for election violence and general articles). The full ocr is in the field \code{ocr} and the short two line description is in the field \code{description}. The unique identifier column \code{fakeid} does not correspond to any id in the database because the data is aggregated from two different tables in the database (documents and candidate_documents).
   #' @export
   all_documents<-durhamevp::get_document("all")
   all_allocations<-durhamevp::get_allocation("all")
@@ -156,6 +156,7 @@ get_classified_docs <- function (){
   the_corpus$general_corpus<-1
 
   the_corpus<-the_corpus[,c("id", "title", "description", "type", "page", "publication_date", "word_count", "ocr", "election_article", "EV_article", "corpus_election", "electoral_nature", "violent_nature", "candidate_document_id")]
+  the_corpus <- tibble::rowid_to_column(the_corpus, "fakeid")
 
   the_corpus
 }
