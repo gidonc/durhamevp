@@ -235,3 +235,77 @@ get_similarity_score <- function(a, b){
   1 - init$ratio()
 }
 
+extract_matches <- function(){
+  #' Creates tibble of all matches from the election violence database
+  #'
+  #' \code{extract_matches} is a wrapper function for applications of record matching.
+  #' @return A tibble of all the database entries which have been matched. The columns of the tibble are as follows \code{pair_no} unique id for the user_doc allocations (i.e. identifies the two user allocations at the document allocation level. \code{case_no} a unique id at the level one up from the match (i.e. identifying the two tag_ids for attributes, identifying the two event_report ids for tags, identifying the two document allocations for event reports). \code{model_var} is the id of the first record being compared, \code{user_var} is the id of the second record being compared, \code{match_type} is the database table the match is from (values: "user_doc", "ev_report", "tags", "attributes"), \code{score} is the matching score on which the match is based.
+  #' @export
+  all_allocations<-durhamevp::get_allocation() %>%
+    dplyr::filter(status=="COMPLETED")
+
+
+  for_analysis<-all_allocations %>%
+    dplyr::group_by(document_id, status=="COMPLETED") %>%
+    dplyr::tally() %>%
+    dplyr::filter(n>1) %>%
+    dplyr::left_join(all_allocations)
+
+  # create unique pairs of respondents
+
+  coder_pairs <- for_analysis %>%
+    dplyr::filter(!user_id %in% c(1:5, 7)) %>%
+    dplyr::filter(allocation_type=="coding", status=="COMPLETED") %>%
+    dplyr::group_by(document_id) %>%
+    tidyr::expand(user_id, user_id) %>%
+    dplyr::filter(user_id < user_id1) %>%
+    tibble::rowid_to_column("pair_no")
+
+  long_coder_pairs <- coder_pairs %>%
+    tidyr::gather(which_user_id, user_id, user_id, user_id1) %>%
+    dplyr::left_join(dplyr::select(all_allocations, user_id, document_id, user_doc_id=id), by = c("document_id", "user_id")) %>%
+    dplyr::arrange(pair_no)
+
+  matched_user_docs<-long_coder_pairs %>%
+    dplyr::ungroup() %>%
+    dplyr::select(-document_id, -user_id) %>%
+    dplyr::mutate(which_user_id=ifelse(which_user_id=="user_id", "model_var", "user_var")) %>%
+    tidyr::spread(which_user_id, user_doc_id) %>%
+    mutate(match_type="user_doc") %>%
+    left_join(coder_pairs, by="pair_no") %>%
+    dplyr::select(-document_id)
+
+
+  get_first<-function(x){
+    x[[1]]
+  }
+
+  get_second<-function(x){
+    x[[2]]
+  }
+
+  get_third<-function(x){
+    x[[3]]
+  }
+
+  matched_nested<-long_coder_pairs %>%
+    dplyr::ungroup() %>%
+    dplyr::select(-document_id, -user_id) %>%
+    tidyr::spread(which_user_id, user_doc_id) %>%
+    #dplyr::slice(1:40) %>%
+    tidyr::nest(pair_no) %>%
+    dplyr::mutate(cal=purrr::map2(user_id, user_id1, get_data_for_comparison)) %>%
+    dplyr::mutate(ev_report=purrr::map(cal, get_first), tags=purrr::map(cal, get_second), attributes=purrr::map(cal, get_third)) %>%
+    gather(match_type, match_data, ev_report, tags, attributes) %>%
+    unnest(data) %>%
+    dplyr::select(-cal) %>%
+    unnest()
+
+  matched_all <- dplyr::bind_rows(matched_user_docs, matched_nested) %>%
+    arrange(pair_no) %>%
+    tibble::rowid_to_column("case_no") %>%
+    dplyr::select(-user_id, -user_id1)
+
+  matched_all
+}
+
