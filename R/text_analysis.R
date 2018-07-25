@@ -137,7 +137,7 @@ get_classified_docs <- function (){
   all_allocations<-durhamevp::get_allocation("all")
   some_documents<-dplyr::left_join(all_allocations, all_documents, by=c("document_id"="id"))
   ev_docs<-dplyr::filter(some_documents, violent_nature=="true", user_id>7)
-  election_docs<-dplyr::filter(some_documents, violent_nature=="false", electoral_nature=="true", user_id>7)
+  election_docs<-dplyr::filter(some_documents, violent_nature=="false", electoral_nature=="true", geo_relevant=="true", time_relevant=="true", user_id>7)
   ev_docs <- ev_docs[!duplicated(ev_docs$document_id), ]
   election_docs<-election_docs[!duplicated(election_docs$id), ]
   nothing_docs<-durhamevp::get_candidate_documents(cand_document_id = c(23058:23834))
