@@ -6,6 +6,9 @@
 \usage{
 get_classified_docs()
 }
+\value{
+A dataframe containing some general articles, some election but not violent articles and some election violence articles. The dataframe can be corpuses can be split and distinguished using dummy variables in the dataframe. \code{EV_article} is \code{1} for election violence articles and \code{0} for all other articles. \code{election_article} is \code{1} for election articles (including election violence articles) and \code{0} for all other articles. (there is an unncessary \code{just_election} indicator for convenience which is \code{1} for election but not violence articles and \code{0} for election violence and general articles). The full ocr is in the field \code{ocr} and the short two line description is in the field \code{description}.
+}
 \description{
-Function to get documents from database which are classified for text analysis.
+\code{get_classified_docs} retrives the currently classified document set from the database. The documents have been classifed to enable machine learning.
 }
