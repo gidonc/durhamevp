@@ -138,6 +138,7 @@ get_classified_docs <- function (){
   ev_docs <- ev_docs[!duplicated(ev_docs$document_id), ]
   election_docs<-election_docs[!duplicated(election_docs$id), ]
   nothing_docs<-durhamevp::get_candidate_documents(cand_document_id = c(23058:23834))
+  nothing_docs<-nothing_docs[nothing_docs$status=="0",]
   nothing_docs$EV_article<-election_docs$EV_article<-nothing_docs$election_article<-0
   ev_docs$EV_article<-ev_docs$election_article<-election_docs$election_article<-1
   sum(election_docs$id %in% ev_docs$id)
