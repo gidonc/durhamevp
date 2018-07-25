@@ -235,7 +235,7 @@ get_similarity_score <- function(a, b){
   1 - init$ratio()
 }
 
-extract_matches <- function(){
+extract_coding_matches <- function(){
   #' Creates tibble of all matches from the election violence database
   #'
   #' \code{extract_matches} is a wrapper function for applications of record matching.
@@ -304,13 +304,14 @@ extract_matches <- function(){
   matched_all <- dplyr::bind_rows(matched_user_docs, matched_nested) %>%
     arrange(pair_no) %>%
     tibble::rowid_to_column("case_no") %>%
-    dplyr::select(-user_id, -user_id1)
+    dplyr::select(-user_id, -user_id1) %>%
+    left_join(coder_pairs, by="pair_no")
 
   matched_all
 }
 
 
-find_agreement_from_matches<- function (matched_all, match_type, drop_cols=c("score", "report_type", "process_point", "event_type", "event_id", "comment", "election_date", "summary", "contested", "tag_id", "event_report_id", "proximity_relative", "id", "allocated_by", "allocation_date", "allocation_type", "assigned_at", "coding_complete", "difficulty_ranking", "document_id", "score.x", "score.y", "article_date_man_verify", "ideal_coding_comments", "last_updated", "status", "user_id", "event_timeframe_quantifier", "event_end", "event_duration", "user_doc_id")){
+find_agreement_from_matches<- function (matched_all, match_type, drop_cols=c("score", "report_type", "process_point", "event_type", "event_id", "comment", "election_date", "summary", "contested", "tag_id", "event_report_id", "proximity_relative", "id", "allocated_by", "allocation_date", "allocation_type", "assigned_at", "coding_complete", "difficulty_ranking", "document_id", "score.x", "score.y", "article_date_man_verify", "ideal_coding_comments", "last_updated", "status", "user_id", "event_timeframe_quantifier", "event_end", "event_duration", "user_doc_id", "event_date", "event_location")){
   #' Checks agreement on variables from dataframe of matched records.
   #'
   #' @param matched_all The dataframe of matches
@@ -318,6 +319,9 @@ find_agreement_from_matches<- function (matched_all, match_type, drop_cols=c("sc
   #' @param drop_cols Names of columns to exclude from the comparison
   #' @export
   #'
+
+  user_records<-dplyr::select(matched_all, case_no, user_id, user_id1)
+  matched_all<-dplyr::select(matched_all, -user_id, -user_id1)
 
   if(match_type=="user_doc"){
     the_cases <- filter(matched_all, match_type=="user_doc")
@@ -347,4 +351,7 @@ find_agreement_from_matches<- function (matched_all, match_type, drop_cols=c("sc
     the_agreement <- tidyr::spread(the_agreement, which_var, value)
   }
   the_agreement <- dplyr::mutate(the_agreement, agree = model_var==user_var )
+  the_agreement <- dplyr::left_join(the_agreement, user_records, by="case_no")
+
+  the_agreement
 }
