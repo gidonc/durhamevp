@@ -1,14 +1,13 @@
-create_sets<-function(the_corpus, id, size, seed){
+create_sets<-function(the_corpus, size, seed){
   #' Create training and test set from a corpus
   #' @param the_corpus The text corpus to split
-  #' @param id Document ID variable in the text corpus
   #' @param size Size of the training set (must be smaller than number of documents in the corpus)
   #' @param seed Seed for randomization to ensure replicability
   #' @export
   set.seed(seed)
-  id_train<-sample(1:ndoc(the_corpus), size, replace=FALSE)
-  training<-quanteda::corpus_subset(the_corpus, id %in% id_train)
-  testing<-quanteda::corpus_subset(the_corpus, !id %in% id_train)
+  id_train<-sample(1:quanteda::ndoc(the_corpus), size, replace=FALSE)
+  training<-quanteda::corpus_subset(the_corpus, fakeid %in% id_train)
+  testing<-quanteda::corpus_subset(the_corpus, !fakeid %in% id_train)
   return(list(training=training, testing=testing))
 }
 
@@ -20,7 +19,7 @@ create_ngrams<-function(the_corpus,wrd){
 
 }
 
-preprocess_corpus<-function(the_corpus, min_termfreq=2, min_docfreq=2, max_termfreq=NULL, max_docfreq=NULL,
+preprocess_corpus<-function(the_corpus, min_termfreq=10, min_docfreq=2, max_termfreq=NULL, max_docfreq=NULL,
                             remove_punct=TRUE, remove_numbers=TRUE, remove_hyphens=TRUE, termfreq_type="count", docfreq_type="count",
                             dfm_tfidf=FALSE){
   #' Preprocess a text corpus and return a document feature matrix (wrapper round quanteda functions).
