@@ -19,7 +19,7 @@ create_ngrams<-function(the_corpus,wrd){
 
 }
 
-preprocess_corpus<-function(the_corpus, min_termfreq=10, min_docfreq=2, max_termfreq=NULL, max_docfreq=NULL,
+preprocess_corpus<-function(the_corpus, min_termfreq=2, min_docfreq=2, max_termfreq=NULL, max_docfreq=NULL,
                             remove_punct=TRUE, remove_numbers=TRUE, remove_hyphens=TRUE, termfreq_type="count", docfreq_type="count",
                             dfm_tfidf=FALSE){
   #' Preprocess a text corpus and return a document feature matrix (wrapper round quanteda functions).
@@ -32,6 +32,42 @@ preprocess_corpus<-function(the_corpus, min_termfreq=10, min_docfreq=2, max_term
   }
   the_dfm
 }
+
+preprocess_ngrams<-function(the_corpus, n, min_termfreq=2, min_docfreq=2, max_termfreq=NULL, max_docfreq=NULL,
+                            remove_punct=TRUE, remove_numbers=TRUE, remove_hyphens=TRUE, termfreq_type="count", docfreq_type="count",
+                            dfm_tfidf=FALSE){
+  #' Preprocess a text corpus including the creation of n-grams and return a document feature matrix (wrapper round quanteda functions).
+  #' @param the_corpus The text corpus to be pre-processed.
+  #' @param n Upper-bound of n-grams to be included. E.g., entering 2 would mean that uni-grams and bi-grams are included
+  #' @export
+  toks<-quanteda::tokens(the_corpus,remove_numbers = TRUE, remove_punct = TRUE, remove_symbols = TRUE,
+                         remove_separators = TRUE, remove_hyphens = TRUE, ngrams=1:n)
+  the_dfm <- quanteda::dfm(toks, stem=TRUE, remove=quanteda::stopwords("english"))
+  the_dfm <- quanteda::dfm_trim(the_dfm, min_termfreq=min_termfreq, min_docfreq = min_docfreq, termfreq_type=termfreq_type, docfreq_type=docfreq_type)
+  if(dfm_tfidf){
+    the_dfm<-quanteda::dfm_tfidf(the_dfm)
+  }
+  the_dfm
+}
+
+preprocess_sgrams<-function(the_corpus, wseq, min_termfreq=2, min_docfreq=2, max_termfreq=NULL, max_docfreq=NULL,
+                            remove_punct=TRUE, remove_numbers=TRUE, remove_hyphens=TRUE, termfreq_type="count", docfreq_type="count",
+                            dfm_tfidf=FALSE){
+  #' Preprocess a text corpus including the creation of n-grams for specific words and return a document feature matrix (wrapper round quanteda functions).
+  #' @param the_corpus The text corpus to be pre-processed.
+  #' @param wseq Pre-specified word sequence as list on which n-grams should be created
+  #' @export
+  toks<-quanteda::tokens(the_corpus,remove_numbers = TRUE, remove_punct = TRUE, remove_symbols = TRUE,
+                         remove_separators = TRUE, remove_hyphens = TRUE)
+  toks<-quanteda::tokens_compound(toks,wseq)
+  the_dfm <- quanteda::dfm(toks, stem=TRUE, remove=quanteda::stopwords("english"))
+  the_dfm <- quanteda::dfm_trim(the_dfm, min_termfreq=min_termfreq, min_docfreq = min_docfreq, termfreq_type=termfreq_type, docfreq_type=docfreq_type)
+  if(dfm_tfidf){
+    the_dfm<-quanteda::dfm_tfidf(the_dfm)
+  }
+  the_dfm
+}
+
 
 nb_test<-function(training, testing, classvar){
   #' Train a naive bayes classifier on a training dfm and asses its performance on a test dfm reporting test statistics (wrapper function aroudn Quanteda commands)
