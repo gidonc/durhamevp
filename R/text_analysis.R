@@ -107,7 +107,7 @@ assess_classification <- function(res_data){
     nb_assess<-as.data.frame(caret::confusionMatrix(data=res_data$nb_ev_cat, reference=res_data$actual_f, mode="everything", positive="1")$byClass)
     names(nb_assess)<-"value"
     nb_assess <- tibble::rownames_to_column(nb_assess) %>%
-      mutate(model="naive bayes")
+      dplyr::mutate(model="naive bayes")
   } else {
     nb_assess<-data.frame(matrix(nrow=0, ncol=3))
     names(nb_assess)<-c("rowname", "value", "model")
@@ -122,7 +122,7 @@ assess_classification <- function(res_data){
     names(aff_assess)<-c("rowname", "value", "model")
   }
 
-  this_assess<- bind_rows(aff_assess, nb_assess)
+  this_assess<- dplyr::bind_rows(aff_assess, nb_assess)
 
   this_assess
 }
