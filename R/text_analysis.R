@@ -22,7 +22,7 @@ preprocess_corpus<-function(the_corpus, min_termfreq=2, min_docfreq=2, max_termf
                             remove_punct=TRUE, remove_numbers=TRUE, remove_hyphens=TRUE, termfreq_type="count", docfreq_type="count",
                             dfm_tfidf=FALSE){
   #' Preprocess a text corpus and return a document feature matrix (wrapper round quanteda functions).
-  #' @param the_corpus The text corpus to split.
+  #' @param the_corpus The text corpus to be pre-processed.
   #' @export
   the_dfm <- quanteda::dfm(the_corpus, stem=TRUE, remove=quanteda::stopwords("english"), remove_punct=remove_punct, remove_numbers=remove_numbers, remove_hyphens=remove_hyphens)
   the_dfm <- quanteda::dfm_trim(the_dfm, min_termfreq=min_termfreq, min_docfreq = min_docfreq, termfreq_type=termfreq_type, docfreq_type=docfreq_type)
@@ -57,6 +57,7 @@ split_corpus<-function(the_corpus, n_train, min_termfreq=2, min_docfreq=2,
   testing_set <- the_dfm[setdiff(quanteda::docnames(the_dfm), quanteda::docnames(training_set))]
   return(list(training_set=training_set, testing_set=testing_set))
 }
+
 my_naivebayes<-function(train, test){
   #' @export
   nb<-quanteda::textmodel_nb(train, y=quanteda::docvars(train, "EV_article"), prior="docfreq")

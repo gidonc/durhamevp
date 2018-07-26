@@ -1,0 +1,49 @@
+create_sets<-function(the_corpus, id, size, seed){
+  #' Create training and test set from a corpus
+  #' @param the_corpus The text corpus to split
+  #' @param id Document ID variable in the text corpus
+  #' @param size Size of the training set (must be smaller than number of documents in the corpus)
+  #' @param seed Seed for randomization to ensure replicability
+  #' @export
+  set.seed(seed)
+  id_train<-sample(1:ndoc(the_corpus), size, replace=FALSE)
+  training<-quanteda::corpus_subset(the_corpus, id %in% id_train)
+  testing<-quanteda::corpus_subset(the_corpus, !id %in% id_train)
+  return(list(training=training, testing=testing))
+}
+
+create_ngrams<-function(the_corpus,wrd){
+  #' Create a specific n-gram involving a certain word from a corpus (wrapper round quanteda functions).
+  #' @param the_corpus The text corpus object
+  #' @param wrd The word or words to be n-gramed. Star denotes wild card.
+  #' @export
+
+}
+
+preprocess_corpus<-function(the_corpus, min_termfreq=2, min_docfreq=2, max_termfreq=NULL, max_docfreq=NULL,
+                            remove_punct=TRUE, remove_numbers=TRUE, remove_hyphens=TRUE, termfreq_type="count", docfreq_type="count",
+                            dfm_tfidf=FALSE){
+  #' Preprocess a text corpus and return a document feature matrix (wrapper round quanteda functions).
+  #' @param the_corpus The text corpus to be pre-processed.
+  #' @export
+  the_dfm <- quanteda::dfm(the_corpus, stem=TRUE, remove=quanteda::stopwords("english"), remove_punct=remove_punct, remove_numbers=remove_numbers, remove_hyphens=remove_hyphens)
+  the_dfm <- quanteda::dfm_trim(the_dfm, min_termfreq=min_termfreq, min_docfreq = min_docfreq, termfreq_type=termfreq_type, docfreq_type=docfreq_type)
+  if(dfm_tfidf){
+    the_dfm<-quanteda::dfm_tfidf(the_dfm)
+  }
+  the_dfm
+}
+
+nb_test<-function(training, testing, classvar){
+  #' Train a naive bayes classifier on a training dfm and asses its performance on a test dfm reporting test statistics (wrapper function aroudn Quanteda commands)
+  #' @param training Training data frequency matrix
+  #' @param testing Testing data frequency matrix
+  #' @param classvar Classification variable name, entered as string
+  #' @export
+  nb<-quanteda::textmodel_nb(training,quanteda::docvars(training, classvar))
+  testing<-quanteda::dfm_select(testing,training)
+  actual_class<-docvars(testing,classvar)
+  predicted_class<-predict(nb,testing)
+  nb_res<-caret::confusionMatrix(table(actual_class,predicted_class),mode="everything")
+  return(nb_res)
+}
