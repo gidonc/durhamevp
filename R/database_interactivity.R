@@ -91,8 +91,8 @@ build_where_condition <- function (col_name, vals, existing_condition, existing_
   #'
   #'@param col_name The column name for there where condition.
   #'@param vals The value or values to include in the query.
-  #'@param exiting_condition An existing SQL query to append this where condition to.
-  #'@param exiting_interpolate_list Existing interpolation list to add this interpolation list to.
+  #'@param existing_condition An existing SQL query to append this where condition to.
+  #'@param existing_interpolate_list Existing interpolation list to add this interpolation list to.
   #'@export
   if (length(vals)==0){
     warning("zero length value condition in build_where_condition. Query will return empty dataset.")
