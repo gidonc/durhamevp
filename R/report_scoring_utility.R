@@ -271,8 +271,8 @@ extract_coding_matches <- function(){
     dplyr::select(-document_id, -user_id) %>%
     dplyr::mutate(which_user_id=ifelse(which_user_id=="user_id", "model_var", "user_var")) %>%
     tidyr::spread(which_user_id, user_doc_id) %>%
-    mutate(match_type="user_doc") %>%
-    left_join(coder_pairs, by="pair_no") %>%
+    dplyr::mutate(match_type="user_doc") %>%
+    dplyr::left_join(coder_pairs, by="pair_no") %>%
     dplyr::select(-document_id)
 
 
@@ -296,16 +296,16 @@ extract_coding_matches <- function(){
     tidyr::nest(pair_no) %>%
     dplyr::mutate(cal=purrr::map2(user_id, user_id1, get_data_for_comparison)) %>%
     dplyr::mutate(ev_report=purrr::map(cal, get_first), tags=purrr::map(cal, get_second), attributes=purrr::map(cal, get_third)) %>%
-    gather(match_type, match_data, ev_report, tags, attributes) %>%
-    unnest(data) %>%
+    tidyr::gather(match_type, match_data, ev_report, tags, attributes) %>%
+    tidyr::unnest(data) %>%
     dplyr::select(-cal) %>%
-    unnest()
+    tidyr::unnest()
 
   matched_all <- dplyr::bind_rows(matched_user_docs, matched_nested) %>%
     arrange(pair_no) %>%
     tibble::rowid_to_column("case_no") %>%
     dplyr::select(-user_id, -user_id1) %>%
-    left_join(coder_pairs, by="pair_no")
+    dplyr::left_join(coder_pairs, by="pair_no")
 
   matched_all
 }
