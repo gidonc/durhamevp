@@ -77,7 +77,7 @@ nb_test<-function(training, testing, classvar){
   #' @export
   nb<-quanteda::textmodel_nb(training,quanteda::docvars(training, classvar))
   testing<-quanteda::dfm_select(testing,training)
-  actual_class<-docvars(testing,classvar)
+  actual_class<-quanteda::docvars(testing,classvar)
   predicted_class<-predict(nb,testing)
   nb_res<-caret::confusionMatrix(table(actual_class,predicted_class),mode="everything")
   return(nb_res)
