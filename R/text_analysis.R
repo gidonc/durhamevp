@@ -162,3 +162,20 @@ get_classified_docs <- function (){
   the_corpus
 }
 
+contains_words <- function(the_dataframe, contains_words, text_col="ocr", results_col="EV_article"){
+  #' Function to tally cases with and without a particular words
+  #' @param the_dataframe the dataframe with a text column and a results column
+  #' @param contains_words the word (or other regex) to search for
+  #' @param text_col the column containing the text
+  #' @param results_col the column containing the classification
+
+  have_word<-grepl(contains_words, the_dataframe[,text_col])
+  dont_have_word<-!have_word
+
+  res_have_word<-the_corpus[,results_col][have_word]
+  res_dont_have_word<-the_corpus[,results_col][dont_have_word]
+
+  print(sum(res_have_word)/length(res_have_word))
+  print(sum(res_dont_have_word)/length(res_dont_have_word))
+
+}
