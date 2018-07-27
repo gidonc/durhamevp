@@ -173,7 +173,12 @@ contains_words <- function(the_dataframe, contains_words, text_col="ocr", result
   dont_have_word<-!have_word
 
   res_have_word<-the_dataframe[,results_col][have_word]
+<<<<<<< HEAD
   res_dont_have_word<-the_dataframe[,results_col][dont_have_word]
+=======
+  res_dont_have_word<-(the_dataframe[,results_col][dont_have_word]-1)^2
+
+>>>>>>> 6ad20992be2d416210a47d4fa40d0bc888032cd1
 
   print(sum(res_have_word)/length(res_have_word))
   print(sum(res_dont_have_word)/length(res_dont_have_word))
