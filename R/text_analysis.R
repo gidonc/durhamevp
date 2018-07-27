@@ -172,8 +172,8 @@ contains_words <- function(the_dataframe, contains_words, text_col="ocr", result
   have_word<-grepl(contains_words, the_dataframe[,text_col])
   dont_have_word<-!have_word
 
-  res_have_word<-the_corpus[,results_col][have_word]
-  res_dont_have_word<-the_corpus[,results_col][dont_have_word]
+  res_have_word<-the_dataframe[,results_col][have_word]
+  res_dont_have_word<-the_dataframe[,results_col][dont_have_word]
 
   print(sum(res_have_word)/length(res_have_word))
   print(sum(res_dont_have_word)/length(res_dont_have_word))
