@@ -131,7 +131,7 @@ get_classified_docs <- function (){
   #' Function to get documents from database which are classified for text analysis.
   #'
   #' \code{get_classified_docs} retrives the currently classified document set from the database. The documents have been classifed to enable machine learning.
-  #' @return Returns a dataframe containing three types of article: first, general articles (unrelated to elections), second, some election but not violent articles and third, some election violence articles. The dataframe can be split into separate corpuses (if desired). The different types of article are distinguished using dummy variables: \code{EV_article} is \code{1} for election violence articles and \code{0} for all other articles. \code{election_article} is \code{1} for election articles (including election violence articles) and \code{0} for all other articles. (there is an unncessary \code{just_election} indicator for convenience which is \code{1} for election but not violence articles and \code{0} for election violence and general articles). The full ocr is in the field \code{ocr} and the short two line description is in the field \code{description}. The unique identifier column \code{fakeid} does not correspond to any id in the database because the data is aggregated from two different tables in the database (documents and candidate_documents).
+  #' @return Returns a dataframe containing some general articles, some election but not violent articles and some election violence articles. The dataframe can be split into separate corpuses (if desired). The different types of article are distinguished using dummy variables: \code{EV_article} is \code{1} for election violence articles and \code{0} for all other articles. \code{election_article} is \code{1} for election articles (including election violence articles) and \code{0} for all other articles. (there is an unncessary \code{just_election} indicator for convenience which is \code{1} for election but not violence articles and \code{0} for election violence and general articles). The full ocr is in the field \code{ocr} and the short two line description is in the field \code{description}. The unique identifier column \code{fakeid} does not correspond to any id in the database because the data is aggregated from two different tables in the database (documents and candidate_documents).
   #' @export
   all_documents<-durhamevp::get_document("all")
   all_allocations<-durhamevp::get_allocation("all")
@@ -141,7 +141,11 @@ get_classified_docs <- function (){
   ev_docs <- ev_docs[!duplicated(ev_docs$document_id), ]
   election_docs<-election_docs[!duplicated(election_docs$id), ]
   nothing_docs<-durhamevp::get_candidate_documents(cand_document_id = c(23058:23834))
+  more_election_docs<-durhamevp::get_candidate_documents(cand_document_id = c(12244:14140))
+  more_election_docs<-more_election_docs[more_election_docs$status==77,]
   nothing_docs<-nothing_docs[nothing_docs$status=="0",]
+  election_docs<-dplyr::bind_rows(election_docs,
+                                 more_election_docs)
   nothing_docs$EV_article<-election_docs$EV_article<-nothing_docs$election_article<-0
   ev_docs$EV_article<-ev_docs$election_article<-election_docs$election_article<-1
   sum(election_docs$id %in% ev_docs$id)
@@ -151,8 +155,8 @@ get_classified_docs <- function (){
   nothing_docs$corpus_election<-0
   ev_docs$corpus_election<-election_docs$corpus_election<-1
   the_corpus<-dplyr::bind_rows(nothing_docs,
-                        election_docs,
-                        ev_docs)
+                               election_docs,
+                               ev_docs)
   the_corpus$general_corpus<-1
 
   the_corpus<-the_corpus[,c("id", "title", "description", "type", "page", "publication_date", "word_count", "ocr", "election_article", "EV_article", "corpus_election", "electoral_nature", "violent_nature", "candidate_document_id")]
@@ -160,4 +164,3 @@ get_classified_docs <- function (){
 
   the_corpus
 }
-
