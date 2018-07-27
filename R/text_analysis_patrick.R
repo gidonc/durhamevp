@@ -50,6 +50,17 @@ preprocess_ngrams<-function(the_corpus, n, min_termfreq=2, min_docfreq=2, max_te
   the_dfm
 }
 
+check_sngrams<-function(toks, wseq, wseqc){
+  #' Check whether a tokenized corpus contains specific n-grams. The function prints a list of the specific n-gram in all texts of the corpus
+  #' @param toks Tokonized corpus
+  #' @param wseq Pre-specified word sequence as list on which n-grams should be created; may contain wildcard combinations using '*'
+  #' @param wseqc Pre-specified word sequence concatinated
+  #' @export
+  grams<-quanteda::tokens_compound(toks,phrase(wseq))
+  grams<-quanteda::tokens_select(grams,phrase(wseqc))
+  print(grams)
+}
+
 preprocess_sgrams<-function(the_corpus, wseq, min_termfreq=2, min_docfreq=2, max_termfreq=NULL, max_docfreq=NULL,
                             remove_punct=TRUE, remove_numbers=TRUE, remove_hyphens=TRUE, termfreq_type="count", docfreq_type="count",
                             dfm_tfidf=FALSE){
@@ -59,15 +70,14 @@ preprocess_sgrams<-function(the_corpus, wseq, min_termfreq=2, min_docfreq=2, max
   #' @export
   toks<-quanteda::tokens(the_corpus,remove_numbers = TRUE, remove_punct = TRUE, remove_symbols = TRUE,
                          remove_separators = TRUE, remove_hyphens = TRUE)
-  toks<-quanteda::tokens_compound(toks,wseq)
-  the_dfm <- quanteda::dfm(toks, stem=TRUE, remove=quanteda::stopwords("english"))
+  gramtoks<-quanteda::tokens_compound(toks,phrase(wseq))
+  the_dfm <- quanteda::dfm(gramtoks, stem=TRUE, remove=quanteda::stopwords("english"))
   the_dfm <- quanteda::dfm_trim(the_dfm, min_termfreq=min_termfreq, min_docfreq = min_docfreq, termfreq_type=termfreq_type, docfreq_type=docfreq_type)
   if(dfm_tfidf){
     the_dfm<-quanteda::dfm_tfidf(the_dfm)
   }
   the_dfm
 }
-
 
 nb_test<-function(training, testing, classvar){
   #' Train a naive bayes classifier on a training dfm and asses its performance on a test dfm reporting test statistics (wrapper function aroudn Quanteda commands)
@@ -81,4 +91,14 @@ nb_test<-function(training, testing, classvar){
   predicted_class<-predict(nb,testing)
   nb_res<-caret::confusionMatrix(table(actual_class,predicted_class),mode="everything")
   return(nb_res)
+}
+
+nb_keywords<-function(training, testing, classvar){
+  #' Train a naive bayes classifier and plot and extract keywords (wrapper function aroudn Quanteda commands)
+  #' @param training Training data frequency matrix
+  #' @param testing Testing data frequency matrix
+  #' @param classvar Classification variable name, entered as string
+  #' @export
+  nb<-quanteda::textmodel_nb(training,quanteda::docvars(training, classvar))
+  post<-nb$PcGw
 }
