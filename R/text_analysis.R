@@ -108,7 +108,7 @@ assess_classification <- function(res_data){
     nb_assess<-as.data.frame(caret::confusionMatrix(data=res_data$nb_ev_cat, reference=res_data$actual_f, mode="everything", positive="1")$byClass)
     names(nb_assess)<-"value"
     nb_assess <- tibble::rownames_to_column(nb_assess) %>%
-      mutate(model="naive bayes")
+      dplyr::mutate(model="naive bayes")
   } else {
     nb_assess<-data.frame(matrix(nrow=0, ncol=3))
     names(nb_assess)<-c("rowname", "value", "model")
@@ -123,7 +123,7 @@ assess_classification <- function(res_data){
     names(aff_assess)<-c("rowname", "value", "model")
   }
 
-  this_assess<- bind_rows(aff_assess, nb_assess)
+  this_assess<- dplyr::bind_rows(aff_assess, nb_assess)
 
   this_assess
 }
@@ -142,7 +142,11 @@ get_classified_docs <- function (){
   ev_docs <- ev_docs[!duplicated(ev_docs$document_id), ]
   election_docs<-election_docs[!duplicated(election_docs$id), ]
   nothing_docs<-durhamevp::get_candidate_documents(cand_document_id = c(23058:23834))
+  more_election_docs<-durhamevp::get_candidate_documents(cand_document_id = c(12244:14140))
+  more_election_docs<-more_election_docs[more_election_docs$status==77,]
   nothing_docs<-nothing_docs[nothing_docs$status=="0",]
+  election_docs<-dplyr::bind_rows(election_docs,
+                                 more_election_docs)
   nothing_docs$EV_article<-election_docs$EV_article<-nothing_docs$election_article<-0
   ev_docs$EV_article<-ev_docs$election_article<-election_docs$election_article<-1
   sum(election_docs$id %in% ev_docs$id)
@@ -152,8 +156,8 @@ get_classified_docs <- function (){
   nothing_docs$corpus_election<-0
   ev_docs$corpus_election<-election_docs$corpus_election<-1
   the_corpus<-dplyr::bind_rows(nothing_docs,
-                        election_docs,
-                        ev_docs)
+                               election_docs,
+                               ev_docs)
   the_corpus$general_corpus<-1
 
   the_corpus<-the_corpus[,c("id", "title", "description", "type", "page", "publication_date", "word_count", "ocr", "election_article", "EV_article", "corpus_election", "electoral_nature", "violent_nature", "candidate_document_id")]
