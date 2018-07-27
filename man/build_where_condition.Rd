@@ -12,9 +12,9 @@ build_where_condition(col_name, vals, existing_condition,
 
 \item{vals}{The value or values to include in the query.}
 
-\item{exiting_condition}{An existing SQL query to append this where condition to.}
+\item{existing_condition}{An existing SQL query to append this where condition to.}
 
-\item{exiting_interpolate_list}{Existing interpolation list to add this interpolation list to.}
+\item{existing_interpolate_list}{Existing interpolation list to add this interpolation list to.}
 }
 \description{
 Constructs where conditions for querying database.
