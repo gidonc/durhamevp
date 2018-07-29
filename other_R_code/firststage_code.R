@@ -25,18 +25,98 @@ train<-quanteda::corpus(sets$training[,c("fakeid", "ocr", "EV_article")], text_f
 test<-quanteda::corpus(sets$test[,c("fakeid", "ocr", "EV_article")], text_field = "ocr")
 
 #Preprocess corpus and create DFM (without n-grams); preprocessing choices can be adapted in function
-train_nograms_dfm<-preprocess_corpus(train, stem=FALSE)
-test_nograms_dfm<-preprocess_corpus(test, stem=FALSE)
+train_nograms_dfm<-preprocess_corpus(train, stem=FALSE, min_termfreq = 20, min_docfreq = 5)
+test_nograms_dfm<-preprocess_corpus(test, stem=FALSE, min_termfreq = 20, min_docfreq = 5)
 
 #Preprocess corpus and create DFM (with specific n-grams); preprocessing choices can be adapted in function
 ev_grams<-list(c('election','riot'),c('election','disturbance'),c('election','incident'))
 
-train_grams_dfm<-preprocess_sgrams(train, wseq=ev_grams, stem=FALSE)
-test_grams_dfm<-preprocess_sgrams(test, wseq=ev_grams, stem=FALSE)
+train_grams_dfm<-preprocess_sgrams(train, wseq=ev_grams, stem=FALSE, min_termfreq = 20, min_docfreq = 5)
+test_grams_dfm<-preprocess_sgrams(test, wseq=ev_grams, stem=FALSE, min_termfreq = 20, min_docfreq = 5)
 
 #Extract keywords from naive bayes classifier run on training dfm
 kw_nograms<-nb_keywords(train_nograms_dfm, classvar="EV_article")
-head(kw_nograms, 10)
+head(kw_nograms, 50)
+tail(kw_nograms, 50)
 
 kw_grams<-nb_keywords(train_grams_dfm, classvar="EV_article")
 head(kw_grams, 10)
+tail(kw_grams, 50)
+
+head(train_grams_dfm[,"telegram"]==1)
+
+riot_dfm<-quanteda::dfm_(train_grams_dfm, "riot")
+as.logical(train_grams_dfm[,"riot"]==1)
+quanteda::docvars(train_grams_dfm[as.logical(train_grams_dfm[,"elector"]==1),], "EV_article")
+
+
+
+
+##----King et al algorithm attempt----
+
+search_set<- get_candidate_documents(cand_document_id = 2000:5000)
+search_set$set<-0
+
+ev_set<-classdoc[classdoc$EV_article==1,]
+ev_set$set<-1
+
+
+all_docs<-dplyr::bind_rows(search_set,
+                            ev_set)
+all_docs<-tibble::rowid_to_column(all_docs, "fakeid2")
+
+
+ev_sample<-dplyr::sample_n(dplyr::filter(all_docs, set==1), 500)
+search_sample<-dplyr::sample_n(dplyr::filter(all_docs, set==0), 500)
+
+king_train<-dplyr::bind_rows(search_sample,
+                             ev_sample)
+#train_nograms_dfm<-preprocess_corpus(king_train, stem=FALSE, min_termfreq = 20, min_docfreq = 5)
+#test_nograms_dfm<-preprocess_corpus(test, stem=FALSE, min_termfreq = 20, min_docfreq = 5)
+
+# R = reference set (of election violence articles)
+# S = search set [unlabelled]
+# T = election violence articles in S
+
+# 1. partition S into T and its complement (S\T)
+#
+
+train<-quanteda::corpus(king_train[,c("fakeid2", "ocr", "set")], text_field = "ocr")
+#test<-quanteda::corpus(sets$test[,c("fakeid", "ocr", "EV_article")], text_field = "ocr")
+
+#Preprocess corpus and create DFM (without n-grams); preprocessing choices can be adapted in function
+train_nograms_dfm<-preprocess_corpus(train, stem=FALSE, min_termfreq = 20, min_docfreq = 5)
+#test_nograms_dfm<-preprocess_corpus(test, stem=FALSE, min_termfreq = 20, min_docfreq = 5)
+
+#Preprocess corpus and create DFM (with specific n-grams); preprocessing choices can be adapted in function
+#ev_grams<-list(c('election','riot'),c('election','disturbance'),c('election','incident'))
+
+train_grams_dfm<-preprocess_sgrams(train, wseq=ev_grams, stem=FALSE, min_termfreq = 20, min_docfreq = 20)
+#test_grams_dfm<-preprocess_sgrams(test, wseq=ev_grams, stem=FALSE, min_termfreq = 20, min_docfreq = 5)
+
+#Extract keywords from naive bayes classifier run on training dfm
+kw_nograms<-nb_keywords(train_nograms_dfm, classvar="set")
+head(kw_nograms, 50)
+tail(kw_nograms, 50)
+
+kw_grams<-nb_keywords(train_grams_dfm, classvar="EV_article")
+head(kw_grams, 10)
+tail(kw_grams, 50)
+
+
+smash<-contains_words(king_train, " rough", results_col="set")
+
+ev_article<-classdoc[classdoc$EV_article==1,]
+ev_corpus<-quanteda::corpus(ev_article[,c("fakeid", "ocr", "EV_article")], text_field = "ocr")
+ev_dfm<-preprocess_corpus(ev_corpus, min_docfreq = 200, stem=FALSE)
+ev_dfm==0
+
+kw_nograms<-nb_keywords(ev_dfm, classvar="EV_article")
+
+ev_docfreq<-quanteda::docfreq(ev_dfm)
+ev_docfreq[order(ev_docfreq, decreasing = TRUE)]
+sum((ev_dfm[,"mr"]==0 & ev_dfm[,"one"]==0 & ev_dfm[,"day"]==0 & ev_dfm[,"riot"]==0 & ev_dfm[,"police"]==0 & ev_dfm[,"last"]==0& ev_dfm[,"night"]==0))
+
+d2<-quanteda::dfm_subset(ev_dfm, ev_dfm[,"mr"]==0 & ev_dfm[,"one"]==0 & ev_dfm[,"day"]==0 & ev_dfm[,"riot"]==0 & ev_dfm[,"police"]==0 & ev_dfm[,"last"]==0 & ev_dfm[,"night"]==0)
+
+ev_docfreq<-quanteda::docfreq(d2)
