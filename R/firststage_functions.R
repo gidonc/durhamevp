@@ -58,7 +58,7 @@ preprocess_sgrams<-function(the_corpus, wseq, stem=TRUE, min_termfreq=2, min_doc
   #' @export
   toks<-quanteda::tokens(the_corpus,remove_numbers = TRUE, remove_punct = TRUE, remove_symbols = TRUE,
                          remove_separators = TRUE, remove_hyphens = TRUE)
-  gramtoks<-quanteda::tokens_compound(toks,phrase(wseq))
+  gramtoks<-quanteda::tokens_compound(toks,quanteda::phrase(wseq))
   the_dfm <- quanteda::dfm(gramtoks, stem=stem, remove=quanteda::stopwords("english"))
   the_dfm <- quanteda::dfm_trim(the_dfm, min_termfreq=min_termfreq, min_docfreq = min_docfreq, termfreq_type=termfreq_type, docfreq_type=docfreq_type)
   if(dfm_tfidf){
