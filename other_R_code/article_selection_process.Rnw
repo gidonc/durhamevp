@@ -20,7 +20,14 @@ It is trivial to define an algorithm which obtains a subset of $S$ which contain
 Our task is to find a good method for returning $T$ from $S$ in a form which we can analyse. By a \textit{good} method we mean a method which returns a greater proportion of $T$, and a greater ratio of $T$ to $\neg T$ than alternative methods. The main alternative method is manual searching by historians.
 
 \section{Keyword Identification}
-How difficult is it to find search terms which return all of
+Note it is important to make keyword identification somewhat selective of $T$ from $S$ otherwise even very good stage 2 \& 3 selection processes the false positives will overwhelm the true positives.
+
+Algorithm:
+\begin{enumerate}
+  \item use classifier on $R$ and $S$ to identify two lists of keywords
+  \item generate probability from classifier parameters
+  \item add to keyword list based on probability
+\end{enumerate}
 
 
 \end{document}
