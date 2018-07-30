@@ -1,6 +1,10 @@
 \documentclass{article}
 
 \begin{document}
+<<loadpackages, echo=FALSE, warning=FALSE, message=FALSE>>=
+library(durhamevp)
+library(tidyverse)
+@
 
 We only have access to a big data set via boolean search.
 
@@ -19,6 +23,20 @@ It is trivial to define an algorithm which obtains a subset of $S$ which contain
 
 Our task is to find a good method for returning $T$ from $S$ in a form which we can analyse. By a \textit{good} method we mean a method which returns a greater proportion of $T$, and a greater ratio of $T$ to $\neg T$ than alternative methods. The main alternative method is manual searching by historians.
 
+\section{The data}
+<<loaddata, cache=TRUE, tidy=TRUE>>=
+classdocs<-durhamevp::get_classified_docs()
+classified_corpus<-quanteda::corpus(classdocs[,c("fakeid", "ocr", "EV_article")], text_field = "ocr")
+classified_dfm <- preprocess_corpus(classified_corpus, stem=FALSE, min_termfreq=20, min_docfreq = 10)
+@
+
+In the data there are \Sexpr{nrow(classdocs)} cases:
+\begin{itemize}
+  \item \textbf{\Sexpr{sum(classdocs$election_article==0)}} non-election articles.
+  \item \textbf{\Sexpr{sum(classdocs$EV_article==1)}} election violence articles.
+  \item \textbf{\Sexpr{sum(classdocs$just_election==1)}} election (but not violent) articles.
+\end{itemize}
+
 \section{Keyword Identification}
 Note it is important to make keyword identification somewhat selective of $T$ from $S$ otherwise even very good stage 2 \& 3 selection processes the false positives will overwhelm the true positives.
 
@@ -28,6 +46,44 @@ Algorithm:
   \item generate probability from classifier parameters
   \item add to keyword list based on probability
 \end{enumerate}
+<<findkeywords>>=
+keywords<-nb_keywords(classified_dfm, "EV_article")
+knitr::kable(head(keywords, 20))
+@
+
+\section{Refinement Using Description}
+
+<<usingdescription>>=
+description_corpus<-quanteda::corpus(classdocs[,c("fakeid", "description", "EV_article")], text_field = "description")
+description_dfm <- preprocess_corpus(description_corpus, stem=FALSE, min_termfreq=5, min_docfreq = 2)
+
+both_dfms<-split_dfm(description_dfm, n_train = 1500)
+nb<-quanteda::textmodel_nb(both_dfms$train, y=quanteda::docvars(both_dfms$train, "EV_article"), prior="uniform")
+prob_nb<-predict(nb, newdata = both_dfms$test, type="probability")
+pred_nb<-data.frame(predict(nb, newdata = both_dfms$test, type="class"))
+res<-data.frame(predict_nb=pred_nb, prob_nb)
+names(res)<-c("predict_nb", "prob_notev", "prob_ev")
+assess_classification(organise_results(both_dfms$test, res)) %>%
+  filter(rowname %in% c("Precision", "Recall", "F1")) %>%
+  kable()
+@
+
+\section{Refinement Using OCR}
+
+<<usingocr>>=
+ocr_corpus<-quanteda::corpus(classdocs[,c("fakeid", "ocr", "EV_article")], text_field = "ocr")
+ocr_dfm <- preprocess_corpus(ocr_corpus, stem=FALSE, min_termfreq=5, min_docfreq = 2)
+
+both_dfms<-split_dfm(ocr_dfm, n_train = 1500)
+nb<-quanteda::textmodel_nb(both_dfms$train, y=quanteda::docvars(both_dfms$train, "EV_article"), prior="uniform")
+prob_nb<-predict(nb, newdata = both_dfms$test, type="probability")
+pred_nb<-data.frame(predict(nb, newdata = both_dfms$test, type="class"))
+res<-data.frame(predict_nb=pred_nb, prob_nb)
+names(res)<-c("predict_nb", "prob_notev", "prob_ev")
+assess_classification(organise_results(both_dfms$test, res)) %>%
+  filter(rowname %in% c("Precision", "Recall", "F1")) %>%
+  kable()
+@
 
 
 \end{document}
