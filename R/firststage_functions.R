@@ -72,6 +72,7 @@ nb_keywords<-function(training, classvar, distribution="Bernoulli"){
   #' @param training Training data feature matrix
   #' @param classvar Classification variable name, entered as string
   #' @export
+
   nb<-quanteda::textmodel_nb(training,quanteda::docvars(training, classvar), distribution=distribution)
   post<-as.data.frame(t(nb$PcGw))
   post<-tibble::rownames_to_column(post)
