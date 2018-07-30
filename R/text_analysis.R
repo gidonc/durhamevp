@@ -44,11 +44,11 @@ split_dfm <- function(dfm, n_train){
 
 split_corpus<-function(the_corpus, n_train, min_termfreq=2, min_docfreq=2,
                        remove_punct=TRUE, remove_numbers=TRUE, remove_hyphens=TRUE,
-                       dfm_tfidf=FALSE){
+                       dfm_tfidf=FALSE, stem=TRUE){
   #' Preprocess a text corpus and divide it into training and testing sets based on number of training items.
   #' Note: it is more efficient to preprocess and split separately, especially if running in a loop.
   #' @export
-  the_dfm <- quanteda::dfm(the_corpus, stem=TRUE, remove=quanteda::stopwords("english"), remove_punct=remove_punct, remove_numbers=remove_numbers, remove_hyphens=remove_hyphens)
+  the_dfm <- quanteda::dfm(the_corpus, stem=stem, remove=quanteda::stopwords("english"), remove_punct=remove_punct, remove_numbers=remove_numbers, remove_hyphens=remove_hyphens)
   the_dfm <- quanteda::dfm_trim(the_dfm, min_termfreq=min_termfreq, min_docfreq = min_docfreq)
   if(dfm_tfidf){
     the_dfm<-quanteda::dfm_tfidf(the_dfm)
