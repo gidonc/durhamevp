@@ -39,7 +39,7 @@ check_sngrams<-function(toks, wseq, wseqc){
   print(grams)
 }
 
-nb_test<-function(training, testing, classvar){
+nb_test<-function(training, testing, classvar, distribution="Bernoulli"){
   #' Train a naive bayes classifier on a training dfm and asses its performance on a test dfm reporting test statistics (wrapper function aroudn Quanteda commands)
   #' @param training Training data frequency matrix
   #' @param testing Testing data frequency matrix

@@ -67,12 +67,12 @@ preprocess_sgrams<-function(the_corpus, wseq, stem=TRUE, min_termfreq=2, min_doc
   the_dfm
 }
 
-nb_keywords<-function(training, classvar){
+nb_keywords<-function(training, classvar, distribution="Bernoulli"){
   #' Train a naive bayes classifier and extract keywords as data.frame object ordered by most predictive word of class on top (wrapper function around Quanteda commands). The returned data.frame has three columns: word, 0(=posterior prob of word indicating that document in classvar==0), 1(=posterior prob of word predicting word indicating that document in classvar==1), and id.
   #' @param training Training data feature matrix
   #' @param classvar Classification variable name, entered as string
   #' @export
-  nb<-quanteda::textmodel_nb(training,quanteda::docvars(training, classvar))
+  nb<-quanteda::textmodel_nb(training,quanteda::docvars(training, classvar), distribution=distribution)
   post<-as.data.frame(t(nb$PcGw))
   post<-tibble::rownames_to_column(post)
   post$id<-seq.int(nrow(post))

@@ -35,21 +35,23 @@ train_grams_dfm<-preprocess_sgrams(train, wseq=ev_grams, stem=FALSE, min_termfre
 test_grams_dfm<-preprocess_sgrams(test, wseq=ev_grams, stem=FALSE, min_termfreq = 20, min_docfreq = 5)
 
 #Extract keywords from naive bayes classifier run on training dfm
-kw_nograms<-nb_keywords(train_nograms_dfm, classvar="EV_article")
-head(kw_nograms, 50)
+kw_nograms<-nb_keywords(train_nograms_dfm, classvar="EV_article", distribution = "multinomial")
+head(kw_nograms, 10)
 tail(kw_nograms, 50)
 
-kw_grams<-nb_keywords(train_grams_dfm, classvar="EV_article")
+kw_grams<-nb_keywords(train_grams_dfm, classvar="EV_article", distribution = "multinomial")
 head(kw_grams, 10)
 tail(kw_grams, 50)
 
-head(train_grams_dfm[,"telegram"]==1)
-
 riot_dfm<-quanteda::dfm_(train_grams_dfm, "riot")
-as.logical(train_grams_dfm[,"riot"]==1)
 quanteda::docvars(train_grams_dfm[as.logical(train_grams_dfm[,"elector"]==1),], "EV_article")
 
+dfm_boolean<-quanteda::dfm_weight(train_grams_dfm, scheme="boolean")
 
+kw_boolean<-nb_keywords(train_nograms_dfm, classvar="EV_article", distribution="Bernoulli")
+head(kw_boolean, 10)
+tail(kw_nograms, 50)
+quanteda::textmodel_nb(dfm_boolean, quanteda::docvars(dfm_boolean, "EV_article"), distribution="multinomial")
 
 
 ##----King et al algorithm attempt----
@@ -120,3 +122,6 @@ sum((ev_dfm[,"mr"]==0 & ev_dfm[,"one"]==0 & ev_dfm[,"day"]==0 & ev_dfm[,"riot"]=
 d2<-quanteda::dfm_subset(ev_dfm, ev_dfm[,"mr"]==0 & ev_dfm[,"one"]==0 & ev_dfm[,"day"]==0 & ev_dfm[,"riot"]==0 & ev_dfm[,"police"]==0 & ev_dfm[,"last"]==0 & ev_dfm[,"night"]==0)
 
 ev_docfreq<-quanteda::docfreq(d2)
+
+toks<-quanteda::tokens(the_corpus,remove_numbers = TRUE, remove_punct = TRUE, remove_symbols = TRUE,
+                       remove_separators = TRUE, remove_hyphens = TRUE)
