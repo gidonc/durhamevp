@@ -5,3 +5,6 @@ config.yml
 .Rhistory
 .Rprofile
 packrat
+other_R_code/*.tex
+other_R_code/*.log
+other_R_code/*.synctex.gz
