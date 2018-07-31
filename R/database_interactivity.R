@@ -386,7 +386,7 @@ get_user_mode <- function(user_id="all"){
 }
 
 get_archivesearches<-function(archive_search_id="all"){
-  #' Returns the crawler search table
+  #' Returns the table of searches which have been passed to the crawler.
   #'
   #' @param archive_search_id archive_search id or ids to filter by.
   #' @export
