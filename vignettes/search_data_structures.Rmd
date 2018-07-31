@@ -1,10 +1,10 @@
 ---
-title: "Structure of Data from Crawler"
+title: "Data on Searches of the Newspaper Archives"
 author: "Gidon Cohen"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Structure of Data from Crawler}
+  %\VignetteIndexEntry{Data on Searches of the Newspaper Archives}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -21,12 +21,40 @@ library(durhamevp)
 
 This vignette documents how the data from crawling the BNA and WNO archive is stored on the database, how this data can be retrived and how it can be analysed.
 
-The database stores three information from the crawling process in three tables. The table portal\_archivesearch store information about the searches which have been run on the websites. This table can be retrived with the `get_archivesearches()' command.
-```{r getarchivesearches, eval=TRUE}
+The database stores three information from the crawling process in three tables: 
+
+  1.  The table portal\_archivesearch store information about the searches which have been run on the newspaper archives websites. 
+  2.  The table portal\_archivesearchresults stores information about the results returned by these searches
+  3.  The table portal\_candidatedocument stores the candidate documents
+
+
+### Archive searches
+
+The portal\_archivesearch table can be retrived with the `get_archivesearches()` command.
+
+```{r getarchivesearches, eval=TRUE, warning=FALSE}
 
 archivesearches<-get_archivesearches()
 
 knitr::kable(tail(archivesearches, 3))
+
+```
+
+
+### Archive search results
+
+The portal\_archivesearchresults table can be retrived with the `get_archivesearchresults()` command. To retrieve the results relating to a particular search. For example to retrieve the results returned by the most recent document search (archive_search_id = `r tail(archivesearches$id,1)`):
+
+
+```{r getarchivesearchresults, eval=TRUE, warning=FALSE}
+lastid<-tail(archivesearches$id,1)
+archivesearchresults<-get_archivesearchresults(archive_search_id=lastid)
+
+names(archivesearchresults)
+
+dim(archivesearchresults)
+
+knitr::kable(head(archivesearchresults[,c("id", "archive_search_id", "description", "publication_title")], 3))
 
 ```
 
