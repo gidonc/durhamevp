@@ -81,10 +81,10 @@ my_wordscores<-function(train, test){
   pred_wordscores
 
 }
-organise_results <- function (testset, pred_nb, pred_aff=NULL, pred_wordscores=NULL){
+organise_results <- function (testset, pred_nb, pred_aff=NULL, pred_wordscores=NULL, res_col="EV_article"){
   #' @export
-  this_res<-dplyr::as.tbl(data.frame(actual=quanteda::docvars(testset, "EV_article"),
-                              actual_f=factor(quanteda::docvars(testset, "EV_article")),
+  this_res<-dplyr::as.tbl(data.frame(actual=quanteda::docvars(testset, res_col),
+                              actual_f=factor(quanteda::docvars(testset, res_col)),
                               nb_ev_cat=pred_nb$predict_nb,
                               nb_ev_prob=pred_nb$prob_ev,
                               nb_notev_prob=pred_nb$prob_notev
