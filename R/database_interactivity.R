@@ -385,6 +385,52 @@ get_user_mode <- function(user_id="all"){
   profiles
 }
 
+get_archivesearches<-function(archive_search_id="all"){
+  #' Returns the table of searches which have been passed to the crawler.
+  #'
+  #' @param archive_search_id archive_search id or ids to filter by.
+  #' @export
+
+  con <- manage_dbcons()
+
+  this_sql<-"SELECT * FROM portal_archivesearch" # base query
+
+  res<-build_where_condition("id", archive_search_id, this_sql, NULL)
+  res[["condition"]] <- paste(res[["condition"]], ";")
+  this_sql<-res[["condition"]]
+  interpolate_list <- res[["interpolate_list"]]
+  this_safe_sql<-DBI::sqlInterpolate(DBI::ANSI(), this_sql,
+                                     .dots = interpolate_list)
+  archivesearch<-DBI::dbGetQuery(con, this_safe_sql)
+
+
+
+  archivesearch
+}
+
+get_archivesearchresults<-function(archivesearchresults_id="all", archive_search_id="all"){
+  #' Returns the crawler search table
+  #'
+  #' @param archivesearch_id archive_search id or ids to filter by.
+  #' @export
+
+  con <- manage_dbcons()
+
+  this_sql<-"SELECT * FROM portal_archivesearchresult" # base query
+
+  res<-build_where_condition("id", archivesearchresults_id, this_sql, NULL)
+  res<-build_where_condition("archive_search_id", archive_search_id, res$condition, res$interpolate_list)
+  res[["condition"]] <- paste(res[["condition"]], ";")
+  this_sql<-res[["condition"]]
+  interpolate_list <- res[["interpolate_list"]]
+  this_safe_sql<-DBI::sqlInterpolate(DBI::ANSI(), this_sql,
+                                     .dots = interpolate_list)
+  archivesearch<-DBI::dbGetQuery(con, this_safe_sql)
+
+
+
+  archivesearch
+}
 set_user_mode <- function (user_id, new_mode){
   #' Sets user mode
   #'

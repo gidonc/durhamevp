@@ -1,0 +1,560 @@
+\documentclass{article}\usepackage[]{graphicx}\usepackage[]{color}
+%% maxwidth is the original width if it is less than linewidth
+%% otherwise use linewidth (to make sure the graphics do not exceed the margin)
+\makeatletter
+\def\maxwidth{ %
+  \ifdim\Gin@nat@width>\linewidth
+    \linewidth
+  \else
+    \Gin@nat@width
+  \fi
+}
+\makeatother
+
+\definecolor{fgcolor}{rgb}{0.345, 0.345, 0.345}
+\newcommand{\hlnum}[1]{\textcolor[rgb]{0.686,0.059,0.569}{#1}}%
+\newcommand{\hlstr}[1]{\textcolor[rgb]{0.192,0.494,0.8}{#1}}%
+\newcommand{\hlcom}[1]{\textcolor[rgb]{0.678,0.584,0.686}{\textit{#1}}}%
+\newcommand{\hlopt}[1]{\textcolor[rgb]{0,0,0}{#1}}%
+\newcommand{\hlstd}[1]{\textcolor[rgb]{0.345,0.345,0.345}{#1}}%
+\newcommand{\hlkwa}[1]{\textcolor[rgb]{0.161,0.373,0.58}{\textbf{#1}}}%
+\newcommand{\hlkwb}[1]{\textcolor[rgb]{0.69,0.353,0.396}{#1}}%
+\newcommand{\hlkwc}[1]{\textcolor[rgb]{0.333,0.667,0.333}{#1}}%
+\newcommand{\hlkwd}[1]{\textcolor[rgb]{0.737,0.353,0.396}{\textbf{#1}}}%
+\let\hlipl\hlkwb
+
+\usepackage{framed}
+\makeatletter
+\newenvironment{kframe}{%
+ \def\at@end@of@kframe{}%
+ \ifinner\ifhmode%
+  \def\at@end@of@kframe{\end{minipage}}%
+  \begin{minipage}{\columnwidth}%
+ \fi\fi%
+ \def\FrameCommand##1{\hskip\@totalleftmargin \hskip-\fboxsep
+ \colorbox{shadecolor}{##1}\hskip-\fboxsep
+     % There is no \\@totalrightmargin, so:
+     \hskip-\linewidth \hskip-\@totalleftmargin \hskip\columnwidth}%
+ \MakeFramed {\advance\hsize-\width
+   \@totalleftmargin\z@ \linewidth\hsize
+   \@setminipage}}%
+ {\par\unskip\endMakeFramed%
+ \at@end@of@kframe}
+\makeatother
+
+\definecolor{shadecolor}{rgb}{.97, .97, .97}
+\definecolor{messagecolor}{rgb}{0, 0, 0}
+\definecolor{warningcolor}{rgb}{1, 0, 1}
+\definecolor{errorcolor}{rgb}{1, 0, 0}
+\newenvironment{knitrout}{}{} % an empty environment to be redefined in TeX
+
+\usepackage{alltt}
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\begin{document}
+
+
+We only have access to a big data set via boolean search.
+
+Sub-sets of the data set returned by a single key word on a single day are large.For example for the single search term `election' for the single day of 1 August 1868 returns 1982 articles. The search term `riot' for the same day (close to the 1868 General Election) returns 360 articles, 228 of which do not also contain the word election.
+
+With even a small number of search terms it quickly becomes impractical to examine all the documents even for a single day.
+
+Following King et al we define
+$S$ - the search set of all documents in the British Newspaper Archive
+$T$ - the target set of all documents in the British Newspaper Archive which are about election violence
+$R$ - a reference set of documents which are about election violence
+
+The task is to identify $T$ from $S$ in a form where $T$ can be
+
+It is trivial to define an algorithm which obtains a subset of $S$ which contains $T$, because $S \subseteq S$ and $T \subset S$. Algorithms which aim to maximise the chances of obtaining all of $T$ will tend to return $S$.
+
+Our task is to find a good method for returning $T$ from $S$ in a form which we can analyse. By a \textit{good} method we mean a method which returns a greater proportion of $T$, and a greater ratio of $T$ to $\neg T$ than alternative methods. The main alternative method is manual searching by historians.
+
+\section{The data}
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{classdocs} \hlkwb{<-} \hlstd{durhamevp}\hlopt{::}\hlkwd{get_classified_docs}\hlstd{()}
+\hlcom{# just some candidate document for speed/space reasons}
+\hlstd{unclassdocs} \hlkwb{<-} \hlstd{durhamevp}\hlopt{::}\hlkwd{get_candidate_documents}\hlstd{(}\hlnum{3000}\hlopt{:}\hlnum{6000}\hlstd{)}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+In the data there are 1894 cases:
+\begin{itemize}
+  \item \textbf{703} non-election articles.
+  \item \textbf{769} election violence articles.
+  \item \textbf{422} election (but not violent) articles.
+\end{itemize}
+
+\section{Keyword Identification}
+Note it is important to make keyword identification somewhat selective of $T$ from $S$ otherwise even very good stage 2 \& 3 selection processes the false positives will overwhelm the true positives.
+
+Algorithm:
+\begin{enumerate}
+  \item use classifier on $R$ and $S$ to identify two lists of keywords
+  \item generate probability from classifier parameters
+  \item add to keyword list based on probability
+\end{enumerate}
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{classified_corpus}\hlkwb{<-}\hlstd{quanteda}\hlopt{::}\hlkwd{corpus}\hlstd{(classdocs[,}\hlkwd{c}\hlstd{(}\hlstr{"fakeid"}\hlstd{,} \hlstr{"ocr"}\hlstd{,} \hlstr{"EV_article"}\hlstd{)],} \hlkwc{text_field} \hlstd{=} \hlstr{"ocr"}\hlstd{)}
+\hlstd{classified_dfm} \hlkwb{<-} \hlkwd{preprocess_corpus}\hlstd{(classified_corpus,} \hlkwc{stem}\hlstd{=}\hlnum{FALSE}\hlstd{,} \hlkwc{min_termfreq}\hlstd{=}\hlnum{20}\hlstd{,} \hlkwc{min_docfreq} \hlstd{=} \hlnum{10}\hlstd{)}
+
+\hlstd{keywords}\hlkwb{<-}\hlkwd{nb_keywords}\hlstd{(classified_dfm,} \hlstr{"EV_article"}\hlstd{)}
+\hlstd{knitr}\hlopt{::}\hlkwd{kable}\hlstd{(}\hlkwd{head}\hlstd{(keywords,} \hlnum{20}\hlstd{))}
+\end{alltt}
+\end{kframe}
+\begin{tabular}{l|l|r|r|r}
+\hline
+  & rowname & 0 & 1 & id\\
+\hline
+12299 & roughly & 0.0277149 & 0.9722851 & 12299\\
+\hline
+12300 & riotously & 0.0315492 & 0.9684508 & 12300\\
+\hline
+12280 & smashing & 0.0336163 & 0.9663837 & 12280\\
+\hline
+12298 & bicycle & 0.0347548 & 0.9652452 & 12298\\
+\hline
+12302 & pontypool & 0.0366149 & 0.9633851 & 12302\\
+\hline
+11621 & smashed & 0.0468791 & 0.9531209 & 11621\\
+\hline
+12303 & bedminster & 0.0499935 & 0.9500065 & 12303\\
+\hline
+12279 & p.c & 0.0528924 & 0.9471076 & 12279\\
+\hline
+12289 & roughs & 0.0548967 & 0.9451033 & 12289\\
+\hline
+12257 & rioters & 0.0579995 & 0.9420005 & 12257\\
+\hline
+12044 & stoned & 0.0585510 & 0.9414490 & 12044\\
+\hline
+12301 & abersychan & 0.0585510 & 0.9414490 & 12301\\
+\hline
+12304 & lofts & 0.0585510 & 0.9414490 & 12304\\
+\hline
+12295 & missile & 0.0611686 & 0.9388314 & 12295\\
+\hline
+11754 & supt & 0.0744892 & 0.9255108 & 11754\\
+\hline
+11959 & foley & 0.0744892 & 0.9255108 & 11959\\
+\hline
+11977 & missiles & 0.0776601 & 0.9223399 & 11977\\
+\hline
+9149 & staves & 0.0819225 & 0.9180775 & 9149\\
+\hline
+12094 & panes & 0.0835908 & 0.9164092 & 12094\\
+\hline
+12268 & terrell & 0.0835908 & 0.9164092 & 12268\\
+\hline
+\end{tabular}
+
+
+\end{knitrout}
+
+\section{Refinement Using Description}
+
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{description_corpus}\hlkwb{<-}\hlstd{quanteda}\hlopt{::}\hlkwd{corpus}\hlstd{(classdocs[,}\hlkwd{c}\hlstd{(}\hlstr{"fakeid"}\hlstd{,} \hlstr{"description"}\hlstd{,} \hlstr{"EV_article"}\hlstd{)],} \hlkwc{text_field} \hlstd{=} \hlstr{"description"}\hlstd{)}
+\hlstd{description_dfm} \hlkwb{<-} \hlkwd{preprocess_corpus}\hlstd{(description_corpus,} \hlkwc{stem}\hlstd{=}\hlnum{FALSE}\hlstd{,} \hlkwc{min_termfreq}\hlstd{=}\hlnum{5}\hlstd{,} \hlkwc{min_docfreq} \hlstd{=} \hlnum{2}\hlstd{)}
+
+\hlstd{both_dfms}\hlkwb{<-}\hlkwd{split_dfm}\hlstd{(description_dfm,} \hlkwc{n_train} \hlstd{=} \hlnum{1000}\hlstd{)}
+
+\hlstd{nb}\hlkwb{<-}\hlstd{quanteda}\hlopt{::}\hlkwd{textmodel_nb}\hlstd{(both_dfms}\hlopt{$}\hlstd{train,} \hlkwc{y}\hlstd{=quanteda}\hlopt{::}\hlkwd{docvars}\hlstd{(both_dfms}\hlopt{$}\hlstd{train,} \hlstr{"EV_article"}\hlstd{),} \hlkwc{prior}\hlstd{=}\hlstr{"uniform"}\hlstd{)}
+\hlstd{prob_nb}\hlkwb{<-}\hlkwd{predict}\hlstd{(nb,} \hlkwc{newdata} \hlstd{= both_dfms}\hlopt{$}\hlstd{test,} \hlkwc{type}\hlstd{=}\hlstr{"probability"}\hlstd{)}
+\hlstd{pred_nb}\hlkwb{<-}\hlkwd{data.frame}\hlstd{(}\hlkwd{predict}\hlstd{(nb,} \hlkwc{newdata} \hlstd{= both_dfms}\hlopt{$}\hlstd{test,} \hlkwc{type}\hlstd{=}\hlstr{"class"}\hlstd{))}
+\hlstd{res}\hlkwb{<-}\hlkwd{data.frame}\hlstd{(}\hlkwc{predict_nb}\hlstd{=pred_nb, prob_nb)}
+\hlkwd{names}\hlstd{(res)}\hlkwb{<-}\hlkwd{c}\hlstd{(}\hlstr{"predict_nb"}\hlstd{,} \hlstr{"prob_notev"}\hlstd{,} \hlstr{"prob_ev"}\hlstd{)}
+\hlkwd{assess_classification}\hlstd{(}\hlkwd{organise_results}\hlstd{(both_dfms}\hlopt{$}\hlstd{test, res))} \hlopt{%>%}
+  \hlkwd{filter}\hlstd{(rowname} \hlopt{%in%} \hlkwd{c}\hlstd{(}\hlstr{"Precision"}\hlstd{,} \hlstr{"Recall"}\hlstd{,} \hlstr{"F1"}\hlstd{))} \hlopt{%>%}
+  \hlkwd{kable}\hlstd{()}
+\end{alltt}
+\end{kframe}
+\begin{tabular}{l|r|l}
+\hline
+rowname & value & model\\
+\hline
+Precision & 0.7842105 & naive bayes\\
+\hline
+Recall & 0.8370787 & naive bayes\\
+\hline
+F1 & 0.8097826 & naive bayes\\
+\hline
+\end{tabular}
+
+\begin{kframe}\begin{alltt}
+\hlstd{description_corpus}\hlkwb{<-}\hlstd{quanteda}\hlopt{::}\hlkwd{corpus}\hlstd{(classdocs[,}\hlkwd{c}\hlstd{(}\hlstr{"fakeid"}\hlstd{,} \hlstr{"description"}\hlstd{,} \hlstr{"EV_article"}\hlstd{)],} \hlkwc{text_field} \hlstd{=} \hlstr{"description"}\hlstd{)}
+\hlstd{description_dfm} \hlkwb{<-} \hlkwd{preprocess_corpus}\hlstd{(description_corpus,} \hlkwc{stem}\hlstd{=}\hlnum{FALSE}\hlstd{,} \hlkwc{min_termfreq}\hlstd{=}\hlnum{5}\hlstd{,} \hlkwc{min_docfreq} \hlstd{=} \hlnum{2}\hlstd{)}
+
+\hlstd{both_dfms}\hlkwb{<-}\hlkwd{split_dfm}\hlstd{(description_dfm,} \hlkwc{n_train} \hlstd{=} \hlnum{1000}\hlstd{)}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+
+Note: this way of creating the dfm does make dfms terms equal because one overall dfm is created and then it is subset. You can see below that the number of features in both dfms is the same:
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlkwd{print}\hlstd{(both_dfms}\hlopt{$}\hlstd{train)}
+\end{alltt}
+\begin{verbatim}
+## Document-feature matrix of: 1,000 documents, 1,647 features (99.2% sparse).
+\end{verbatim}
+\begin{alltt}
+\hlkwd{print}\hlstd{(both_dfms}\hlopt{$}\hlstd{test)}
+\end{alltt}
+\begin{verbatim}
+## Document-feature matrix of: 894 documents, 1,647 features (99.2% sparse).
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+
+\subsection{More realistic use case}
+Exclude non-election cases which would not be returned by our keywords:
+
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{description_corpus}\hlkwb{<-}\hlstd{quanteda}\hlopt{::}\hlkwd{corpus}\hlstd{(classdocs[classdocs}\hlopt{$}\hlstd{election_article}\hlopt{==}\hlnum{1}\hlstd{,}\hlkwd{c}\hlstd{(}\hlstr{"fakeid"}\hlstd{,} \hlstr{"description"}\hlstd{,} \hlstr{"EV_article"}\hlstd{)],} \hlkwc{text_field} \hlstd{=} \hlstr{"description"}\hlstd{)}
+\hlstd{description_dfm} \hlkwb{<-} \hlkwd{preprocess_corpus}\hlstd{(description_corpus,} \hlkwc{stem}\hlstd{=}\hlnum{FALSE}\hlstd{,} \hlkwc{min_termfreq}\hlstd{=}\hlnum{5}\hlstd{,} \hlkwc{min_docfreq} \hlstd{=} \hlnum{2}\hlstd{)}
+
+\hlstd{both_dfms}\hlkwb{<-}\hlkwd{split_dfm}\hlstd{(description_dfm,} \hlkwc{n_train} \hlstd{=} \hlnum{1000}\hlstd{)}
+
+\hlstd{nb}\hlkwb{<-}\hlstd{quanteda}\hlopt{::}\hlkwd{textmodel_nb}\hlstd{(both_dfms}\hlopt{$}\hlstd{train,} \hlkwc{y}\hlstd{=quanteda}\hlopt{::}\hlkwd{docvars}\hlstd{(both_dfms}\hlopt{$}\hlstd{train,} \hlstr{"EV_article"}\hlstd{),} \hlkwc{prior}\hlstd{=}\hlstr{"uniform"}\hlstd{)}
+\hlstd{prob_nb}\hlkwb{<-}\hlkwd{predict}\hlstd{(nb,} \hlkwc{newdata} \hlstd{= both_dfms}\hlopt{$}\hlstd{test,} \hlkwc{type}\hlstd{=}\hlstr{"probability"}\hlstd{)}
+\hlstd{pred_nb}\hlkwb{<-}\hlkwd{data.frame}\hlstd{(}\hlkwd{predict}\hlstd{(nb,} \hlkwc{newdata} \hlstd{= both_dfms}\hlopt{$}\hlstd{test,} \hlkwc{type}\hlstd{=}\hlstr{"class"}\hlstd{))}
+\hlstd{res}\hlkwb{<-}\hlkwd{data.frame}\hlstd{(}\hlkwc{predict_nb}\hlstd{=pred_nb, prob_nb)}
+\hlkwd{names}\hlstd{(res)}\hlkwb{<-}\hlkwd{c}\hlstd{(}\hlstr{"predict_nb"}\hlstd{,} \hlstr{"prob_notev"}\hlstd{,} \hlstr{"prob_ev"}\hlstd{)}
+\hlkwd{assess_classification}\hlstd{(}\hlkwd{organise_results}\hlstd{(both_dfms}\hlopt{$}\hlstd{test, res))} \hlopt{%>%}
+  \hlkwd{filter}\hlstd{(rowname} \hlopt{%in%} \hlkwd{c}\hlstd{(}\hlstr{"Precision"}\hlstd{,} \hlstr{"Recall"}\hlstd{,} \hlstr{"F1"}\hlstd{))} \hlopt{%>%}
+  \hlkwd{kable}\hlstd{()}
+\end{alltt}
+\end{kframe}
+\begin{tabular}{l|r|l}
+\hline
+rowname & value & model\\
+\hline
+Precision & 0.9019608 & naive bayes\\
+\hline
+Recall & 0.7076923 & naive bayes\\
+\hline
+F1 & 0.7931034 & naive bayes\\
+\hline
+\end{tabular}
+
+\begin{kframe}\begin{alltt}
+\hlstd{description_corpus}\hlkwb{<-}\hlstd{quanteda}\hlopt{::}\hlkwd{corpus}\hlstd{(classdocs[,}\hlkwd{c}\hlstd{(}\hlstr{"fakeid"}\hlstd{,} \hlstr{"description"}\hlstd{,} \hlstr{"EV_article"}\hlstd{)],} \hlkwc{text_field} \hlstd{=} \hlstr{"description"}\hlstd{)}
+\hlstd{description_dfm} \hlkwb{<-} \hlkwd{preprocess_corpus}\hlstd{(description_corpus,} \hlkwc{stem}\hlstd{=}\hlnum{FALSE}\hlstd{,} \hlkwc{min_termfreq}\hlstd{=}\hlnum{5}\hlstd{,} \hlkwc{min_docfreq} \hlstd{=} \hlnum{2}\hlstd{)}
+
+\hlstd{both_dfms}\hlkwb{<-}\hlkwd{split_dfm}\hlstd{(description_dfm,} \hlkwc{n_train} \hlstd{=} \hlnum{1000}\hlstd{)}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+\section{Refinement Using OCR}
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{ocr_corpus}\hlkwb{<-}\hlstd{quanteda}\hlopt{::}\hlkwd{corpus}\hlstd{(classdocs[,}\hlkwd{c}\hlstd{(}\hlstr{"fakeid"}\hlstd{,} \hlstr{"ocr"}\hlstd{,} \hlstr{"EV_article"}\hlstd{)],} \hlkwc{text_field} \hlstd{=} \hlstr{"ocr"}\hlstd{)}
+\hlstd{ocr_dfm} \hlkwb{<-} \hlkwd{preprocess_corpus}\hlstd{(ocr_corpus,} \hlkwc{stem}\hlstd{=}\hlnum{FALSE}\hlstd{,} \hlkwc{min_termfreq}\hlstd{=}\hlnum{5}\hlstd{,} \hlkwc{min_docfreq} \hlstd{=} \hlnum{2}\hlstd{)}
+
+\hlstd{both_dfms}\hlkwb{<-}\hlkwd{split_dfm}\hlstd{(ocr_dfm,} \hlkwc{n_train} \hlstd{=} \hlnum{1000}\hlstd{)}
+\hlstd{nb}\hlkwb{<-}\hlstd{quanteda}\hlopt{::}\hlkwd{textmodel_nb}\hlstd{(both_dfms}\hlopt{$}\hlstd{train,} \hlkwc{y}\hlstd{=quanteda}\hlopt{::}\hlkwd{docvars}\hlstd{(both_dfms}\hlopt{$}\hlstd{train,} \hlstr{"EV_article"}\hlstd{),} \hlkwc{prior}\hlstd{=}\hlstr{"uniform"}\hlstd{)}
+\hlstd{prob_nb}\hlkwb{<-}\hlkwd{predict}\hlstd{(nb,} \hlkwc{newdata} \hlstd{= both_dfms}\hlopt{$}\hlstd{test,} \hlkwc{type}\hlstd{=}\hlstr{"probability"}\hlstd{)}
+\hlstd{pred_nb}\hlkwb{<-}\hlkwd{data.frame}\hlstd{(}\hlkwd{predict}\hlstd{(nb,} \hlkwc{newdata} \hlstd{= both_dfms}\hlopt{$}\hlstd{test,} \hlkwc{type}\hlstd{=}\hlstr{"class"}\hlstd{))}
+\hlstd{res}\hlkwb{<-}\hlkwd{data.frame}\hlstd{(}\hlkwc{predict_nb}\hlstd{=pred_nb, prob_nb)}
+\hlkwd{names}\hlstd{(res)}\hlkwb{<-}\hlkwd{c}\hlstd{(}\hlstr{"predict_nb"}\hlstd{,} \hlstr{"prob_notev"}\hlstd{,} \hlstr{"prob_ev"}\hlstd{)}
+\hlkwd{assess_classification}\hlstd{(}\hlkwd{organise_results}\hlstd{(both_dfms}\hlopt{$}\hlstd{test, res))} \hlopt{%>%}
+  \hlkwd{filter}\hlstd{(rowname} \hlopt{%in%} \hlkwd{c}\hlstd{(}\hlstr{"Precision"}\hlstd{,} \hlstr{"Recall"}\hlstd{,} \hlstr{"F1"}\hlstd{))} \hlopt{%>%}
+  \hlkwd{kable}\hlstd{()}
+\end{alltt}
+\end{kframe}
+\begin{tabular}{l|r|l}
+\hline
+rowname & value & model\\
+\hline
+Precision & 0.6456212 & naive bayes\\
+\hline
+Recall & 0.9031339 & naive bayes\\
+\hline
+F1 & 0.7529691 & naive bayes\\
+\hline
+\end{tabular}
+
+
+\end{knitrout}
+
+
+\section{King Algorithm: implementation}
+
+\subsection{Incrementally Define $R$ and $S$}
+$R$ is our reference set. [King suggestions: could define $R$ based on one simple keyword search].
+\subsubsection{Intermediate step}
+Take keywords in $R$, $K_R$, ranked by simple statistic such as document frequency or frequency-inverse document frequency. User examines elements of $K_R$ apart from those used to define the set and chooses some keywords to define $Q_S$, which in turn generates a definition for $S$ so that we can run the rest of the algorithm.
+The user can continue to add keywords from $K_R$ into the final desired query $Q_RT$.
+This step also mitigates the issue of how to define a search set in large data sets that do not fit into memory all at once or may not even be able to be retrieved all at onece. is the BNA.
+
+\subsection{Partition $S$ into $T$ and $S \backslash T$}
+To partition $S$ into $T$ and $S \backslash T$, we first define a `training' set by sampling from $S$ and $R$. Since $R$ is typically much smaller than $S$ our test set for our classifiers is all all of $S$, we often use the entire $R$ set and a sample of $S$ as our training set.
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{R} \hlkwb{<-} \hlstd{classdocs[classdocs}\hlopt{$}\hlstd{EV_article}\hlopt{==}\hlnum{1}\hlstd{,]}
+\hlstd{R}\hlopt{$}\hlstd{R} \hlkwb{<-} \hlnum{1}
+\hlstd{R}\hlopt{$}\hlstd{in_sample}\hlkwb{<-}\hlnum{1}
+\hlstd{S} \hlkwb{<-} \hlstd{unclassdocs}
+\hlstd{S}\hlopt{$}\hlstd{R} \hlkwb{<-} \hlnum{0}
+
+\hlstd{n_sample_S} \hlkwb{<-} \hlnum{1000}
+\hlstd{S}\hlopt{$}\hlstd{in_sample}\hlkwb{<-}\hlnum{0}
+\hlstd{S}\hlopt{$}\hlstd{in_sample[}\hlkwd{sample}\hlstd{(}\hlnum{1}\hlopt{:}\hlkwd{nrow}\hlstd{(S), n_sample_S)]}\hlkwb{<-}\hlnum{1}
+
+\hlstd{R_S} \hlkwb{<-} \hlstd{dplyr}\hlopt{::}\hlkwd{bind_rows}\hlstd{(R, S)}
+\hlstd{R_S}\hlopt{$}\hlstd{fakeid}\hlkwb{<-}\hlnum{1}\hlopt{:}\hlkwd{nrow}\hlstd{(R_S)}
+
+
+
+\hlstd{R_S_corpus}\hlkwb{<-}\hlstd{quanteda}\hlopt{::}\hlkwd{corpus}\hlstd{(R_S[,}\hlkwd{c}\hlstd{(}\hlstr{"fakeid"}\hlstd{,} \hlstr{"ocr"}\hlstd{,} \hlstr{"in_sample"}\hlstd{,} \hlstr{"R"}\hlstd{)],} \hlkwc{text_field} \hlstd{=} \hlstr{"ocr"}\hlstd{)}
+\hlstd{R_S_dfm} \hlkwb{<-} \hlkwd{preprocess_corpus}\hlstd{(R_S_corpus,} \hlkwc{stem}\hlstd{=}\hlnum{FALSE}\hlstd{,} \hlkwc{min_termfreq}\hlstd{=}\hlnum{20}\hlstd{,} \hlkwc{min_docfreq} \hlstd{=} \hlnum{20}\hlstd{)}
+
+\hlstd{king_train_dfm}\hlkwb{<-}\hlstd{quanteda}\hlopt{::}\hlkwd{dfm_subset}\hlstd{(R_S_dfm, quanteda}\hlopt{::}\hlkwd{docvars}\hlstd{(R_S_dfm,} \hlstr{"in_sample"}\hlstd{)}\hlopt{==}\hlnum{1}\hlstd{)}
+\hlstd{king_nb} \hlkwb{<-} \hlstd{quanteda}\hlopt{::}\hlkwd{textmodel_nb}\hlstd{(king_train_dfm,} \hlkwc{y}\hlstd{=quanteda}\hlopt{::}\hlkwd{docvars}\hlstd{(king_train_dfm,} \hlstr{"R"}\hlstd{),} \hlkwc{prior}\hlstd{=}\hlstr{"uniform"}\hlstd{)}
+\hlstd{keywords}\hlkwb{<-}\hlkwd{nb_keywords}\hlstd{(king_train_dfm,} \hlstr{"R"}\hlstd{)}
+\hlstd{knitr}\hlopt{::}\hlkwd{kable}\hlstd{(}\hlkwd{head}\hlstd{(keywords,} \hlnum{20}\hlstd{))}
+\end{alltt}
+\end{kframe}
+\begin{tabular}{l|l|r|r|r}
+\hline
+  & rowname & 0 & 1 & id\\
+\hline
+3 & generated & 0.0221304 & 0.9778696 & 3\\
+\hline
+14 & legible & 0.0227857 & 0.9772143 & 14\\
+\hline
+8 & technology & 0.0250073 & 0.9749927 & 8\\
+\hline
+13 & deciphering & 0.0250073 & 0.9749927 & 13\\
+\hline
+2919 & chartist & 0.0267458 & 0.9732542 & 2919\\
+\hline
+2670 & detective & 0.0337936 & 0.9662064 & 2670\\
+\hline
+2271 & roughs & 0.0350241 & 0.9649759 & 2271\\
+\hline
+9415 & telegraphed & 0.0353459 & 0.9646541 & 9415\\
+\hline
+12921 & gutted & 0.0370477 & 0.9629523 & 12921\\
+\hline
+2501 & p.c & 0.0449904 & 0.9550096 & 2501\\
+\hline
+1079 & cobden & 0.0458847 & 0.9541153 & 1079\\
+\hline
+3421 & smashing & 0.0495804 & 0.9504196 & 3421\\
+\hline
+10653 & worker & 0.0558817 & 0.9441183 & 10653\\
+\hline
+9331 & schoolroom & 0.0579874 & 0.9420126 & 9331\\
+\hline
+13218 & gladstone's & 0.0579874 & 0.9420126 & 13218\\
+\hline
+3510 & ratepayers & 0.0602579 & 0.9397421 & 3510\\
+\hline
+8408 & telegram & 0.0632289 & 0.9367711 & 8408\\
+\hline
+1167 & disraeli & 0.0653778 & 0.9346222 & 1167\\
+\hline
+5 & optical & 0.0714484 & 0.9285516 & 5\\
+\hline
+12923 & pontypool & 0.0787619 & 0.9212381 & 12923\\
+\hline
+\end{tabular}
+
+
+\end{knitrout}
+
+After fitting the classifiers, we use the estimated parameters to generate predicted probabilities of $R$ membership for all documents in $S$. Of cource, all the search set documents in fact fall within $S$ but our interest in in learning from the \textit{mistakes} these classifiers make.
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{S_dfm} \hlkwb{<-} \hlstd{quanteda}\hlopt{::}\hlkwd{dfm_subset}\hlstd{(R_S_dfm, quanteda}\hlopt{::}\hlkwd{docvars}\hlstd{(R_S_dfm,} \hlstr{"R"}\hlstd{)}\hlopt{==}\hlnum{0}\hlstd{)}
+\hlstd{quanteda}\hlopt{::}\hlkwd{docvars}\hlstd{(S_dfm,} \hlstr{"T"}\hlstd{)}\hlkwb{<-}\hlkwd{predict}\hlstd{(king_nb,} \hlkwc{newdata} \hlstd{= S_dfm,} \hlkwc{type}\hlstd{=}\hlstr{"class"}\hlstd{)}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+\subsection{Discovering Keywords to Classify Documents}
+After partitioning $S$ into estimated target $T$ and non-target set $S \backslash T$, we must find and rank keywords which best discriminate $T$ and $S \backslash T$.
+King does this in three stages:
+\subsubsection{identify keywords in S}
+
+\subsubsection{sort them into those that predict each of the two steps}
+
+My suggestion here is simply to use binary\_dfm
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{S_dfm_binary}\hlkwb{<-}\hlstd{quanteda}\hlopt{::}\hlkwd{dfm_weight}\hlstd{(S_dfm,} \hlkwc{scheme}\hlstd{=}\hlstr{"boolean"}\hlstd{)}
+\hlstd{king_stage2} \hlkwb{<-} \hlstd{quanteda}\hlopt{::}\hlkwd{textmodel_nb}\hlstd{(S_dfm,} \hlkwc{y}\hlstd{=quanteda}\hlopt{::}\hlkwd{docvars}\hlstd{(S_dfm_binary,} \hlstr{"T"}\hlstd{),} \hlkwc{distribution}\hlstd{=}\hlstr{"Bernoulli"}\hlstd{)}
+\hlstd{king_stage2} \hlkwb{<-} \hlkwd{nb_keywords}\hlstd{(S_dfm,} \hlstr{"T"}\hlstd{)}
+\hlstd{knitr}\hlopt{::}\hlkwd{kable}\hlstd{(}\hlkwd{head}\hlstd{(king_stage2,} \hlnum{30}\hlstd{))}
+\end{alltt}
+\end{kframe}
+\begin{tabular}{l|l|r|r|r}
+\hline
+  & rowname & 0 & 1 & id\\
+\hline
+8722 & unionism & 0.0113223 & 0.9886777 & 8722\\
+\hline
+8429 & horden & 0.0141129 & 0.9858871 & 8429\\
+\hline
+1208 & protectionist & 0.0173133 & 0.9826867 & 1208\\
+\hline
+9203 & suffragists & 0.0203970 & 0.9796030 & 9203\\
+\hline
+9590 & nationalist & 0.0223910 & 0.9776090 & 9590\\
+\hline
+8485 & motor & 0.0237863 & 0.9762137 & 8485\\
+\hline
+10142 & socialism & 0.0290080 & 0.9709920 & 10142\\
+\hline
+8420 & nationalists & 0.0296335 & 0.9703665 & 8420\\
+\hline
+9858 & socialist & 0.0296335 & 0.9703665 & 9858\\
+\hline
+2335 & dump & 0.0302866 & 0.9697134 & 2335\\
+\hline
+9120 & bicycle & 0.0316832 & 0.9683168 & 9120\\
+\hline
+9011 & truncheons & 0.0399786 & 0.9600214 & 9011\\
+\hline
+3074 & asquith & 0.0427787 & 0.9572213 & 3074\\
+\hline
+8737 & industries & 0.0438013 & 0.9561987 & 8737\\
+\hline
+9286 & rowdyism & 0.0438013 & 0.9561987 & 9286\\
+\hline
+9331 & schoolroom & 0.0438013 & 0.9561987 & 9331\\
+\hline
+9415 & telegraphed & 0.0438013 & 0.9561987 & 9415\\
+\hline
+8994 & batons & 0.0455433 & 0.9544567 & 8994\\
+\hline
+8421 & socialists & 0.0460006 & 0.9539994 & 8421\\
+\hline
+2417 & workers & 0.0471852 & 0.9528148 & 2417\\
+\hline
+8747 & candidature & 0.0491752 & 0.9508248 & 8747\\
+\hline
+2631 & unionist & 0.0495718 & 0.9504282 & 2631\\
+\hline
+9138 & railings & 0.0502017 & 0.9497983 & 9138\\
+\hline
+9205 & barricaded & 0.0502017 & 0.9497983 & 9205\\
+\hline
+1993 & witness's & 0.0541586 & 0.9458414 & 1993\\
+\hline
+2919 & chartist & 0.0541586 & 0.9458414 & 2919\\
+\hline
+8609 & drafted & 0.0541586 & 0.9458414 & 8609\\
+\hline
+9043 & booing & 0.0541586 & 0.9458414 & 9043\\
+\hline
+8398 & hartlepool & 0.0575614 & 0.9424386 & 8398\\
+\hline
+8430 & sacked & 0.0598163 & 0.9401837 & 8430\\
+\hline
+\end{tabular}
+
+\begin{kframe}\begin{alltt}
+\hlstd{knitr}\hlopt{::}\hlkwd{kable}\hlstd{(}\hlkwd{tail}\hlstd{(king_stage2,} \hlnum{30}\hlstd{))}
+\end{alltt}
+\end{kframe}
+\begin{tabular}{l|l|r|r|r}
+\hline
+  & rowname & 0 & 1 & id\\
+\hline
+16564 & despised & 0.9361369 & 0.0638631 & 16564\\
+\hline
+97 & fruits & 0.9370575 & 0.0629425 & 97\\
+\hline
+16555 & breaching & 0.9370575 & 0.0629425 & 16555\\
+\hline
+5001 & candidly & 0.9379520 & 0.0620480 & 5001\\
+\hline
+16375 & fortress & 0.9379520 & 0.0620480 & 16375\\
+\hline
+4632 & citadel & 0.9381717 & 0.0618283 & 4632\\
+\hline
+16237 & scrip & 0.9388215 & 0.0611785 & 16237\\
+\hline
+7969 & lunette & 0.9392471 & 0.0607529 & 7969\\
+\hline
+4023 & aspire & 0.9420685 & 0.0579315 & 4023\\
+\hline
+7970 & laurent & 0.9428271 & 0.0571729 & 7970\\
+\hline
+13935 & shells & 0.9449882 & 0.0550118 & 13935\\
+\hline
+15303 & carolina & 0.9449882 & 0.0550118 & 15303\\
+\hline
+6762 & combat & 0.9463404 & 0.0536596 & 6762\\
+\hline
+7376 & batteries & 0.9504040 & 0.0495960 & 7376\\
+\hline
+4633 & belgians & 0.9537326 & 0.0462674 & 4633\\
+\hline
+14316 & belgian & 0.9556141 & 0.0443859 & 14316\\
+\hline
+7397 & repose & 0.9560607 & 0.0439393 & 7397\\
+\hline
+4619 & antwerp & 0.9562807 & 0.0437193 & 4619\\
+\hline
+11134 & senate & 0.9564985 & 0.0435015 & 11134\\
+\hline
+12926 & prussia & 0.9564985 & 0.0435015 & 12926\\
+\hline
+2897 & gerard & 0.9566425 & 0.0433575 & 2897\\
+\hline
+15893 & frontiers & 0.9577611 & 0.0422389 & 15893\\
+\hline
+4618 & capitulation & 0.9581658 & 0.0418342 & 4618\\
+\hline
+16545 & lillo & 0.9611442 & 0.0388558 & 16545\\
+\hline
+6394 & belgium & 0.9623721 & 0.0376279 & 6394\\
+\hline
+4623 & chasse & 0.9626404 & 0.0373596 & 4623\\
+\hline
+7977 & bombs & 0.9672625 & 0.0327375 & 7977\\
+\hline
+7981 & scheldt & 0.9679827 & 0.0320173 & 7981\\
+\hline
+7973 & besiegers & 0.9727743 & 0.0272257 & 7973\\
+\hline
+4625 & forts & 0.9769438 & 0.0230562 & 4625\\
+\hline
+\end{tabular}
+
+
+\end{knitrout}
+
+\subsection{rank them by degree of discriminatory power}
+We already seem to have done this in the step above
+\subsection{Human Input and Human-Computer Iteration}
+Now present
+
+
+\end{document}
