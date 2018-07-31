@@ -26,8 +26,9 @@ Our task is to find a good method for returning $T$ from $S$ in a form which we 
 \section{The data}
 <<loaddata, cache=TRUE, tidy=TRUE>>=
 classdocs<-durhamevp::get_classified_docs()
-classified_corpus<-quanteda::corpus(classdocs[,c("fakeid", "ocr", "EV_article")], text_field = "ocr")
-classified_dfm <- preprocess_corpus(classified_corpus, stem=FALSE, min_termfreq=20, min_docfreq = 10)
+# just some candidate document for speed/space reasons
+unclassdocs<-durhamevp::get_candidate_documents(3000:6000)
+
 @
 
 In the data there are \Sexpr{nrow(classdocs)} cases:
@@ -47,6 +48,9 @@ Algorithm:
   \item add to keyword list based on probability
 \end{enumerate}
 <<findkeywords>>=
+classified_corpus<-quanteda::corpus(classdocs[,c("fakeid", "ocr", "EV_article")], text_field = "ocr")
+classified_dfm <- preprocess_corpus(classified_corpus, stem=FALSE, min_termfreq=20, min_docfreq = 10)
+
 keywords<-nb_keywords(classified_dfm, "EV_article")
 knitr::kable(head(keywords, 20))
 @
@@ -68,6 +72,12 @@ names(res)<-c("predict_nb", "prob_notev", "prob_ev")
 assess_classification(organise_results(both_dfms$test, res)) %>%
   filter(rowname %in% c("Precision", "Recall", "F1")) %>%
   kable()
+
+description_corpus<-quanteda::corpus(classdocs[,c("fakeid", "description", "EV_article")], text_field = "description")
+description_dfm <- preprocess_corpus(description_corpus, stem=FALSE, min_termfreq=5, min_docfreq = 2)
+
+both_dfms<-split_dfm(description_dfm, n_train = 1000)
+
 @
 
 
@@ -76,6 +86,32 @@ Note: this way of creating the dfm does make dfms terms equal because one overal
 <<equaldfms>>=
 print(both_dfms$train)
 print(both_dfms$test)
+@
+
+\subsection{More realistic use case}
+Exclude non-election cases which would not be returned by our keywords:
+
+
+<<usingdescriptionrealistic, warning=FALSE>>=
+description_corpus<-quanteda::corpus(classdocs[classdocs$election_article==1,c("fakeid", "description", "EV_article")], text_field = "description")
+description_dfm <- preprocess_corpus(description_corpus, stem=FALSE, min_termfreq=5, min_docfreq = 2)
+
+both_dfms<-split_dfm(description_dfm, n_train = 1000)
+
+nb<-quanteda::textmodel_nb(both_dfms$train, y=quanteda::docvars(both_dfms$train, "EV_article"), prior="uniform")
+prob_nb<-predict(nb, newdata = both_dfms$test, type="probability")
+pred_nb<-data.frame(predict(nb, newdata = both_dfms$test, type="class"))
+res<-data.frame(predict_nb=pred_nb, prob_nb)
+names(res)<-c("predict_nb", "prob_notev", "prob_ev")
+assess_classification(organise_results(both_dfms$test, res)) %>%
+  filter(rowname %in% c("Precision", "Recall", "F1")) %>%
+  kable()
+
+description_corpus<-quanteda::corpus(classdocs[,c("fakeid", "description", "EV_article")], text_field = "description")
+description_dfm <- preprocess_corpus(description_corpus, stem=FALSE, min_termfreq=5, min_docfreq = 2)
+
+both_dfms<-split_dfm(description_dfm, n_train = 1000)
+
 @
 
 \section{Refinement Using OCR}
@@ -106,8 +142,61 @@ The user can continue to add keywords from $K_R$ into the final desired query $Q
 This step also mitigates the issue of how to define a search set in large data sets that do not fit into memory all at once or may not even be able to be retrieved all at onece. is the BNA.
 
 \subsection{Partition $S$ into $T$ and $S \backslash T$}
+To partition $S$ into $T$ and $S \backslash T$, we first define a `training' set by sampling from $S$ and $R$. Since $R$ is typically much smaller than $S$ our test set for our classifiers is all all of $S$, we often use the entire $R$ set and a sample of $S$ as our training set.
+<<fitkingtrain>>=
+R <- classdocs[classdocs$EV_article==1,]
+R$R <- 1
+R$in_sample<-1
+S <- unclassdocs
+S$R <- 0
+
+n_sample_S <- 1000
+S$in_sample<-0
+S$in_sample[sample(1:nrow(S), n_sample_S)]<-1
+
+R_S <- dplyr::bind_rows(R, S)
+R_S$fakeid<-1:nrow(R_S)
+
+
+
+R_S_corpus<-quanteda::corpus(R_S[,c("fakeid", "ocr", "in_sample", "R")], text_field = "ocr")
+R_S_dfm <- preprocess_corpus(R_S_corpus, stem=FALSE, min_termfreq=20, min_docfreq = 20)
+
+king_train_dfm<-quanteda::dfm_subset(R_S_dfm, quanteda::docvars(R_S_dfm, "in_sample")==1)
+king_nb <- quanteda::textmodel_nb(king_train_dfm, y=quanteda::docvars(king_train_dfm, "R"), prior="uniform")
+keywords<-nb_keywords(king_train_dfm, "R")
+knitr::kable(head(keywords, 20))
+@
+
+After fitting the classifiers, we use the estimated parameters to generate predicted probabilities of $R$ membership for all documents in $S$. Of cource, all the search set documents in fact fall within $S$ but our interest in in learning from the \textit{mistakes} these classifiers make.
+
+<<learnclassmistakes>>=
+S_dfm <- quanteda::dfm_subset(R_S_dfm, quanteda::docvars(R_S_dfm, "R")==0)
+quanteda::docvars(S_dfm, "T")<-predict(king_nb, newdata = S_dfm, type="class")
+@
 
 \subsection{Discovering Keywords to Classify Documents}
+After partitioning $S$ into estimated target $T$ and non-target set $S \backslash T$, we must find and rank keywords which best discriminate $T$ and $S \backslash T$.
+King does this in three stages:
+\subsubsection{identify keywords in S}
 
+\subsubsection{sort them into those that predict each of the two steps}
+
+My suggestion here is simply to use binary\_dfm
+
+<<>>=
+S_dfm_binary<-quanteda::dfm_weight(S_dfm, scheme="boolean")
+king_stage2 <- quanteda::textmodel_nb(S_dfm, y=quanteda::docvars(S_dfm_binary, "T"), distribution="Bernoulli")
+king_stage2 <- nb_keywords(S_dfm, "T")
+knitr::kable(head(king_stage2, 30))
+
+knitr::kable(tail(king_stage2, 30))
+@
+
+\subsection{rank them by degree of discriminatory power}
+We already seem to have done this in the step above
 \subsection{Human Input and Human-Computer Iteration}
+Now present
+
+
 \end{document}
