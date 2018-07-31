@@ -10,7 +10,7 @@ We only have access to a big data set via boolean search.
 
 Sub-sets of the data set returned by a single key word on a single day are large.For example for the single search term `election' for the single day of 1 August 1868 returns 1982 articles. The search term `riot' for the same day (close to the 1868 General Election) returns 360 articles, 228 of which do not also contain the word election.
 
-With even a small number of search terms it quicly becomes impractical to examine all the documents even for a single day.
+With even a small number of search terms it quickly becomes impractical to examine all the documents even for a single day.
 
 Following King et al we define
 $S$ - the search set of all documents in the British Newspaper Archive
@@ -53,11 +53,13 @@ knitr::kable(head(keywords, 20))
 
 \section{Refinement Using Description}
 
-<<usingdescription>>=
+
+<<usingdescription, warning=FALSE>>=
 description_corpus<-quanteda::corpus(classdocs[,c("fakeid", "description", "EV_article")], text_field = "description")
 description_dfm <- preprocess_corpus(description_corpus, stem=FALSE, min_termfreq=5, min_docfreq = 2)
 
-both_dfms<-split_dfm(description_dfm, n_train = 1500)
+both_dfms<-split_dfm(description_dfm, n_train = 1000)
+
 nb<-quanteda::textmodel_nb(both_dfms$train, y=quanteda::docvars(both_dfms$train, "EV_article"), prior="uniform")
 prob_nb<-predict(nb, newdata = both_dfms$test, type="probability")
 pred_nb<-data.frame(predict(nb, newdata = both_dfms$test, type="class"))
@@ -66,6 +68,14 @@ names(res)<-c("predict_nb", "prob_notev", "prob_ev")
 assess_classification(organise_results(both_dfms$test, res)) %>%
   filter(rowname %in% c("Precision", "Recall", "F1")) %>%
   kable()
+@
+
+
+Note: this way of creating the dfm does make dfms terms equal because one overall dfm is created and then it is subset. You can see below that the number of features in both dfms is the same:
+
+<<equaldfms>>=
+print(both_dfms$train)
+print(both_dfms$test)
 @
 
 \section{Refinement Using OCR}
@@ -74,7 +84,7 @@ assess_classification(organise_results(both_dfms$test, res)) %>%
 ocr_corpus<-quanteda::corpus(classdocs[,c("fakeid", "ocr", "EV_article")], text_field = "ocr")
 ocr_dfm <- preprocess_corpus(ocr_corpus, stem=FALSE, min_termfreq=5, min_docfreq = 2)
 
-both_dfms<-split_dfm(ocr_dfm, n_train = 1500)
+both_dfms<-split_dfm(ocr_dfm, n_train = 1000)
 nb<-quanteda::textmodel_nb(both_dfms$train, y=quanteda::docvars(both_dfms$train, "EV_article"), prior="uniform")
 prob_nb<-predict(nb, newdata = both_dfms$test, type="probability")
 pred_nb<-data.frame(predict(nb, newdata = both_dfms$test, type="class"))
@@ -86,4 +96,18 @@ assess_classification(organise_results(both_dfms$test, res)) %>%
 @
 
 
+\section{King Algorithm: implementation}
+
+\subsection{Incrementally Define $R$ and $S$}
+$R$ is our reference set. [King suggestions: could define $R$ based on one simple keyword search].
+\subsubsection{Intermediate step}
+Take keywords in $R$, $K_R$, ranked by simple statistic such as document frequency or frequency-inverse document frequency. User examines elements of $K_R$ apart from those used to define the set and chooses some keywords to define $Q_S$, which in turn generates a definition for $S$ so that we can run the rest of the algorithm.
+The user can continue to add keywords from $K_R$ into the final desired query $Q_RT$.
+This step also mitigates the issue of how to define a search set in large data sets that do not fit into memory all at once or may not even be able to be retrieved all at onece. is the BNA.
+
+\subsection{Partition $S$ into $T$ and $S \backslash T$}
+
+\subsection{Discovering Keywords to Classify Documents}
+
+\subsection{Human Input and Human-Computer Iteration}
 \end{document}
