@@ -7,7 +7,7 @@ Note: it is more efficient to preprocess and split separately, especially if run
 \usage{
 split_corpus(the_corpus, n_train, min_termfreq = 2, min_docfreq = 2,
   remove_punct = TRUE, remove_numbers = TRUE, remove_hyphens = TRUE,
-  dfm_tfidf = FALSE)
+  dfm_tfidf = FALSE, stem = TRUE)
 }
 \description{
 Preprocess a text corpus and divide it into training and testing sets based on number of training items.

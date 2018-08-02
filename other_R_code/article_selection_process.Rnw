@@ -1,4 +1,5 @@
 \documentclass{article}
+\usepackage{amsmath}
 
 \begin{document}
 <<loadpackages, echo=FALSE, warning=FALSE, message=FALSE>>=
@@ -26,12 +27,12 @@ Our task is to find a good method for returning $T$ from $S$ in a form which we 
 \section{The data}
 <<loaddata, cache=TRUE, tidy=TRUE>>=
 classdocs<-durhamevp::get_classified_docs()
+
 # just some candidate document for speed/space reasons
 unclassdocs<-durhamevp::get_candidate_documents(3000:6000)
-
 @
 
-In the data there are \Sexpr{nrow(classdocs)} cases:
+In the classified data there are \Sexpr{nrow(classdocs)} cases:
 \begin{itemize}
   \item \textbf{\Sexpr{sum(classdocs$election_article==0)}} non-election articles.
   \item \textbf{\Sexpr{sum(classdocs$EV_article==1)}} election violence articles.
@@ -62,7 +63,7 @@ knitr::kable(head(keywords, 20))
 description_corpus<-quanteda::corpus(classdocs[,c("fakeid", "description", "EV_article")], text_field = "description")
 description_dfm <- preprocess_corpus(description_corpus, stem=FALSE, min_termfreq=5, min_docfreq = 2)
 
-both_dfms<-split_dfm(description_dfm, n_train = 1000)
+both_dfms<-split_dfm(description_dfm, n_train = 700)
 
 nb<-quanteda::textmodel_nb(both_dfms$train, y=quanteda::docvars(both_dfms$train, "EV_article"), prior="uniform")
 prob_nb<-predict(nb, newdata = both_dfms$test, type="probability")
@@ -76,7 +77,7 @@ assess_classification(organise_results(both_dfms$test, res)) %>%
 description_corpus<-quanteda::corpus(classdocs[,c("fakeid", "description", "EV_article")], text_field = "description")
 description_dfm <- preprocess_corpus(description_corpus, stem=FALSE, min_termfreq=5, min_docfreq = 2)
 
-both_dfms<-split_dfm(description_dfm, n_train = 1000)
+both_dfms<-split_dfm(description_dfm, n_train = 700)
 
 @
 
@@ -96,7 +97,7 @@ Exclude non-election cases which would not be returned by our keywords:
 description_corpus<-quanteda::corpus(classdocs[classdocs$election_article==1,c("fakeid", "description", "EV_article")], text_field = "description")
 description_dfm <- preprocess_corpus(description_corpus, stem=FALSE, min_termfreq=5, min_docfreq = 2)
 
-both_dfms<-split_dfm(description_dfm, n_train = 1000)
+both_dfms<-split_dfm(description_dfm, n_train = 700)
 
 nb<-quanteda::textmodel_nb(both_dfms$train, y=quanteda::docvars(both_dfms$train, "EV_article"), prior="uniform")
 prob_nb<-predict(nb, newdata = both_dfms$test, type="probability")
@@ -120,7 +121,7 @@ both_dfms<-split_dfm(description_dfm, n_train = 1000)
 ocr_corpus<-quanteda::corpus(classdocs[,c("fakeid", "ocr", "EV_article")], text_field = "ocr")
 ocr_dfm <- preprocess_corpus(ocr_corpus, stem=FALSE, min_termfreq=5, min_docfreq = 2)
 
-both_dfms<-split_dfm(ocr_dfm, n_train = 1000)
+both_dfms<-split_dfm(ocr_dfm, n_train = 700)
 nb<-quanteda::textmodel_nb(both_dfms$train, y=quanteda::docvars(both_dfms$train, "EV_article"), prior="uniform")
 prob_nb<-predict(nb, newdata = both_dfms$test, type="probability")
 pred_nb<-data.frame(predict(nb, newdata = both_dfms$test, type="class"))
@@ -150,7 +151,7 @@ R$in_sample<-1
 S <- unclassdocs
 S$R <- 0
 
-n_sample_S <- 1000
+n_sample_S <- 700
 S$in_sample<-0
 S$in_sample[sample(1:nrow(S), n_sample_S)]<-1
 
@@ -196,7 +197,47 @@ knitr::kable(tail(king_stage2, 30))
 \subsection{rank them by degree of discriminatory power}
 We already seem to have done this in the step above
 \subsection{Human Input and Human-Computer Iteration}
-Now present
+
+The King et al suggestion is to present the above lists to humans who then choose additional keywords from these lists. That might be fine if the final goal is develop keywords. However, this does not work so well if the final goal is to obtain sets of documents based on those keywords. Some problems with this approach for obtaining documents
+\begin{enumerate}
+  \item the set of documents will keep on growing without limit (with many irrelevant documents)
+  \item there is no guidance about which keywords to select from the lists presented
+\end{enumerate}
+
+An alternative proposal is to continue with a classification approach. That is to treat the classifer as informative about two separate matters: keywords retrival as potentially informative
+
+The stage II classifier is informative about the following issues:
+\begin{enumerate}
+  \item terms which are in $S$ but not in $R$ which may be positively predictive of election violence.
+  \item terms which are very differently predictive of election violence between stage I and stage II classification.
+  \item
+\end{enumerate}
+
+Idea 1: For keyword $t$ in keywords $1 \dots n$, $Q_t$ is the Boolean query which returns document $d$ from $S$ if $d$ contains $t$. $S\prime$ is the set of documents returned by the set of queries $Q_{T_1} \dots Q_{T_n}$. The probability that document $d$ is an example of the concept of interest is given by the set of queries which return that document. We run independent queries with each of the keywords. We have different sets returned from
+
+Idea 2: King's stage II classification can be thought of of the first part of an EM process which augments information from labelled data with information from unlabelled data. See for a classic example Nigam et. al. 2000 - Semi-supervised parameter estimation: can learn from a combination of labeled and unlabeled data in a loop. First train a classifier using available labeled documents, and probabilistically label the unlabeled documents. Then train a new classifier using the labels for all the documents, iterate to convergence. This basic EM procedure works well when the data conform to the generative assumptions of the model. However, these assumptions are often violated in practice, and poor performance can result. Two extension improve classification accuracy (1) a weighting factor to modulate the contribution of the unlabeled data and (2) the use of multiple mixture components per class.
+
+How can unlabeled data increase classification accuracy? Unlabelled data provide information about the joint probability distribution over words. Suppose that using only the labeled data we determine that documents containing the word `riot' belongs to the election violence class. If we use this fact to estimate the classification of the many unlabeled documents, we might find the word `bludgeon' occurs frequently with the word `riot' and we might construct a more accurate classifier that considers both `riot' and `bludgeon' as indicators of positive examples.
+
+
+Given a training set ($x^{(i)}, y^{(i)}$) for $i=1 \dots n$, where $\theta$ is a paramter vector consiting of the values for all parameters $q(y)$ [the probability of seeing the label $y$] and $q_i(x \vert y)$ [the probability of attribute $j$ taking the value $x$ conditional on the underlying label being $y$] the log-likelihood function is:
+\begin{equation}
+\begin{split}
+      L\left(\theta\right) & = \sum_{i=1}^{n} \log p\left(x^{(i)}, y^{(i)}\right) \\
+           & =  \sum_{i=1}^{n} \log q(y^{(i)}) + \sum_{i=1}^{n} \sum_{j=1}^{d} \log q_j \left(x_j^{(i)} \vert y^{(i)}\right)
+           \end{split}
+\end{equation}
+Idea 3: to find a set of keywords searches which returns $T$ - when you have a set of keywords which returns $T$ - adding new keywords will change $S$ but not reveal more cases of $T$ - so will not see large changes in individual word predictivity of class in Naive Bayes classifier.  encompasses the add search terms until revised data set $S\prime$ is not substantially changed by addition of new
+When new search terms are added this changes the nature of $S$ - at each iteration new information added - consider changes to $S\prime$
+
+<<>>=
+names(king_stage2)<-c("rowname", "stage2_0", "stage2_1", "stage2_id")
+names(keywords)<-c("rowname", "stage1_0", "stage1_1", "stage1_id")
+left_join(king_stage2, keywords, by="rowname") %>%
+  mutate(logit_stage1 =log(stage1_1/stage1_0), logit_stage2=log(stage2_1/stage2_0)) %>%
+  ggplot(aes(logit_stage1, logit_stage2))+
+  geom_point()
+@
 
 
 \end{document}
