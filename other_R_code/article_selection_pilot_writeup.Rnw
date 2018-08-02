@@ -1,8 +1,26 @@
 \documentclass{article}
-\usepackage{amsmath}
-
+\title{Election Violence Newspaper Article Selection Process Pilot}
 \begin{document}
+\maketitle
+\section{Summary}
+The document below provides code to implement the keyword selection process (and later the plan is that it will describe the whole workflow of article selection).
 
+The main point so far is to use classifier suggestions to expand keywords so that we capture cases of election violence. The highly predictive keyword lists can be found in Section \ref{sect:keysuggest}.
+
+Should we use highly predictive keywords (which might reinforce patterns we have found) or should we use words whose predictivity is changing between first and second stage classification.
+
+As a first attempt (not particularly principled) I suggest taking:
+\begin{description}
+ \item [one from highly predictive in stage 1 classification] rough
+ \item [one from highly predictive in stage 2 classification] mob
+ \item [one from becomes highly predictive from stage 1 to stage 2] stone
+\end{description}
+
+
+
+Note: Here the highly predictive keywords are taken only from the description (not the full ocr). If we want to use the King method then this is necessary because we won't have the full ocr for unclassified cases in general. However, if we use the first stage classifier we could use the full ocr. Lists from first stage classifier with full ocr can be found in Section \ref{sect:ocrclass}
+
+\section{Packages used}
 <<setuppath, echo=FALSE, results="hide">>=
 dropbox.path<-switch (Sys.info()["nodename"],
                       "DM-GIA-051"="D:/Dropbox",
@@ -13,20 +31,78 @@ dropbox.path<-switch (Sys.info()["nodename"],
 project.path<-paste0(dropbox.path, "/ESRC Grant EV 19th Century")
 
 knitr::read_chunk(paste0(project.path, "/Code/durhamevp/other_R_code/article_selection_pilot.R"))
+options(tidy=TRUE, width=50)
+@
+
+<<resetdb, echo=FALSE, warning=FALSE, message=FALSE, results="hide">>=
+# Is this necessary because of cached results below? Otherwise sometime get error messages like Corrupt MySQL handle
+durhamevp::killDbConnections()
+
 @
 
 <<pilot.packages, warning=FALSE, message=FALSE>>=
 
 @
 
+\section{Download Classified Cases}
+There is an initial set of cases which represent the concept (in this case `election violence'). We also have a set of cases which do not represent the concept (Note: King et al do not have the non-election violence cases).
+
+
+I also add indicators that this material is classified (\texttt{classified==1}) and that it is not unclassified (\texttt{unclass==0}) which will be useful when added to subsequent material.
 <<download.R.set, cache=TRUE>>=
 
 @
 
+\section{Download Initial 1832 Cases}
+We run three searches on the BNA. election riot, election incident, election disturbance. The code below returns these search results (including the description text) as stored on the database.
+
+A (slightly adjusted) version of the url is used to detect and remove material which is in the classified set above.
+
+I also add indicators that this material is not classified (\texttt{classified==0}) and that it is unclassified (\texttt{unclass==1}) which will be useful when added to the classified material above.
+
+(Note: infact these searches have been run multiple times in 1832 probably for experimentation reasons - presumably because they were run very close in time to each other with no new material added the results are identical - for this reason I have just chosen one instance of each of the three searches).
 <<initial.1832.results>>=
 
 @
 
 
+\section{First stage classification}
+Here I use the classified non-election violence cases which we have. King et al do not have the equivalent - so they use the unclassified cases as non-cases.
+<<first.stage.classification>>=
+
+@
+
+\section{Second stage classification}
+<<second.stage.classification>>=
+
+@
+
+\section{Connect results}
+Connect results from the two classification stages.
+<<join.stages>>=
+
+@
+
+\section{Keyword suggestions}
+\label{sect:keysuggest}
+From the first stage classifier (words most predictive of election violence articles)
+From the second stage classifier (words most predictive of predicted election violence articles)
+From the difference between the first and second stage classifers (words which become much more and much less predicitive of election violence articles between the two classification stages).
+<<classification.results>>=
+
+@
+
+
+\section{Some descriptives of search returns and overlaps}
+The 1832 searches with the three terms (election riot, election disturbance, election incident) returned a total of \Sexpr{length(unique(res_i_1832$url))} unique articles. Below are the numbers and proportion of total returns from combinations of the initial search terms and from each search term independently.
+<<descriptives.1832, results='asis'>>=
+
+@
+
+\section{First stage classification on full OCR}
+\label{sect:ocrclass}
+<<first.stage.classification.ocr>>=
+
+@
 
 \end{document}
