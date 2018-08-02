@@ -160,7 +160,7 @@ get_classified_docs <- function (){
                                ev_docs)
   the_corpus$general_corpus<-1
 
-  the_corpus<-the_corpus[,c("id", "title", "description", "type", "page", "publication_date", "word_count", "ocr", "election_article", "EV_article", "just_election", "corpus_election", "electoral_nature", "violent_nature", "candidate_document_id")]
+  the_corpus<-the_corpus[,c("id", "title", "url", "description", "type", "page", "publication_date", "word_count", "ocr", "election_article", "EV_article", "just_election", "corpus_election", "electoral_nature", "violent_nature", "candidate_document_id")]
   the_corpus <- tibble::rowid_to_column(the_corpus, "fakeid")
 
   the_corpus
