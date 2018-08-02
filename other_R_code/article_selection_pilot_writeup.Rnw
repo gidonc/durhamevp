@@ -1,0 +1,32 @@
+\documentclass{article}
+\usepackage{amsmath}
+
+\begin{document}
+
+<<setuppath, echo=FALSE, results="hide">>=
+dropbox.path<-switch (Sys.info()["nodename"],
+                      "DM-GIA-051"="D:/Dropbox",
+                      "DM-GIA-055"="D:/Dropbox",
+                      "GIDON-ASUS-15"="C:/Users/Gidon/Dropbox",
+                      "GID-HOME-LENOVO"="C:/Users/Gidon/Dropbox")
+
+project.path<-paste0(dropbox.path, "/ESRC Grant EV 19th Century")
+
+knitr::read_chunk(paste0(project.path, "/Code/durhamevp/other_R_code/article_selection_pilot.R"))
+@
+
+<<pilot.packages, warning=FALSE, message=FALSE>>=
+
+@
+
+<<download.R.set, cache=TRUE>>=
+
+@
+
+<<initial.1832.results>>=
+
+@
+
+
+
+\end{document}
