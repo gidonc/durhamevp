@@ -208,7 +208,7 @@ classifier_select_docs <- function(classifier, new_docs, text_field="description
   new_docs[want_these,]
 }
 
-stage2<-function(train, new_docs, text_field="description", class_to_keep=1, training_classify_var="EV_article", prior="uniform"){
+classifier_selection_description<-function(train, new_docs, text_field="description", class_to_keep=1, training_classify_var="EV_article", prior="uniform"){
   #'
   #' @export
 
@@ -220,7 +220,7 @@ stage2<-function(train, new_docs, text_field="description", class_to_keep=1, tra
   new_docs_subset
 }
 
-stage3<-function(train, new_docs, text_field="ocr", class_to_keep=1, training_classify_var="EV_article", prior="uniform"){
+classifier_selection_ocr<-function(train, new_docs, text_field="ocr", class_to_keep=1, training_classify_var="EV_article", prior="uniform"){
   #'
   #' @export
   train_corpus<-quanteda::corpus(train[,c(text_field, training_classify_var)], text_field = text_field)
