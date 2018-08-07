@@ -186,3 +186,47 @@ contains_words <- function(the_dataframe, contains_words, text_col="ocr", result
 
   res_set
 }
+
+
+classifier_select_docs <- function(classifier, new_docs, text_field="description", class_to_keep=1){
+  #' Subsets a dataframe of documents based on a classifier.
+  #'
+  #' @param classifier The quanteda naive bayes classifier to perform the classification
+  #' @param new_docs A data frame containing the documents to classify
+  #' @param text_field The field containing the text to classify
+  #' @param class_to_keep The classifier class to keep
+  #' @param ... arguments to be passed to \code{preprocess_corpus}
+  #' @return The subset of the \code{docs_df} which is classified as \code{class_to_keep}
+  #' @export
+
+  the_corpus <- quanteda::corpus(new_docs[,c(text_field), drop=FALSE], text_field = text_field)
+  the_dfm<-durhamevp::preprocess_corpus(the_corpus)
+  the_dfm<-quanteda::dfm_select(the_dfm, classifier$x)
+  want_these<-predict(classifier, newdata = the_dfm, type="class")==class_to_keep
+
+
+  new_docs[want_these,]
+}
+
+stage2<-function(train, new_docs, text_field="description", class_to_keep=1, training_classify_var="EV_article", prior="uniform"){
+  #'
+  #' @export
+
+  train_corpus<-quanteda::corpus(train[,c(text_field, training_classify_var)], text_field = text_field)
+  train_dfm<-durhamevp::preprocess_corpus(train_corpus)
+  classifier<-quanteda::textmodel_nb(train_dfm, y=quanteda::docvars(train_dfm, training_classify_var), prior=prior)
+  new_docs_subset<-durhamevp::classifier_select_docs(classifier=classifier, new_docs=new_docs, text_field = text_field, class_to_keep = class_to_keep)
+
+  new_docs_subset
+}
+
+stage3<-function(train, new_docs, text_field="ocr", class_to_keep=1, training_classify_var="EV_article", prior="uniform"){
+  #'
+  #' @export
+  train_corpus<-quanteda::corpus(train[,c(text_field, training_classify_var)], text_field = text_field)
+  train_dfm<-durhamevp::preprocess_corpus(train_corpus)
+  classifier<-quanteda::textmodel_nb(train_dfm, y=quanteda::docvars(train_dfm, training_classify_var), prior=prior)
+  new_docs_subset<-durhamevp::classifier_select_docs(classifier=classifier, new_docs=new_docs, text_field = text_field, class_to_keep = class_to_keep)
+
+  new_docs_subset
+}
