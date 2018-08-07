@@ -5,7 +5,7 @@
 \title{Subsets a dataframe of documents based on a classifier.}
 \usage{
 classifier_select_docs(classifier, new_docs, text_field = "description",
-  class_to_keep = 1, ...)
+  class_to_keep = 1)
 }
 \arguments{
 \item{classifier}{The quanteda naive bayes classifier to perform the classification}
