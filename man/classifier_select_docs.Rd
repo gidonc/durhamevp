@@ -4,19 +4,19 @@
 \alias{classifier_select_docs}
 \title{Subsets a dataframe of documents based on a classifier.}
 \usage{
-classifier_select_docs(classifier, doc_df, text_field = "description",
-  docid_field = "candidate_document_id", class_to_keep = 1, ...)
+classifier_select_docs(classifier, new_docs, text_field = "description",
+  class_to_keep = 1, ...)
 }
 \arguments{
 \item{classifier}{The quanteda naive bayes classifier to perform the classification}
+
+\item{new_docs}{A data frame containing the documents to classify}
 
 \item{text_field}{The field containing the text to classify}
 
 \item{class_to_keep}{The classifier class to keep}
 
 \item{...}{arguments to be passed to \code{preprocess_corpus}}
-
-\item{docs_df}{A data frame containing the documents to classify}
 }
 \value{
 The subset of the \code{docs_df} which is classified as \code{class_to_keep}
