@@ -13,7 +13,7 @@ create_docsets<-function(alldocs, size, seed){
   return(list(training=training, testing=testing))
 }
 
-preprocess_corpus<-function(the_corpus, stem=TRUE, min_termfreq=2, min_docfreq=2, max_termfreq=NULL, max_docfreq=NULL,
+preprocess_corpus<-function(the_corpus, stem=TRUE, min_termfreq=20, min_docfreq=20, max_termfreq=NULL, max_docfreq=NULL,
                             remove_punct=TRUE, remove_numbers=TRUE, remove_hyphens=TRUE, termfreq_type="count", docfreq_type="count",
                             dfm_tfidf=FALSE){
   #' Preprocess a text corpus and return a document feature matrix (wrapper round quanteda functions).
@@ -22,8 +22,8 @@ preprocess_corpus<-function(the_corpus, stem=TRUE, min_termfreq=2, min_docfreq=2
   #' @param remove_punct default TRUE
   #' @param remove_numbers default TRUE
   #' @param remove_hyphens default TRUE
-  #' @param min_termfreq default 2
-  #' @param min_docfreq default 2
+  #' @param min_termfreq default 20
+  #' @param min_docfreq default 20
   #' @param max_termfreq default NULL
   #' @param max_docfreq default NULL
   #' @param termfreq_type default "count"
@@ -79,4 +79,57 @@ nb_keywords<-function(training, classvar, distribution="Bernoulli"){
   post$id<-seq.int(nrow(post))
   post<-post[order(post[,3], decreasing=TRUE),]
   return(post)
+}
+
+run_firststage<-function(docs, docidvar="fakeid", classvar="classified", typevar="EV_article", textvar="description",
+                         stem=TRUE, min_termfreq=20, min_docfreq=20, max_termfreq=NULL, max_docfreq=NULL,
+                         remove_punct=TRUE, remove_numbers=TRUE, remove_hyphens=TRUE, termfreq_type="count", docfreq_type="count",
+                         dfm_tfidf=FALSE,
+                         cutpoint=0.8){
+  #' First stage function of the article selection process taking in a set of documents and returning a set of potential keywords
+  #' @param docs Data frame of documents containing classified cases (R-set) and unclassified cases (S-set)
+  #' @param docidvar Unique document id variable; default = "fakeid"
+  #' @param classvar Indicator identifying classified documents; default = "classified"
+  #' @param typevar Indicator identifying election violence articles; default = "EV_article"
+  #' @param textvar Indicator identifying text field to classify on; default = "description"
+  #' @param stem default TRUE
+  #' @param remove_punct default TRUE
+  #' @param remove_numbers default TRUE
+  #' @param remove_hyphens default TRUE
+  #' @param min_termfreq default 20
+  #' @param min_docfreq default 20
+  #' @param max_termfreq default NULL
+  #' @param max_docfreq default NULL
+  #' @param termfreq_type default "count"
+  #' @param docfreq_type default "count"
+  #' @param dfm_tfidf default FALSE
+  #' @param cutpoint Value from (0,1); default = 0.8
+  #' @export
+  #Creating corpus and dfm
+  full_corpus<-quanteda::corpus(docs[c(docidvar, classvar, typevar, textvar)], text_field=textvar)
+  full_dfm <- durhamevp::preprocess_corpus(full_corpus, stem=stem, remove_punct=remove_punct, remove_numbers=remove_numbers, remove_hyphens=remove_hyphens,
+                                           min_termfreq=min_termfreq, min_docfreq = min_docfreq, termfreq_type=termfreq_type, docfreq_type=docfreq_type)
+
+  #Training naive Bayes classifier on classified subset of documents and extract keywords from this stage
+  class_dfm<-quanteda::dfm_subset(full_dfm, quanteda::docvars(full_dfm, classvar)==1)
+  class_nb <- quanteda::textmodel_nb(class_dfm, y=quanteda::docvars(class_dfm, typevar), prior="uniform")
+  keywords1<-durhamevp::nb_keywords(class_dfm, typevar)
+
+  #Use trained classifier to predict election violence article from unclassified documents and extract keywords
+  S_dfm <- quanteda::dfm_subset(full_dfm, quanteda::docvars(full_dfm, classvar)==0)
+  quanteda::docvars(S_dfm, "T")<-predict(class_nb, newdata = S_dfm, type="class")
+  keywords2<-nb_keywords(S_dfm, "T")
+
+  #Combine keywords from classified and unclassified sets and identify those with largest change in predictive power between classified and unclassified documents
+  names(keywords1)<-c("keyword", "stg1_0", "stg1_1", "id")
+  names(keywords2)<-c("keyword", "stg2_0", "stg2_1", "id")
+  change<-left_join(keywords1, keywords2, by=c("keyword", "id")) %>%
+    mutate(lgt_stg1 =log(stg1_1/stg1_0), lgt_stg2=log(stg2_1/stg2_0)) %>%
+    mutate(abs_lgt_chng=abs(lgt_stg1-lgt_stg2)) %>%
+    mutate(lgt_chng=lgt_stg2-lgt_stg1)
+
+  #Return ordered keyword suggestions from most to least difference in predictiveness
+  return(change %>%
+    filter(stg2_1>=cutpoint) %>%
+    arrange(-lgt_chng))
 }

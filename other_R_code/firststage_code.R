@@ -14,6 +14,46 @@ rm(list=ls())
 #keyring::key_set(service="evp", user="data_writer")
 #con<-evdb_connect(password_method = "keyring")
 
+#Create clean document set for the 1832 election to run first stage function
+classdocs<-durhamevp::get_classified_docs()
+
+classdocs<-classdocs %>%
+  dplyr::mutate(std_url = sub("download/", "", url)) %>%
+  dplyr::mutate(unclass=0, classified=1)
+
+##----initial.1832.results----
+all_searches<-get_archivesearches()
+initial_1832_searches<-all_searches%>%
+  dplyr::select(id, search_text, archive_date_start, archive_date_end) %>%
+  filter(archive_date_start>lubridate::ymd("1832-01-01"), archive_date_start<lubridate::ymd("1832-12-31")) %>%
+  filter(search_text %in% c("election riot", "election incident", "election disturbance"))
+
+# a number of precisely duplicated searches here which return precisely duplicated results - we could handle this later on but here probably simplest to just use three distinct ones
+# election riot - id 73
+# election disturbance - id 81
+# election incident - id 85
+res_i_1832<-get_archivesearchresults(archive_search_id = c(73, 81, 85)) %>%
+  left_join(all_searches, by=c("archive_search_id"="id")) %>%
+  mutate(std_url = sub("download/", "", url))
+
+is_classified <-res_i_1832$std_url %in% classdocs$std_url
+
+unclass_i_1832 <- res_i_1832[!is_classified,] %>%
+  mutate(unclass=1, classified=0)
+
+all_docs<- bind_rows(classdocs,
+                     unclass_i_1832)
+all_docs$fakeid<-1:nrow(all_docs)
+
+#Run the first stage function
+kwsuggestions<-run_firststage(docs=all_docs,min_termfreq=50, min_docfreq=50)
+kwsuggestions
+
+
+
+
+##----OLD CODE----
+
 #Get candidate documents
 classdoc<-get_classified_docs()
 
