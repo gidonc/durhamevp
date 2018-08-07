@@ -251,16 +251,18 @@ get_document<-function(document_id){
   documents
 }
 
-get_candidate_documents<-function(cand_document_id){
+get_candidate_documents<-function(cand_document_id, url="all"){
   #' Returns the candidate document table filtered by candidate document id
   #'
   #' @param cand_document_id Candidate document id or ids to filter by.
+  #' @param url document url or urls to filter by.
   #' @export
 
   con <- manage_dbcons()
   this_sql<-"SELECT * FROM portal_candidatedocument" # base query
 
   res<-build_where_condition("id", cand_document_id, this_sql, NULL)
+  res<-build_where_condition("url", url, res$condition, res$interpolate_list)
   res[["condition"]] <- paste(res[["condition"]], ";")
   this_sql<-res[["condition"]]
   interpolate_list <- res[["interpolate_list"]]
