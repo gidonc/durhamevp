@@ -130,3 +130,80 @@ class_nb_ocr <- quanteda::textmodel_nb(class_dfm_o, y=quanteda::docvars(class_df
 first_stage_keywords_ocr<-nb_keywords(class_dfm_o, "EV_article")
 
 knitr::kable(head(first_stage_keywords_ocr, 30), digits = 2)
+
+
+##----secondround.1832.results----
+all_searches<-get_archivesearches()
+initial_1832_searches<-all_searches%>%
+  dplyr::select(id, search_text, archive_date_start, archive_date_end) %>%
+  filter(archive_date_start>lubridate::ymd("1832-01-01"), archive_date_start<lubridate::ymd("1832-12-31")) %>%
+  filter(search_text %in% c("election riot", "election incident", "election disturbance", "rough", "stone", "mob"))
+
+# a number of precisely duplicated searches here which return precisely duplicated results - we could handle this later on but here probably simplest to just use three distinct ones
+# election riot - id 73
+# election disturbance - id 81
+# election incident - id 85
+# rough - id 170
+# stone - id 171
+# mob - id 172
+
+res_2_1832<-get_archivesearchresults(archive_search_id = c(73, 81, 85, 170, 171, 172)) %>%
+  left_join(all_searches, by=c("archive_search_id"="id")) %>%
+  mutate(std_url = sub("download/", "", url))
+res_2_1832 <- res_2_1832[!duplicated(paste(res_2_1832$search_text, res_2_1832$description)),]
+is_classified <-res_2_1832$std_url %in% classdocs$std_url
+
+unclass_2_1832 <- res_2_1832[!is_classified,] %>%
+  mutate(unclass=1, classified=0)
+
+all_docs2<- bind_rows(classdocs,
+                     unclass_2_1832)
+all_docs2$fakeid<-1:nrow(all_docs)
+
+##----descriptives.1832----
+
+res_32_des<-res_2_1832[!duplicated(paste(res_2_1832$search_text, res_2_1832$description)),] %>%
+  group_by(url) %>%
+  mutate(search_text=sub(" ", "_", search_text)) %>%
+  dplyr::select(url, search_text) %>%
+  mutate(value=1) %>%
+  tidyr::spread(search_text, value, fill=0) %>%
+  mutate(tot_art=nrow(.))
+
+knitr::kable(res_32_des %>%
+               group_by(election_riot, election_incident, election_disturbance, mob, rough, stone) %>%
+               summarize(n=length(tot_art), prop=n/tot_art[1])%>%
+               arrange(-prop), digits = 2)
+
+all_corpus_d2<-corpus(all_docs2[c("fakeid", "description", "EV_article", "classified")], text_field="description")
+
+all_dfm_d2 <- preprocess_corpus(all_corpus_d2, stem=TRUE, min_termfreq=20, min_docfreq = 20)
+
+class_dfm_d2<-quanteda::dfm_subset(all_dfm_d2, quanteda::docvars(all_dfm_d2, "classified")==1)
+class_nb2 <- quanteda::textmodel_nb(class_dfm_d2, y=quanteda::docvars(class_dfm_d2, "EV_article"), prior="uniform")
+first_stage_keywords2<-nb_keywords(class_dfm_d2, "EV_article")
+
+##----second.stage.classification2----
+S_dfm2 <- quanteda::dfm_subset(all_dfm_d2, quanteda::docvars(all_dfm_d2, "classified")==0)
+quanteda::docvars(S_dfm2, "T")<-predict(class_nb2, newdata = S_dfm2, type="class")
+second_stage_keywords<-nb_keywords(S_dfm2, "T")
+
+##----subset.on.description----
+classified_boolean_returns<-classified_docs[classified_docs$election_article==1,]
+download_these <- stage2(classified_boolean_returns, unclass_i_1832)
+do_not_download_these <- unclass_i_1832[unclass_i_1832$url %in% download_these$url,]
+
+##----print.random.download.cases----
+download_random<-dplyr::sample_n(download_these, 10)
+download_random$url_std<-sub("/viewer/download", "/viewer", download_random$url)
+download_random_candidate_docs<-get_candidate_documents(cand_document_id = "all", c(download_random$url, download_random$url_std))
+out_docs <- download_random_candidate_docs
+
+for (doc in 1:nrow(out_docs)){
+  cat(paste0("\subsection{", out_docs[doc, "title"], " (candidate_document_id: ", out_docs[doc, "id"], ")}"))
+  cat(paste0("  \n"))
+  knitr::knit_print(out_docs[doc, "description"])
+  knitr::knit_print(out_docs[doc, "ocr"])
+  cat("  \n")
+}
+##----subset.on.ocr----
