@@ -279,7 +279,7 @@ searches_to_dfm<- function(archivesearches){
   searchstring_dfm
 }
 
-classifier_selection_keywords<-function(train, archivesearches, class_to_keep=1, training_classify_var="EV_article", prior="uniform", text_field="ocr"){
+classifier_selection_keywords<-function(train, archivesearchresults, class_to_keep=1, training_classify_var="EV_article", prior="uniform", text_field="ocr"){
   #'
   #' @export
 
