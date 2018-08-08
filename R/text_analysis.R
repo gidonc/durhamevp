@@ -187,6 +187,27 @@ contains_words <- function(the_dataframe, contains_words, text_col="ocr", result
   res_set
 }
 
+has_word <- function(the_dataframe, contains_words, text_col="ocr", results_col="EV_article"){
+  #' Function to tally cases with and without a particular words
+  #' @param the_dataframe the dataframe with a text column and a results column
+  #' @param contains_words the word (or other regex) to search for
+  #' @param text_col the column containing the text
+  #' @param results_col the column containing the classification
+
+  have_word<-grepl(contains_words, the_dataframe[,text_col])
+  dont_have_word<-!have_word
+
+  res_set<-the_dataframe[have_word,]
+  res_setEV<-subset(res_set, res_set[,results_col]==1)
+  res_setNEV<-subset(res_set, res_set[,results_col]==0)
+
+  resall<-nrow(res_set)/nrow(the_dataframe)
+  resEV<-nrow(res_setEV)/nrow(subset(the_dataframe,the_dataframe[,results_col]==1))
+  resNEV<-nrow(res_setNEV)/nrow(subset(the_dataframe,the_dataframe[,results_col]==0))
+
+  res<-c(resall, resEV, resNEV)
+  return(res)
+}
 
 classifier_select_docs <- function(classifier, new_docs, text_field="description", class_to_keep=1){
   #' Subsets a dataframe of documents based on a classifier.
