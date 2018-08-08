@@ -291,5 +291,5 @@ classifier_selection_keywords<-function(train, archivesearchresults, class_to_ke
   want_these<-predict(classifier, newdata = search_dfm, type="class")==class_to_keep
 
 
-  archivesearches[want_these,]
+  archivesearchresults[want_these,]
 }
