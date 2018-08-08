@@ -230,3 +230,17 @@ classifier_selection_ocr<-function(train, new_docs, text_field="ocr", class_to_k
 
   new_docs_subset
 }
+
+get_candidates_fromarchivesearchresults<-function(archivesearchresults){
+  #' Gets candidate documents from archivesearchresults.
+  #' This is somewhat challenging because sometimes the url has 'download' in sometimes it doesn't
+  #' This function is really a hack to find either case.
+  #' @param archivesearchresults The archive search results (including a url column)
+  #' @return Candidate documents with urls matching the urls in archivesearchresults
+  #' @export
+
+  archivesearchresults$url_std<-sub("/viewer/download", "/viewer", archivesearchresults$url)
+  the_candidates<-get_candidate_documents(cand_document_id = "all", c(archivesearchresults$url, archivesearchresults$url_std))
+
+  the_candidates
+}
