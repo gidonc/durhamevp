@@ -244,3 +244,31 @@ get_candidates_fromarchivesearchresults<-function(archivesearchresults){
 
   the_candidates
 }
+
+searches_to_dfm<- function(archivesearches){
+  #' Convert a set of search results to a dfm.
+  #' @param archivesearches the results of archivesearches
+  searches_to_string<-archivesearches %>%
+    dplyr::mutate(std_url = sub("download/", "", url)) %>%
+    group_by(std_url) %>%
+    dplyr::summarise(search_string=paste(search_text, collapse = " "))
+  searchstring_corpus <- quanteda::corpus(searches_to_string, text_field="search_string")
+  searchstring_dfm<-quanteda::dfm(searchstring_corpus)
+
+  searchstring_dfm
+}
+
+classifier_selection_keywords<-function(train, archivesearches, class_to_keep=1, training_classify_var="EV_article", prior="uniform", text_field="ocr"){
+  #'
+  #' @export
+
+  search_dfm<-searches_to_dfm(archivesearchresults)
+  train_corpus<-quanteda::corpus(train[,c(text_field, training_classify_var)], text_field = text_field)
+  train_dfm<-quanteda::dfm(train_corpus, select=colnames(search_dfm))
+  search_dfm<-quanteda::dfm_select(search_dfm, train_dfm)
+  classifier<-quanteda::textmodel_nb(train_dfm, y=quanteda::docvars(train_dfm, training_classify_var), prior=prior)
+  want_these<-predict(classifier, newdata = search_dfm, type="class")==class_to_keep
+
+
+  archivesearches[want_these,]
+}
