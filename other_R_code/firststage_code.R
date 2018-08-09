@@ -12,7 +12,7 @@ rm(list=ls())
 
 #One Time Connection to the Database (necesary for Patrick to connect to database)
 #keyring::key_set(service="evp", user="data_writer")
-#con<-evdb_connect(password_method = "keyring")
+con<-evdb_connect(password_method = "keyring")
 
 #Create clean document set for the 1832 election to run first stage function
 classdocs<-durhamevp::get_classified_docs()
@@ -45,11 +45,39 @@ all_docs<- bind_rows(classdocs,
                      unclass_i_1832)
 all_docs$fakeid<-1:nrow(all_docs)
 
-#Run the first stage function
-kwsuggestions<-run_firststage(docs=all_docs,min_termfreq=50, min_docfreq=50)
-kwsuggestions
+#Run the first stage function focusing on change of predictability
+kw_nbchng<-run_firststage_nbchng(docs=all_docs,min_termfreq=50, min_docfreq=50)
+kw_nbchng
 
+#Run the first stage function focusing on feature co-ouccerence
+kw_fcm<-run_firststage_fcm(docs=all_docs,min_termfreq=50, min_docfreq=50)
+kw_fcm
 
+#DEVELOPMENT OF FIRST STAGE FCM
+full_corpus<-quanteda::corpus(all_docs[c("fakeid", "classified", "EV_article", "description")], text_field="description")
+full_dfm <- durhamevp::preprocess_corpus(full_corpus, stem=TRUE, remove_punct=TRUE, remove_numbers=TRUE, remove_hyphens=TRUE,
+                                         min_termfreq=20, min_docfreq = 20, termfreq_type="count", docfreq_type="count")
+topfeatures(full_dfm)
+nfeat(full_dfm)
+
+class_dfm<-quanteda::dfm_subset(full_dfm, quanteda::docvars(full_dfm, "classified")==1)
+class_nb <- quanteda::textmodel_nb(class_dfm, y=quanteda::docvars(class_dfm, "EV_article"), prior="uniform")
+keywords1<-durhamevp::nb_keywords(class_dfm, "EV_article")
+topkw1<-subset(keywords1[,1],keywords1[,3]>=0.9)
+
+S_dfm <- quanteda::dfm_subset(full_dfm, quanteda::docvars(full_dfm, "classified")==0)
+quanteda::docvars(S_dfm, "T")<-predict(class_nb, newdata = S_dfm, type="class")
+keywords2<-nb_keywords(S_dfm, "T")
+topkw2<-subset(keywords2[,1],keywords2[,3]>=0.9)
+
+full_fcm<-fcm(full_dfm)
+pred_fcm<-fcm_select(full_fcm, pattern=c(topkw1,topkw2), selection="keep", valuetyp="fixed")
+kw_fcm<-quanteda::convert(pred_fcm, to="matrix")
+kw_fcm<-kw_fcm[rownames(kw_fcm)%in%topkw1,]
+kw_fcm<-kw_fcm[,colnames(kw_fcm)%in%topkw2]
+kw_fcm
+result<-sort(apply(kw_fcm, 2,sum))
+result
 
 
 ##----OLD CODE----
