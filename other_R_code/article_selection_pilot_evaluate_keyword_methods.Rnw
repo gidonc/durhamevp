@@ -1,0 +1,84 @@
+\documentclass{article}
+\usepackage[margin=1in]{geometry}
+\title{Election Violence Newspaper Article Selection Process Pilot: Evaluate Keyword Selection Method}
+\begin{document}
+\maketitle
+\section{Summary}
+After the code to setup and download data (Sections \ref{sect:packages}-\ref{sect:download1832}) the document below includes:
+First, an implementation of code to select of articles for coding, where initial evaluation of articles is based on keywords from the boolean searches which return those articles (Sections \ref{sect:whichdownloadocr}-\ref{sect:useonocr}). This classification is done using actual searches conducted (effectively 4 keywords) with a Naive Bayes classifier.
+
+Second, the document then provides an evaluation of the keyword selection step based on user classified articles from the platform with Naive Bayes and other classifiers and with 4 and 10 keyword sets (Sections \ref{sect:eval4nb}-\ref{sect:eval10other}).
+
+Finally, to provide an alternative way of evaluating the process, the document includes 10 randomly selected cases which are rejected for coding in the implementation code (Section \ref{sect:rejectnbprocess}).
+
+\section{Packages used}
+\label{sect:packages}
+<<setuppath, echo=FALSE, results="hide">>=
+dropbox.path<-switch (Sys.info()["nodename"],
+                      "DM-GIA-051"="D:/Dropbox",
+                      "DM-GIA-055"="D:/Dropbox",
+                      "GIDON-ASUS-15"="C:/Users/Gidon/Dropbox",
+                      "GID-HOME-LENOVO"="C:/Users/Gidon/Dropbox")
+
+project.path<-paste0(dropbox.path, "/ESRC Grant EV 19th Century")
+
+knitr::read_chunk(paste0(project.path, "/Code/durhamevp/other_R_code/article_selection_pilot.R"))
+options(tidy=TRUE, width=50)
+@
+
+<<resetdb, echo=FALSE, warning=FALSE, message=FALSE, results="hide">>=
+# Is this necessary because of cached results below? Otherwise sometime get error messages like Corrupt MySQL handle
+durhamevp::killDbConnections()
+
+@
+
+<<selection.pilot.custom.functions, echo=FALSE>>=
+
+@
+
+
+
+<<pilot.packages, warning=FALSE, message=FALSE>>=
+
+@
+
+\section{Download Classified Cases}
+There is an initial set of cases which represent the concept (in this case `election violence'). We also have a set of cases which do not represent the concept (Note: King et al do not have the non-election violence cases).
+
+
+I also add indicators that this material is classified (\texttt{classified==1}) and that it is not unclassified (\texttt{unclass==0}) which will be useful when added to subsequent material.
+<<download.R.set, cache=TRUE>>=
+
+@
+
+
+\section{Assess Naive Bayes selection performance on 4 keywords (binary dfm)}
+\label{sect:eval4nb}
+Here there are four keywords (election, riot, disturbance, incident) which are either present (1) or not-present (0). Use these patterns to identify election violence articles with a Naive Bayes classifer.
+<<subset.on.keywords.eval.four.words>>=
+
+@
+
+\section{How do other classifiers perform on 4 keywords (binary dfm)}
+Is performance improved by using other classifiers than Naive Bayes? Here there are four keywords (election, riot, disturbance, incident) which are either present (1) or not-present (0). Use these patterns to identify election violence articles.
+<<subset.on.keywords.eval.other.methods.four.words>>=
+
+@
+
+\section{Assess Naive Bayes selection performance on 10 keywords (binary dfm)}
+Here there are ten keywords ((election, riot, disturbance, incident, mob, stone, window, candidate, party, hustings, magistrate) which are either present (1) or not-present (0). Use these patterns to identify election violence articles with a Naive Bayes classifer.
+<<subset.on.keywords.eval.ten.words>>=
+
+@
+
+
+\section{How do other classifiers perform on 10 keywords (binary dfm)}
+\label{sect:eval10other}
+The same but with ten keywords (election, riot, disturbance, incident, mob, stone, window, candidate, party, hustings, magistrate) which are either present (1) or not-present (0). Use these patterns to identify election violence articles using a range of other classifiers.
+
+<<subset.on.keywords.eval.other.methods.ten.words>>=
+
+@
+
+
+\end{document}

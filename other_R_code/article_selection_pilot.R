@@ -3,6 +3,7 @@ library(reportRx) # note using this just for sanitizing LaTex output, not includ
 library(tidyverse)
 library(quanteda)
 library(durhamevp)
+library(RTextTools) # not sure if this is included as part of the durhamevp package
 
 
 ##----selection.pilot.custom.functions----
@@ -248,8 +249,8 @@ code_random_candidate_docs<-get_candidate_documents(cand_document_id = "all", c(
 
 documents_to_latex(code_random_candidate_docs)
 
-##----keyword.to.dfm----
-
+##----subset.on.keywords----
+# here need a join between archivesearches and archivesearch
 all_searches<-get_archivesearches()
 initial_1832_searches<-all_searches%>%
   dplyr::select(id, search_text, archive_date_start, archive_date_end) %>%
@@ -264,5 +265,171 @@ res_i_1832<-get_archivesearchresults(archive_search_id = c(73, 81, 85)) %>%
   left_join(all_searches, by=c("archive_search_id"="id")) %>%
   mutate(std_url = sub("download/", "", url))
 
-aa<-searches_to_dfm(res_i_1832)
+download_these_fromkeywords<-classifier_selection_keywords(classdocs[classdocs$election_article==1,], res_i_1832)
+# the unclassified archive search results don't have ocr column
+download_these_fromkeywords_ocr<-get_candidates_fromarchivesearchresults(download_these_fromkeywords)
+
+
+##----subset.on.ocr.after.keyword----
+code_these_fromkeywords_ocr <- classifier_selection_ocr(classified_boolean_returns, download_these_fromkeywords_ocr)
+code_these_fromkeywords <- unclass_i_1832[unclass_i_1832$url %in% c(code_these_fromkeywords_ocr$url, switch_url_format(code_these_fromkeywords_ocr$url)),]
+do_not_code_these_fromkeywords <- unclass_i_1832[!unclass_i_1832$url %in% code_these_fromkeywords$url,]
+
+##----subset.on.keywords.eval.four.words----
+class_corpus<-quanteda::corpus(classdocs[classdocs$election_article==1,], text_field="ocr")
+keywords<-c("election", "riot", "incident", "disturbance")
+class_dfm_4<-quanteda::dfm(class_corpus, select=keywords)
+#class_dfm<-preprocess_corpus(class_corpus, stem=FALSE, min_termfreq = 20)
+
+the_sets_4<-split_dfm(class_dfm_4, n_train = 1000)
+classifier<-quanteda::textmodel_nb(the_sets_4$training_set, y=quanteda::docvars(the_sets_4$training_set, "EV_article"), prior="docfreq", distribution="Bernoulli")
+quanteda::docvars(the_sets_4$testing_set, "predicted")<-predict(classifier, newdata = the_sets_4$testing_set, type="class")
+caret::confusionMatrix(data=quanteda::docvars(the_sets_4$testing_set, "predicted"), reference=factor(quanteda::docvars(the_sets_4$testing_set, "EV_article")), mode="prec_recall", positive="1")
+
+##----subset.on.keywords.eval.ten.words----
+class_corpus<-quanteda::corpus(classdocs[classdocs$election_article==1,], text_field="ocr")
+keywords<-c("election", "riot", "incident", "disturbance", "mob", "stone", "window", "candidate", "party", "hustings", "magistrate")
+class_dfm_10<-quanteda::dfm(class_corpus, select=keywords)
+#class_dfm<-preprocess_corpus(class_corpus, stem=FALSE, min_termfreq = 20)
+
+the_sets_10<-split_dfm(class_dfm_10, n_train = 1000)
+classifier_10<-quanteda::textmodel_nb(the_sets_10$training_set, y=quanteda::docvars(the_sets_10$training_set, "EV_article"), prior="docfreq", distribution="Bernoulli")
+quanteda::docvars(the_sets_10$testing_set, "predicted")<-predict(classifier_10, newdata = the_sets_10$testing_set, type="class")
+caret::confusionMatrix(data=quanteda::docvars(the_sets_10$testing_set, "predicted"), reference=factor(quanteda::docvars(the_sets_10$testing_set, "EV_article")), mode="prec_recall", positive="1")
+
+##----subset.on.keywords.eval.other.methods.four.words----
+class_corpus<-quanteda::corpus(classdocs[classdocs$election_article==1,], text_field="ocr")
+keywords<-c("election", "riot", "incident", "disturbance")
+class_dfm<-quanteda::dfm(class_corpus, select=keywords)
+class_dfm_bin<-quanteda::dfm_weight(class_dfm, scheme="boolean")
+doc_matrix<-quanteda::convert(class_dfm_bin, "tm")
+training_nos<-which(1:nrow(class_dfm_bin) %in% sample(1:nrow(class_dfm_bin), 1000))
+testing_nos<-which(!1:nrow(class_dfm_bin) %in% training_nos)
+container <- RTextTools::create_container(doc_matrix, quanteda::docvars(class_dfm, "EV_article"), trainSize = training_nos, testSize = testing_nos, virgin=FALSE)
+
+models_res<-RTextTools::train_models(container, algorithms=c("MAXENT", "SVM", "BOOSTING", "BAGGING", "RF", "TREE"))
+results_res<-RTextTools::classify_models(container, models_res)
+analytics_res<-RTextTools::create_analytics(container, results_res)
+
+class_summary<-analytics_res@document_summary %>%
+  tibble::rowid_to_column("document_id") %>%
+  tidyr::gather(variable, value, -MANUAL_CODE, -document_id) %>%
+  separate(variable, c("variable", "var2")) %>%
+  filter(var2 %in% c("CODE")) %>%
+  unite(value, var2, value) %>%
+  group_by(variable, MANUAL_CODE, value) %>%
+  tally() %>%
+  spread(value, n)
+
+
+class_summary_by_classifier<-analytics_res@document_summary %>%
+  tibble::rowid_to_column("document_id") %>%
+  tidyr::gather(variable, value, -MANUAL_CODE, -document_id) %>%
+  separate(variable, c("variable", "var2")) %>%
+  filter(var2=="LABEL") %>%
+  unite(value, var2, value) %>%
+  group_by(variable, MANUAL_CODE, value) %>%
+  tally() %>%
+  spread(value, n)
+
+knitr::knit_print(knitr::kable(class_summary))
+knitr::knit_print(knitr::kable(class_summary_by_classifier))
+
+prob_summary<-analytics_res@document_summary %>%
+  tibble::rowid_to_column("document_id") %>%
+  tidyr::gather(variable, value, -MANUAL_CODE, -document_id) %>%
+  separate(variable, c("variable", "var2")) %>%
+  filter(var2 %in% c("LABEL", "PROB")) %>%
+  spread(var2, value) %>%
+  group_by(variable, MANUAL_CODE, LABEL)
+
+
+
+prob_summary%>%
+  ggplot(aes(x=as.numeric(as.character(PROB)), fill=factor(MANUAL_CODE)))+
+  facet_wrap(~variable)+
+  geom_histogram()
+
+t(analytics_res@algorithm_summary)
+t(analytics_res@label_summary)
+analytics_res@ensemble_summary
+summary(analytics_res)
+
+
+##----subset.on.keywords.eval.other.methods.ten.words----
+class_corpus<-quanteda::corpus(classdocs[classdocs$election_article==1,], text_field="ocr")
+keywords<-c("election", "riot", "incident", "disturbance", "mob", "stone", "window", "candidate", "party", "hustings", "magistrate")
+class_dfm<-quanteda::dfm(class_corpus, select=keywords)
+class_dfm_bin<-quanteda::dfm_weight(class_dfm, scheme="boolean")
+doc_matrix<-quanteda::convert(class_dfm_bin, "tm")
+training_nos<-which(1:nrow(class_dfm_bin) %in% sample(1:nrow(class_dfm_bin), 1000))
+testing_nos<-which(!1:nrow(class_dfm_bin) %in% training_nos)
+container <- RTextTools::create_container(doc_matrix, quanteda::docvars(class_dfm, "EV_article"), trainSize = training_nos, testSize = testing_nos, virgin=FALSE)
+
+models_res<-RTextTools::train_models(container, algorithms=c("MAXENT", "SVM", "BOOSTING", "BAGGING", "RF", "TREE"))
+results_res<-RTextTools::classify_models(container, models_res)
+analytics_res<-RTextTools::create_analytics(container, results_res)
+
+class_summary<-analytics_res@document_summary %>%
+  tibble::rowid_to_column("document_id") %>%
+  tidyr::gather(variable, value, -MANUAL_CODE, -document_id) %>%
+  separate(variable, c("variable", "var2")) %>%
+  filter(var2 %in% c("CODE")) %>%
+  unite(value, var2, value) %>%
+  group_by(variable, MANUAL_CODE, value) %>%
+  tally() %>%
+  spread(value, n)
+
+
+class_summary_by_classifier<-analytics_res@document_summary %>%
+  tibble::rowid_to_column("document_id") %>%
+  tidyr::gather(variable, value, -MANUAL_CODE, -document_id) %>%
+  separate(variable, c("variable", "var2")) %>%
+  filter(var2=="LABEL") %>%
+  unite(value, var2, value) %>%
+  group_by(variable, MANUAL_CODE, value) %>%
+  tally() %>%
+  spread(value, n)
+
+knitr::knit_print(knitr::kable(class_summary))
+knitr::knit_print(knitr::kable(class_summary_by_classifier))
+
+prob_summary<-analytics_res@document_summary %>%
+  tibble::rowid_to_column("document_id") %>%
+  tidyr::gather(variable, value, -MANUAL_CODE, -document_id) %>%
+  separate(variable, c("variable", "var2")) %>%
+  filter(var2 %in% c("LABEL", "PROB")) %>%
+  spread(var2, value) %>%
+  group_by(variable, MANUAL_CODE, LABEL)
+
+
+
+prob_summary%>%
+  ggplot(aes(x=as.numeric(as.character(PROB)), fill=factor(MANUAL_CODE)))+
+  facet_wrap(~variable)+
+  geom_histogram()
+
+t(analytics_res@algorithm_summary)
+t(analytics_res@label_summary)
+analytics_res@ensemble_summary
+summary(analytics_res)
+
+
+##----print.random.not.code.fromkeywords.cases----
+not_code_fromkeywords_random_candidate_docs<-get_random_candidates(do_not_code_these_fromkeywords, 10)
+
+documents_to_latex(not_code_fromkeywords_random_candidate_docs)
+
+##----bin----
+class_corpus<-quanteda::corpus(classdocs[classdocs$election_article==1,], text_field="ocr")
+keywords<-c("election", "riot", "incident", "disturbance", "mob", "stone", "window", "candidate", "party", "hustings", "magistrate")
+class_dfm<-quanteda::dfm(class_corpus, select=keywords)
+#class_dfm<-preprocess_corpus(class_corpus, stem=FALSE, min_termfreq = 20)
+
+the_sets<-split_dfm(class_dfm, n_train = 1000)
+classifier<-quanteda::textmodel_nb(the_sets$training_set, y=quanteda::docvars(the_sets$training_set, "EV_article"), prior="uniform", distribution="Bernoulli")
+quanteda::docvars(the_sets$testing_set, "predicted")<-predict(classifier, newdata = the_sets$testing_set, type="class")==class_to_keep
+aa<-nb_keywords(the_sets$training_set, "EV_article")
+table(quanteda::docvars(the_sets$testing_set, c("predicted", "EV_article")))
+chisq.test(table(quanteda::docvars(the_sets$testing_set, c("predicted", "EV_article"))))
 
