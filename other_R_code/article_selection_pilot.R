@@ -1,9 +1,43 @@
 ##----pilot.packages----
-
-library(durhamevp)
+library(reportRx) # note using this just for sanitizing LaTex output, not included in durhamevp package requirements
 library(tidyverse)
 library(quanteda)
+library(durhamevp)
 
+
+##----selection.pilot.custom.functions----
+documents_to_latex<-function(out_docs){
+  for (doc in 1:nrow(out_docs)){
+    cat(paste0("\\subsection{", reportRx::sanitizestr(out_docs[doc, "title"]), " (candidate\\_document\\_id: ", out_docs[doc, "id"], ")}"))
+    cat(paste0("  \n"))
+    cat(paste0("\\subsubsection{description}"))
+    cat(paste0("  \n"))
+    #cat(Hmisc::latexTranslate(out_docs[doc, "description"]))
+    #knitr::knit_print(out_docs[doc, "description"])
+    cat(reportRx::sanitizestr(out_docs[doc, "description"]))
+    cat(paste0("\\subsubsection{OCR}"))
+    cat(paste0("  \n"))
+    #knitr::knit_print(out_docs[doc, "ocr"])
+    cat(reportRx::sanitizestr(out_docs[doc, "ocr"]))
+    cat("  \n")
+  }
+}
+
+get_random_candidates<-function(archivesearchresults, n_random){
+  the_random<-dplyr::sample_n(archivesearchresults, n_random)
+  the_candidates<-durhamevp::get_candidates_fromarchivesearchresults(the_random)
+
+  the_candidates
+}
+
+switch_url_format<-Vectorize(function(url){
+  if(grepl("viewer/download", url)){
+    switch_url<-sub("viewer/download", "viewer", url)
+  } else if(grepl("viewer/", url)){
+    switch_url<-sub("viewer/", "viewer/download/", url)
+  }
+  switch_url
+})
 ##----initial.keywords----
 # election riot, election incident, election disturbance
 
@@ -189,21 +223,46 @@ quanteda::docvars(S_dfm2, "T")<-predict(class_nb2, newdata = S_dfm2, type="class
 second_stage_keywords<-nb_keywords(S_dfm2, "T")
 
 ##----subset.on.description----
-classified_boolean_returns<-classified_docs[classified_docs$election_article==1,]
-download_these <- stage2(classified_boolean_returns, unclass_i_1832)
+classified_boolean_returns<-classdocs[classdocs$election_article==1,]
+download_these <- classifier_selection_description(classified_boolean_returns, unclass_i_1832)
 do_not_download_these <- unclass_i_1832[unclass_i_1832$url %in% download_these$url,]
 
-##----print.random.download.cases----
-download_random<-dplyr::sample_n(download_these, 10)
-download_random$url_std<-sub("/viewer/download", "/viewer", download_random$url)
-download_random_candidate_docs<-get_candidate_documents(cand_document_id = "all", c(download_random$url, download_random$url_std))
-out_docs <- download_random_candidate_docs
+# the unclassified archive search results don't have ocr column
+download_these_ocr<-get_candidates_fromarchivesearchresults(download_these)
 
-for (doc in 1:nrow(out_docs)){
-  cat(paste0("\subsection{", out_docs[doc, "title"], " (candidate_document_id: ", out_docs[doc, "id"], ")}"))
-  cat(paste0("  \n"))
-  knitr::knit_print(out_docs[doc, "description"])
-  knitr::knit_print(out_docs[doc, "ocr"])
-  cat("  \n")
-}
 ##----subset.on.ocr----
+code_these_ocr <- classifier_selection_ocr(classified_boolean_returns, download_these_ocr)
+code_these <- unclass_i_1832[unclass_i_1832$url %in% c(code_these_ocr$url, switch_url_format(code_these_ocr$url)),]
+do_not_code_these <- unclass_i_1832[!unclass_i_1832$url %in% code_these$url,]
+
+
+##----print.random.not.code.cases----
+not_code_random_candidate_docs<-get_random_candidates(do_not_code_these, 10)
+
+documents_to_latex(not_code_random_candidate_docs)
+
+##----print.random.code.cases----
+code_random<-dplyr::sample_n(code_these, 10)
+code_random$url_std<-sub("/viewer/download", "/viewer", download_random$url)
+code_random_candidate_docs<-get_candidate_documents(cand_document_id = "all", c(code_random$url, code_random$url_std))
+
+documents_to_latex(code_random_candidate_docs)
+
+##----keyword.to.dfm----
+
+all_searches<-get_archivesearches()
+initial_1832_searches<-all_searches%>%
+  dplyr::select(id, search_text, archive_date_start, archive_date_end) %>%
+  filter(archive_date_start>lubridate::ymd("1832-01-01"), archive_date_start<lubridate::ymd("1832-12-31")) %>%
+  filter(search_text %in% c("election riot", "election incident", "election disturbance"))
+
+# a number of precisely duplicated searches here which return precisely duplicated results - we could handle this later on but here probably simplest to just use three distinct ones
+# election riot - id 73
+# election disturbance - id 81
+# election incident - id 85
+res_i_1832<-get_archivesearchresults(archive_search_id = c(73, 81, 85)) %>%
+  left_join(all_searches, by=c("archive_search_id"="id")) %>%
+  mutate(std_url = sub("download/", "", url))
+
+aa<-searches_to_dfm(res_i_1832)
+
