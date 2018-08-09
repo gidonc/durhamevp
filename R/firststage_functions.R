@@ -81,11 +81,11 @@ nb_keywords<-function(training, classvar, distribution="Bernoulli"){
   return(post)
 }
 
-run_firststage<-function(docs, docidvar="fakeid", classvar="classified", typevar="EV_article", textvar="description",
+run_firststage_nbchng<-function(docs, docidvar="fakeid", classvar="classified", typevar="EV_article", textvar="description",
                          stem=TRUE, min_termfreq=20, min_docfreq=20, max_termfreq=NULL, max_docfreq=NULL,
                          remove_punct=TRUE, remove_numbers=TRUE, remove_hyphens=TRUE, termfreq_type="count", docfreq_type="count",
                          dfm_tfidf=FALSE,
-                         cutpoint=0.8){
+                         cpoint2=0.8, cpointchng=0.0){
   #' First stage function of the article selection process taking in a set of documents and returning a set of potential keywords
   #' @param docs Data frame of documents containing classified cases (R-set) and unclassified cases (S-set)
   #' @param docidvar Unique document id variable; default = "fakeid"
@@ -103,7 +103,8 @@ run_firststage<-function(docs, docidvar="fakeid", classvar="classified", typevar
   #' @param termfreq_type default "count"
   #' @param docfreq_type default "count"
   #' @param dfm_tfidf default FALSE
-  #' @param cutpoint Value from (0,1); default = 0.8
+  #' @param cpoint2 Cutpoint on predicability of election violence in step 2; default = 0.8
+  #' @param cpointchng Cutpoint on change in log predictability between step 1 and 2; default =0.0
   #' @export
   #Creating corpus and dfm
   full_corpus<-quanteda::corpus(docs[c(docidvar, classvar, typevar, textvar)], text_field=textvar)
@@ -130,6 +131,59 @@ run_firststage<-function(docs, docidvar="fakeid", classvar="classified", typevar
 
   #Return ordered keyword suggestions from most to least difference in predictiveness
   return(change %>%
-    filter(stg2_1>=cutpoint) %>%
+    filter(stg2_1>=cpoint2) %>%
+    filter(lgt_chng>=cpointchng) %>%
     arrange(-lgt_chng))
+}
+
+run_firststage_fcm<-function(docs, docidvar="fakeid", classvar="classified", typevar="EV_article", textvar="description",
+                         stem=TRUE, min_termfreq=20, min_docfreq=20, max_termfreq=NULL, max_docfreq=NULL,
+                         remove_punct=TRUE, remove_numbers=TRUE, remove_hyphens=TRUE, termfreq_type="count", docfreq_type="count",
+                         dfm_tfidf=FALSE,
+                         cpoint1=0.8, cpoint2=0.8){
+  #' First stage function of the article selection process taking in a set of documents and returning a set of potential keywords
+  #' @param docs Data frame of documents containing classified cases (R-set) and unclassified cases (S-set)
+  #' @param docidvar Unique document id variable; default = "fakeid"
+  #' @param classvar Indicator identifying classified documents; default = "classified"
+  #' @param typevar Indicator identifying election violence articles; default = "EV_article"
+  #' @param textvar Indicator identifying text field to classify on; default = "description"
+  #' @param stem default TRUE
+  #' @param remove_punct default TRUE
+  #' @param remove_numbers default TRUE
+  #' @param remove_hyphens default TRUE
+  #' @param min_termfreq default 20
+  #' @param min_docfreq default 20
+  #' @param max_termfreq default NULL
+  #' @param max_docfreq default NULL
+  #' @param termfreq_type default "count"
+  #' @param docfreq_type default "count"
+  #' @param dfm_tfidf default FALSE
+  #' @param cpoint1 Cutpoint on predicability of keyword in step 1; default = 0.8
+  #' @param cpoint2 Cutpoint on predicability of keyword in step 2; default = 0.8
+  #' @export
+  #Creating corpus and dfm
+  full_corpus<-quanteda::corpus(docs[c(docidvar, classvar, typevar, textvar)], text_field=textvar)
+  full_dfm <- durhamevp::preprocess_corpus(full_corpus, stem=stem, remove_punct=remove_punct, remove_numbers=remove_numbers, remove_hyphens=remove_hyphens,
+                                           min_termfreq=min_termfreq, min_docfreq = min_docfreq, termfreq_type=termfreq_type, docfreq_type=docfreq_type)
+
+  #Training naive Bayes classifier on classified subset of documents and extract keywords from this stage
+  class_dfm<-quanteda::dfm_subset(full_dfm, quanteda::docvars(full_dfm, classvar)==1)
+  class_nb <- quanteda::textmodel_nb(class_dfm, y=quanteda::docvars(class_dfm, typevar), prior="uniform")
+  keywords1<-durhamevp::nb_keywords(class_dfm, typevar)
+
+  #Use trained classifier to predict election violence article from unclassified documents and extract keywords
+  S_dfm <- quanteda::dfm_subset(full_dfm, quanteda::docvars(full_dfm, classvar)==0)
+  quanteda::docvars(S_dfm, "T")<-predict(class_nb, newdata = S_dfm, type="class")
+  keywords2<-nb_keywords(S_dfm, "T")
+
+  #Combine top keywords from both steps
+  topkw1<-subset(keywords1[,1],keywords1[,3]>=cpoint1)
+  topkw2<-subset(keywords2[,1],keywords2[,3]>=cpoint2)
+  full_fcm<-fcm(full_dfm)
+  pred_fcm<-fcm_select(full_fcm, pattern=c(topkw1,topkw2), selection="keep", valuetyp="fixed")
+  kw_fcm<-quanteda::convert(pred_fcm, to="matrix")
+  kw_fcm<-kw_fcm[rownames(kw_fcm)%in%topkw1,]
+  kw_fcm<-kw_fcm[,colnames(kw_fcm)%in%topkw2]
+
+  return(sort(apply(kw_fcm, 2,sum)))
 }
