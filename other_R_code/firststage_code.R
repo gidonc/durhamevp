@@ -50,7 +50,7 @@ kw_nbchng<-run_firststage_nbchng(docs=all_docs,min_termfreq=50, min_docfreq=50)
 kw_nbchng
 
 #Run the first stage function focusing on feature co-ouccerence
-kw_fcm<-run_firststage_fcm(docs=all_docs,min_termfreq=50, min_docfreq=50)
+kw_fcm<-run_firststage_fcm(docs=all_docs,min_termfreq=50, min_docfreq=50, cpoint2=0.85)
 kw_fcm
 
 #DEVELOPMENT OF FIRST STAGE FCM
@@ -60,20 +60,21 @@ full_dfm <- durhamevp::preprocess_corpus(full_corpus, stem=TRUE, remove_punct=TR
 topfeatures(full_dfm)
 nfeat(full_dfm)
 
+initialkw<-c("elect", "riot", "disturb","incident")
+
 class_dfm<-quanteda::dfm_subset(full_dfm, quanteda::docvars(full_dfm, "classified")==1)
 class_nb <- quanteda::textmodel_nb(class_dfm, y=quanteda::docvars(class_dfm, "EV_article"), prior="uniform")
 keywords1<-durhamevp::nb_keywords(class_dfm, "EV_article")
-topkw1<-subset(keywords1[,1],keywords1[,3]>=0.9)
 
 S_dfm <- quanteda::dfm_subset(full_dfm, quanteda::docvars(full_dfm, "classified")==0)
 quanteda::docvars(S_dfm, "T")<-predict(class_nb, newdata = S_dfm, type="class")
 keywords2<-nb_keywords(S_dfm, "T")
-topkw2<-subset(keywords2[,1],keywords2[,3]>=0.9)
+topkw2<-subset(keywords2[,1],keywords2[,3]>=0.8)
 
 full_fcm<-fcm(full_dfm)
-pred_fcm<-fcm_select(full_fcm, pattern=c(topkw1,topkw2), selection="keep", valuetyp="fixed")
+pred_fcm<-fcm_select(full_fcm, pattern=c(initialkw,topkw2), selection="keep", valuetyp="fixed")
 kw_fcm<-quanteda::convert(pred_fcm, to="matrix")
-kw_fcm<-kw_fcm[rownames(kw_fcm)%in%topkw1,]
+kw_fcm<-kw_fcm[rownames(kw_fcm)%in%initialkw,]
 kw_fcm<-kw_fcm[,colnames(kw_fcm)%in%topkw2]
 kw_fcm
 result<-sort(apply(kw_fcm, 2,sum))
