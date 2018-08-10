@@ -42,12 +42,9 @@ durhamevp::killDbConnections()
 
 @
 
-\section{Download Classified Cases}
-There is an initial set of cases which represent the concept (in this case `election violence'). We also have a set of cases which do not represent the concept (Note: King et al do not have the non-election violence cases).
-
-
-I also add indicators that this material is classified (\texttt{classified==1}) and that it is not unclassified (\texttt{unclass==0}) which will be useful when added to subsequent material.
-<<download.R.set, cache=TRUE>>=
+\section{Cases Used}
+We assess on the classified case set (items coded on the platform by users, plus items coded by Gary as non-election, and election non-violent).
+<<download.R.set, cache=TRUE, echo=FALSE>>=
 
 @
 
@@ -59,11 +56,6 @@ Here there are four keywords (election, riot, disturbance, incident) which are e
 
 @
 
-\section{How do other classifiers perform on 4 keywords (binary dfm)}
-Is performance improved by using other classifiers than Naive Bayes? Here there are four keywords (election, riot, disturbance, incident) which are either present (1) or not-present (0). Use these patterns to identify election violence articles.
-<<subset.on.keywords.eval.other.methods.four.words>>=
-
-@
 
 \section{Assess Naive Bayes selection performance on 10 keywords (binary dfm)}
 Here there are ten keywords ((election, riot, disturbance, incident, mob, stone, window, candidate, party, hustings, magistrate) which are either present (1) or not-present (0). Use these patterns to identify election violence articles with a Naive Bayes classifer.
@@ -71,14 +63,6 @@ Here there are ten keywords ((election, riot, disturbance, incident, mob, stone,
 
 @
 
-
-\section{How do other classifiers perform on 10 keywords (binary dfm)}
-\label{sect:eval10other}
-The same but with ten keywords (election, riot, disturbance, incident, mob, stone, window, candidate, party, hustings, magistrate) which are either present (1) or not-present (0). Use these patterns to identify election violence articles using a range of other classifiers.
-
-<<subset.on.keywords.eval.other.methods.ten.words>>=
-
-@
 
 
 \section{Assess Naive Bayes selection performance on full set of keywords (binary dfm)}
