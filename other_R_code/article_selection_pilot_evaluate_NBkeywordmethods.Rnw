@@ -4,14 +4,9 @@
 \begin{document}
 \maketitle
 \section{Summary}
-After the code to setup and download data (Sections \ref{sect:packages}-\ref{sect:download1832}) the document below includes:
-First, an implementation of code to select of articles for coding, where initial evaluation of articles is based on keywords from the boolean searches which return those articles (Sections \ref{sect:whichdownloadocr}-\ref{sect:useonocr}). This classification is done using actual searches conducted (effectively 4 keywords) with a Naive Bayes classifier.
+The document below includes:
+Evaluates of the selection of articles using keywords with Naive Bayes with 4, 10 and all keyword sets.
 
-Second, the document then provides an evaluation of the keyword selection step based on user classified articles from the platform with Naive Bayes and other classifiers and with 4 and 10 keyword sets (Sections \ref{sect:eval4nb}-\ref{sect:eval10other}).
-
-Finally, to provide an alternative way of evaluating the process, the document includes 10 randomly selected cases which are rejected for coding in the implementation code (Section \ref{sect:rejectnbprocess}).
-
-\section{Packages used}
 \label{sect:packages}
 <<setuppath, echo=FALSE, results="hide">>=
 dropbox.path<-switch (Sys.info()["nodename"],
@@ -38,7 +33,7 @@ durhamevp::killDbConnections()
 
 
 
-<<pilot.packages, warning=FALSE, message=FALSE>>=
+<<pilot.packages, echo=FALSE, warning=FALSE, message=FALSE>>=
 
 @
 
