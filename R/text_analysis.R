@@ -274,14 +274,16 @@ classifier_select_docs <- function(classifier, new_docs, text_field="description
 }
 
 
-classifier_selection_description<-function(train, new_docs, text_field="description", class_to_keep=1, training_classify_var="EV_article", prior="uniform"){
-  #'
+classifier_selection_description<-function(train, new_docs, text_field="description", class_to_keep=1, training_classify_var="EV_article", prior="uniform", classifier_type="xgboost", stem=TRUE, ...){
+  #' @param ... other arguments to be passed to \code{preprocess_corpus}
   #' @export
 
-  train_corpus<-quanteda::corpus(train[,c(text_field, training_classify_var)], text_field = text_field)
-  train_dfm<-durhamevp::preprocess_corpus(train_corpus)
-  classifier<-quanteda::textmodel_nb(train_dfm, y=quanteda::docvars(train_dfm, training_classify_var), prior=prior)
-  new_docs_subset<-durhamevp::classifier_select_docs(classifier=classifier, new_docs=new_docs, text_field = text_field, class_to_keep = class_to_keep)
+  train_corpus <- quanteda::corpus(train[,c(text_field, training_classify_var)], text_field = text_field)
+  train_dfm <- durhamevp::preprocess_corpus(train_corpus, stem=stem, ...)
+  classifier <- evp_classifiers(train_dfm=train_dfm, classifier_type=classifier_type, training_classify_var=training_classify_var, prior=prior)
+
+
+  new_docs_subset<-durhamevp::classifier_select_docs(classifier=classifier, new_docs=new_docs, text_field = text_field, class_to_keep = class_to_keep, stem=stem, ...)
 
   new_docs_subset
 }
@@ -328,7 +330,8 @@ classifier_selection_keywords<-function(train, archivesearchresults, class_to_ke
                                         eval_options=list(keywords=c("candidate","poll","election", "stone","riot", "mob", "husting", "disturbance", "rough", "incident"),
                                                           text_field="ocr",
                                                           eval_classify_var="EV_article")){
-  #'The keywords are constructed from the archivesearchresults
+  #'\code{classifier_selection_keyword} uses a classifier to select document from keywords.
+  #'In 'select' mode the keywords are constructed from the archivesearchresults. In 'eval' mode the keywords are taken from the eval_options and a binary dfm is constructed from the document text.
   #'@param train the training set of documents
   #'@classifier_type The type of classifer to use ("nb" = naive bayes, "xgboost"=xgboost)
   #'@mode Should the documents be selected ("select") or the document selection be evaluated ("eval"), (evaluation assumes search results have been classified)
@@ -370,6 +373,23 @@ classifier_selection_keywords<-function(train, archivesearchresults, class_to_ke
   archivesearchresults[archivesearchresults$std_url %in% want_these_std_url,]
 }
 
+
+evp_classifiers<-function(train_dfm, classifier_type, training_classify_var, prior){
+  #' wrappers round classifiers
+  if(classifier_type=="nb"){
+    classifier<-quanteda::textmodel_nb(train_dfm, y=quanteda::docvars(train_dfm, training_classify_var), prior=prior)
+
+  } else if (classifier_type=="xgboost"){
+    train_dfms <- split_dfm(train_dfm, n_train=floor(nrow(train_dfm)*.8))
+    dtrain <- durhamevp::dfm_to_dgCMatrix(train_dfms$training_set, training_classify_var = training_classify_var)
+    dval <- durhamevp::dfm_to_dgCMatrix(train_dfms$testing_set, training_classify_var = training_classify_var)
+    classifier<-xgboost::xgb.train(data=dtrain, nrounds=100, print_every_n = 10, early_stopping_rounds = 10, maximize = F, eval_metric="error", verbose = 1, watchlist=list(val=dval, train=dtrain))
+  } else {
+    stop(paste("Classifier type", classifier_type, "not supported."))
+  }
+
+  classifier
+}
 dfm_to_dgCMatrix<-function(the_dfm, boolean=FALSE, training_classify_var="EV_article"){
   #'@export
 
