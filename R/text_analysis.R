@@ -209,25 +209,70 @@ has_word <- function(the_dataframe, contains_words, text_col="ocr", results_col=
   return(res)
 }
 
-classifier_select_docs <- function(classifier, new_docs, text_field="description", class_to_keep=1){
+classifier_select_docs <- function(classifier, new_docs, text_field="description", return_logical=FALSE, class_to_keep=1, boolean=TRUE, xgb.cutpoint=.5, stem=FALSE, ...){
   #' Subsets a dataframe of documents based on a classifier.
   #'
-  #' @param classifier The quanteda naive bayes classifier to perform the classification
-  #' @param new_docs A data frame containing the documents to classify
+  #' @param classifier A classifier to perform the classification: either a naive bayes (quanteda) or xgboost (xgboost)
+  #' @param new_docs A data frame or dfm containing the documents to classify
   #' @param text_field The field containing the text to classify
+  #' @param return_logical Should the function return the subset of documents (FALSE) or a logical vector indicating the subset of document (TRUE).
   #' @param class_to_keep The classifier class to keep
-  #' @param ... arguments to be passed to \code{preprocess_corpus}
-  #' @return The subset of the \code{docs_df} which is classified as \code{class_to_keep}
+  #' @param stem stem words (in preprocessing)
+  #' @param ... other arguments to be passed to \code{preprocess_corpus}
+  #' @return Either the subset of the \code{docs_df} which is classified as \code{class_to_keep} or a logical vector indicating this subset (depending on value of \code{return_logical}).
   #' @export
 
-  the_corpus <- quanteda::corpus(new_docs[,c(text_field), drop=FALSE], text_field = text_field)
-  the_dfm<-durhamevp::preprocess_corpus(the_corpus)
-  the_dfm<-quanteda::dfm_select(the_dfm, classifier$x)
-  want_these<-predict(classifier, newdata = the_dfm, type="class")==class_to_keep
+  is.nb<-function(x){
+    "textmodel_nb" %in% class(x)
+  }
 
+  is.xgb<-function(x){
+    "xgb.Booster" %in% class(x)
+  }
+  if(is.dfm(new_docs)){
+    the_dfm <- new_docs
+
+  } else if(is.data.frame(new_docs)){
+    the_corpus <- quanteda::corpus(new_docs[,c(text_field), drop=FALSE], text_field = text_field)
+    the_dfm<-durhamevp::preprocess_corpus(the_corpus, stem=stem,...)
+  } else {
+    stop(paste("new_docs type not suported [class ", class(new_docs), "]"))
+  }
+
+  if(boolean){
+    the_dfm<-dfm_weight(the_dfm, scheme="boolean")
+  }
+
+
+  if(is.nb(classifier)){
+
+    # code for quanteda native bayes models
+    the_dfm<-quanteda::dfm_select(the_dfm, classifier$x)
+    want_these<-predict(classifier, newdata = the_dfm, type="class")==class_to_keep
+  } else if (is.xgb(classifier)){
+
+    # code for xgboost models
+    the_dfm<-quanteda::dfm_select(the_dfm, classifier$feature_names)
+    the_matrix<-as(the_dfm, "dgCMatrix")
+    missing_cols<- classifier$feature_names[!classifier$feature_names %in% colnames(the_matrix)]
+    missing_dat<-Matrix::Matrix(rep(0, nrow(the_matrix)*length(missing_cols)), nrow=nrow(the_matrix), ncol=length(missing_cols))
+    colnames(missing_dat)<-missing_cols
+    the_matrix<-cbind(the_matrix, missing_dat)
+    the_matrix<-the_matrix[,match(classifier$feature_names, colnames(the_matrix))]
+    probs<-predict(classifier, the_matrix)
+    the_class<- as.numeric(probs > xgb.cutpoint)
+    want_these <- the_class==class_to_keep
+  } else {
+    stop(paste("Classifier type not suported [class ", class(classifier), "]"))
+  }
+
+  if(return_logical){
+    return(want_these)
+  }
 
   new_docs[want_these,]
 }
+
 
 classifier_selection_description<-function(train, new_docs, text_field="description", class_to_keep=1, training_classify_var="EV_article", prior="uniform"){
   #'
@@ -279,17 +324,63 @@ searches_to_dfm<- function(archivesearches){
   searchstring_dfm
 }
 
-classifier_selection_keywords<-function(train, archivesearchresults, class_to_keep=1, training_classify_var="EV_article", prior="uniform", text_field="ocr"){
-  #'
-  #' @export
+classifier_selection_keywords<-function(train, archivesearchresults, class_to_keep=1, training_classify_var="EV_article", prior="docfreq", text_field="ocr", classifier_type="xgboost", mode="select",
+                                        eval_options=list(keywords=c("candidate","poll","election", "stone","riot", "mob", "husting", "disturbance", "rough", "incident"),
+                                                          text_field="ocr",
+                                                          eval_classify_var="EV_article")){
+  #'The keywords are constructed from the archivesearchresults
+  #'@param train the training set of documents
+  #'@classifier_type The type of classifer to use ("nb" = naive bayes, "xgboost"=xgboost)
+  #'@mode Should the documents be selected ("select") or the document selection be evaluated ("eval"), (evaluation assumes search results have been classified)
+  #'@export
 
-  search_dfm<-searches_to_dfm(archivesearchresults)
-  train_corpus<-quanteda::corpus(train[,c(text_field, training_classify_var)], text_field = text_field)
-  train_dfm<-quanteda::dfm(train_corpus, select=colnames(search_dfm))
-  search_dfm<-quanteda::dfm_select(search_dfm, train_dfm)
-  classifier<-quanteda::textmodel_nb(train_dfm, y=quanteda::docvars(train_dfm, training_classify_var), prior=prior)
-  want_these<-predict(classifier, newdata = search_dfm, type="class")==class_to_keep
 
+  if (mode=="select"){
+    search_dfm<-searches_to_dfm(archivesearchresults)
+    train_corpus<-quanteda::corpus(train[,c(text_field, training_classify_var)], text_field = text_field)
+    train_dfm<-quanteda::dfm(train_corpus, select=colnames(search_dfm))
+    search_dfm<-quanteda::dfm_select(search_dfm, train_dfm)
+  } else if(mode=="eval"){
+    search_corpus<-quanteda::corpus(archivesearchresults, text_field=eval_options$text_field)
+    search_dfm<-quanteda::dfm(search_corpus, select=eval_options$keywords)
+    train_corpus<-quanteda::corpus(train[,c(text_field, training_classify_var)], text_field = text_field)
+    train_dfm<-quanteda::dfm(train_corpus, select=colnames(search_dfm))
+    search_dfm<-quanteda::dfm_select(search_dfm, train_dfm)
+  } else {
+    stop("Unsupported mode.")
+  }
+  if(classifier_type=="nb"){
+    classifier<-quanteda::textmodel_nb(train_dfm, y=quanteda::docvars(train_dfm, training_classify_var), prior=prior)
 
-  archivesearchresults[want_these,]
+  } else if (classifier_type=="xgboost"){
+    train_dfms <- split_dfm(train_dfm, n_train=floor(nrow(train_dfm)*.8))
+    dtrain <- durhamevp::dfm_to_dgCMatrix(train_dfms$training_set, training_classify_var = training_classify_var)
+    dval <- durhamevp::dfm_to_dgCMatrix(train_dfms$testing_set, training_classify_var = training_classify_var)
+    classifier<-xgboost::xgb.train(data=dtrain, nrounds=100, print_every_n = 10, early_stopping_rounds = 10, maximize = F, eval_metric="error", verbose = 1, watchlist=list(val=dval, train=dtrain))
+  } else {
+    stop(paste("Classifier type", classifier_type, "not supported."))
+  }
+
+  if(mode=="eval"){
+    archivesearchresults$selected<-classifier_select_docs(classifier, search_dfm, boolean = TRUE, return_logical=TRUE)
+    return(archivesearchresults)
+  }
+  want_these_std_url<-docvars(classifier_select_docs(classifier, search_dfm, boolean = TRUE), "std_url")
+
+  archivesearchresults[archivesearchresults$std_url %in% want_these_std_url,]
+}
+
+dfm_to_dgCMatrix<-function(the_dfm, boolean=FALSE, training_classify_var="EV_article"){
+  #'@export
+
+  if(boolean){
+    the_dfm<-dfm_weight(the_dfm, scheme="boolean")
+  }
+  the_dgCMatrix<-as(the_dfm, "dgCMatrix")
+
+  the_labels<-docvars(the_dfm, training_classify_var)
+
+  the_dgCMatrix<-xgb.DMatrix(data=the_dgCMatrix, label=the_labels)
+
+  the_dgCMatrix
 }
