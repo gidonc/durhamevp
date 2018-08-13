@@ -538,3 +538,154 @@ aa<-nb_keywords(the_sets$training_set, "EV_article")
 table(quanteda::docvars(the_sets$testing_set, c("predicted", "EV_article")))
 chisq.test(table(quanteda::docvars(the_sets$testing_set, c("predicted", "EV_article"))))
 
+
+##----tree----
+library(rpart)
+
+class_corpus<-quanteda::corpus(classdocs[classdocs$election_article==1,], text_field="ocr")
+keywords<-c("election", "riot", "incident", "disturbance", "mob", "stone", "window", "candidate", "party", "hustings", "magistrate")
+class_dfm<-quanteda::dfm(class_corpus, select=keywords)
+the_sets<-split_dfm(class_dfm, n_train = 1000)
+train_df<-convert(dfm_weight(the_sets$training_set, scheme="boolean"), "data.frame")
+train_df$EV_article<-docvars(the_sets$training_set, "EV_article")
+cols<-(names(train_df))
+#train_df<-train_df %>%
+#  mutate_at(cols, factor)
+test_df<-convert(dfm_weight(the_sets$testing_set, scheme="boolean"), "data.frame")
+test_df$EV_article<-docvars(the_sets$testing_set, "EV_article")
+#test_df<-test_df %>%
+#  mutate_at(cols, factor)
+
+
+fit2<-rpart(EV_article~election+disturbance+riot+incident, train_df)
+fit2<-rpart(EV_article~election+candidate+party+disturbance+riot+incident+window+stone+hustings+mob+magistrate,
+            data=train_df,
+            method="class",
+            control=rpart.control(minsplit = 0, cp=.005)
+            )
+fancyRpartPlot(fit2)
+
+test_df$predict<-predict(fit2, test_df, type="class")
+
+table(test_df$EV_article, test_df$predict)
+
+fit_rf<-randomForest(as.factor(EV_article)~document+election+candidate+party+disturbance+riot+incident+window+stone+hustings+mob+magistrate,
+                  data=train_df,
+                  method="class",
+                  ntree=100)
+test_df$predict<-predict(fit_rf, test_df)
+
+table(test_df$EV_article, test_df$predict)
+
+library(xgboost)
+
+params <- list(booster = "gbtree",
+               objective = "binary:logistic",
+               eta=.5,
+               gamma=0,
+               max_depth=6,
+               min_child_weight=1,
+               subsample=1,
+               colsample_bytree=1)
+
+class_corpus<-quanteda::corpus(classdocs[classdocs$election_article==1,], text_field="ocr")
+class_corpus<-quanteda::corpus(classdocs, text_field="ocr")
+keywords<-c("election", "riot", "incident", "disturbance", "mob", "stone", "window", "candidate", "party", "hustings", "magistrate")
+#keywords<-c("election", "riot", "incident", "disturbance")
+class_dfm<-quanteda::dfm(class_corpus, select=keywords)
+class_dfm<-preprocess_corpus(class_corpus, min_termfreq = 20, min_docfreq = 10, stem=FALSE)
+the_sets<-split_dfm(class_dfm, n_train = 1000)
+#train_df<-convert(dfm_weight(the_sets$training_set, scheme="boolean"), "data.frame")
+#train_labels<-docvars(the_sets$training_set, "election_article")
+#cols<-(names(train_df))
+#train_df<-train_df %>%
+#  mutate_at(cols, factor)
+#test_df<-convert(dfm_weight(the_sets$testing_set, scheme="boolean"), "data.frame")
+#test_labels<-docvars(the_sets$testing_set, "election_article")
+#test_df<-test_df %>%
+#  mutate_at(cols, factor)
+new_train<-as(the_sets$training_set, "dgCMatrix")
+new_train<-as(dfm_weight(the_sets$training_set, scheme="boolean"), "dgCMatrix")
+train_labels<-docvars(the_sets$training_set, "EV_article")
+new_test<-as(the_sets$testing_set, "dgCMatrix")
+new_test<-as(dfm_weight(the_sets$testing_set, scheme="boolean"), "dgCMatrix")
+test_labels<-docvars(the_sets$testing_set, "EV_article")
+#new_train<-model.matrix(~.+0, setDT(train_df)[,-"document"])
+#new_test<-model.matrix(~.+0, setDT(test_df)[,-"document"])
+dtrain<-xgb.DMatrix(data=new_train, label=train_labels)
+dtest<-xgb.DMatrix(data=new_test, label=test_labels)
+
+params <- list(booster = "gbtree",
+               objective = "binary:logistic",
+               eta=.03,
+               gamma=0,
+               max_depth=6,
+               min_child_weight=1,
+               subsample=.8,
+               colsample_bytree=1)
+xgbvc<-xgb.train(param=params, data=dtrain, nrounds=100, print_every_n = 10, early_stopping_rounds = 10, maximize = F, eval_metric="error", watchlist=list(val=dtest, train=dtrain), verbose = 1)
+
+prob_xgb<-predict(xgbvc, dtest)
+pred_xgb<-factor(ifelse(predict(xgbvc, dtest)>.5, 1, 0))
+#hist(predict(xgbvc, dtest), col=pred_xgb==test_labels)
+#hist(prob_xgb[pred_xgb!=test_labels])
+#hist(prob_xgb[pred_xgb==test_labels])
+caret::confusionMatrix(pred_xgb, factor(test_labels), positive="1", mode="prec_recall")
+top.import<-xgb.importance(feature_names=colnames(new_train), model=xgbvc)[1:30]
+xgb.plot.importance(top.import)
+
+#caret::confusionMatrix(pred_xgb[prob_xgb<.2|prob_xgb>.8], factor(test_labels)[prob_xgb<.2|prob_xgb>.8], positive="1", mode="prec_recall")
+#caret::confusionMatrix(pred_xgb[!(prob_xgb<.2|prob_xgb>.8)], factor(test_labels)[!(prob_xgb<.2|prob_xgb>.8)], positive="1", mode="prec_recall")
+
+aa<-classifier_select_docs(xgbvc, classdocs, text_field = "ocr", xgb.cutpoint = .5, stem=FALSE)
+sum(aa$EV_article==1)
+sum(classdocs$EV_article==1)
+dim(classdocs)
+dim(aa)
+table(aa$EV_article)
+
+
+all_searches<-get_archivesearches()
+res_oneday_1832<-get_archivesearchresults(archive_search_id = c(228:255)) %>%
+  left_join(all_searches, by=c("archive_search_id"="id")) %>%
+  mutate(std_url = sub("download/", "", url))
+
+download_these_fromkeywords<-classifier_selection_keywords(classdocs, res_oneday_1832)
+# the unclassified archive search results don't have ocr column
+download_these_fromkeywords_ocr<-get_candidates_fromarchivesearchresults(download_these_fromkeywords)
+
+select_nb<-classifier_selection_keywords(classdocs, res_oneday_1832, classifier_type = "nb")
+select_xgboost<-classifier_selection_keywords(classdocs, res_oneday_1832, classifier_type = "xgboost")
+dim(select_xgboost)
+dim(select_nb)
+oneday_dfm<-searches_to_dfm(res_oneday_1832)
+reject_xgboost<-oneday_dfm[setdiff(quanteda::docnames(oneday_dfm), quanteda::docnames(select_xgboost))]
+reject_nb<-oneday_dfm[setdiff(quanteda::docnames(oneday_dfm), quanteda::docnames(select_nb))]
+
+reject_onlyxgboost<-reject_xgboost[setdiff(quanteda::docnames(reject_xgboost), quanteda::docnames(reject_nb))]
+reject_onlynb<-reject_nb[setdiff(quanteda::docnames(reject_nb), quanteda::docnames(reject_xgboost))]
+select_xgboost2<-classifier_selection_keywords(classdocs, res_oneday_1832, classifier_type = "xgboost")
+
+sum(docnames(select_xgboost) %in% docnames(select_xgboost2))
+sum(!docnames(select_xgboost) %in% docnames(select_xgboost2))
+
+sum(docnames(select_xgboost2) %in% docnames(select_xgboost))
+sum(!docnames(select_xgboost2) %in% docnames(select_xgboost))
+
+bin_train<-dfm_weight(train_dfm, scheme="boolean")
+nfeatures<-rowSums(bin_train)
+that_pattern<-rowSums(dfm_select(bin_train, c("election", "candidate", "poll")))==3
+that_pattern<-rowSums(dfm_select(bin_train, c("mob")))==1 & docvars(bin_train, "EV_article")==0
+that_pattern==nfeatures
+docvars(bin_train[that_pattern,], "EV_article")
+bin_train[that_pattern,]
+
+aa<-inner_join(select_nb, select_xgboost)
+
+train <- classdocs %>% dplyr::sample_frac(.75)
+test  <- dplyr::anti_join(classdocs, train, by = 'id')
+
+aa<-classifier_selection_keywords(train, test, mode="eval", classifier_type = "xgboost")
+
+caret::confusionMatrix(factor(aa$EV_article), factor(as.numeric(aa$selected)))
+
