@@ -23,7 +23,9 @@ Imports:
     caret,
     pool,
     hunspell,
-    fuzzywuzzyR
+    fuzzywuzzyR,
+    Matrix,
+    xgboost
 RoxygenNote: 6.1.0
 Suggests: knitr,
     rmarkdown,
