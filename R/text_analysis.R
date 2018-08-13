@@ -400,7 +400,7 @@ dfm_to_dgCMatrix<-function(the_dfm, boolean=FALSE, training_classify_var="EV_art
 
   the_labels<-docvars(the_dfm, training_classify_var)
 
-  the_dgCMatrix<-xgb.DMatrix(data=the_dgCMatrix, label=the_labels)
+  the_dgCMatrix<-xgboost::xgb.DMatrix(data=the_dgCMatrix, label=the_labels)
 
   the_dgCMatrix
 }
