@@ -52,6 +52,16 @@ classdocs<-classdocs %>%
   dplyr::mutate(std_url = sub("download/", "", url)) %>%
   dplyr::mutate(unclass=0, classified=1)
 
+# also get candidate documents for description classification purposes
+candocs<-get_candidate_documents("all")
+actdocs<-get_document("all")
+candocs$status2<-candocs$status
+candocs$status2[(candocs$id %in% actdocs$candidate_document_id)]<-"1"
+summary(factor(candocs$status2[(candocs$id %in% actdocs$candidate_document_id)]))
+candocs$EV_article<-ifelse(candocs$status2 %in% c("1", "3"), 1, 0)
+candocs.r<-candocs[candocs$status2 %in% c("1", "3", "7", "8", "0"),]
+
+
 ##----initial.1832.results----
 all_searches<-get_archivesearches()
 initial_1832_searches<-all_searches%>%
@@ -268,6 +278,33 @@ res_i_1832<-get_archivesearchresults(archive_search_id = c(73, 81, 85)) %>%
 download_these_fromkeywords<-classifier_selection_keywords(classdocs[classdocs$election_article==1,], res_i_1832)
 # the unclassified archive search results don't have ocr column
 download_these_fromkeywords_ocr<-get_candidates_fromarchivesearchresults(download_these_fromkeywords)
+
+##----subset.on.description.1841.data----
+all_searches<-get_archivesearches()
+initial_1841_searches<-all_searches%>%
+  dplyr::select(id, search_text, archive_date_start, archive_date_end) %>%
+  filter(archive_date_start>lubridate::ymd("1841-01-01"), archive_date_start<lubridate::ymd("1841-12-31")) %>%
+  filter(search_text %in% c("election", "candidate", "party", "husting", "magistrate",
+                            "riot", "disturbance", "incident", "mob", "rough", "adjourn",
+                            "prison", "police"))
+
+# a number of precisely duplicated searches here which return precisely duplicated results - we could handle this later on but here probably simplest to just use three distinct ones
+# election riot - id 73
+# election disturbance - id 81
+# election incident - id 85
+res_i_1841<-get_archivesearchresults(archive_search_id = initial_1841_searches$id) %>%
+  left_join(all_searches, by=c("archive_search_id"="id")) %>%
+  mutate(std_url = sub("download/", "", url))
+
+select_descript_xgb<-classifier_selection_description(candocs.r, res_i_1841, classifier_type = "xgboost")
+select_descript_nb<-classifier_selection_description(candocs.r, res_i_1841, classifier_type = "nb")
+
+#select_descript_xgb$description
+#select_descript_nb$description
+# the unclassified archive search results don't have ocr column
+#xgb_cand_docs<-get_candidates_fromarchivesearchresults(select_descript_xgb)
+
+#nb_cand_docs<-get_candidates_fromarchivesearchresults(select_descript_nb)
 
 
 ##----subset.on.ocr.after.keyword----
@@ -689,3 +726,28 @@ aa<-classifier_selection_keywords(train, test, mode="eval", classifier_type = "x
 
 caret::confusionMatrix(factor(aa$EV_article), factor(as.numeric(aa$selected)))
 
+
+candocs<-get_candidate_documents("all")
+actdocs<-get_document("all")
+candocs$status2<-candocs$status
+candocs$status2[(candocs$id %in% actdocs$candidate_document_id)]<-"1"
+summary(factor(candocs$status2[(candocs$id %in% actdocs$candidate_document_id)]))
+candocs$EV_article<-ifelse(candocs$status2 %in% c("1", "3"), 1, 0)
+candocs.r<-candocs[candocs$status2 %in% c("1", "3", "7", "8", "0"),]
+nb_descript<-classifier_selection_description(candocs.r, res_oneday_1832, classifier_type = "nb", min_docfreq=2, min_termfreq=2)
+xg_descript<-classifier_selection_description(candocs.r, res_oneday_1832, classifier_type = "xgboost", min_docfreq=2, min_termfreq=2)
+xg_descript$description
+nb_descript$description
+
+bd<-inner_join(xg_descript, nb_descript)
+aa$url
+canddocs_xgb<-get_candidates_fromarchivesearchresults(xg_descript)
+
+dim(download_these_fromkeywords_ocr)
+paste(download_these_fromkeywords_ocr[, c("status", "description")], sep=" *** ")
+
+download_these_fromkeywords_ocr %>%
+  arrange(status) %>%
+  unite(description2, status, description) %>%
+  select(description2)
+table(download_these_fromkeywords_ocr$status)
