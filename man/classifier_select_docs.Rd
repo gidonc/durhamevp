@@ -5,21 +5,26 @@
 \title{Subsets a dataframe of documents based on a classifier.}
 \usage{
 classifier_select_docs(classifier, new_docs, text_field = "description",
-  class_to_keep = 1)
+  return_logical = FALSE, class_to_keep = 1, boolean = TRUE,
+  xgb.cutpoint = 0.5, stem = FALSE, ...)
 }
 \arguments{
-\item{classifier}{The quanteda naive bayes classifier to perform the classification}
+\item{classifier}{A classifier to perform the classification: either a naive bayes (quanteda) or xgboost (xgboost)}
 
-\item{new_docs}{A data frame containing the documents to classify}
+\item{new_docs}{A data frame or dfm containing the documents to classify}
 
 \item{text_field}{The field containing the text to classify}
 
+\item{return_logical}{Should the function return the subset of documents (FALSE) or a logical vector indicating the subset of document (TRUE).}
+
 \item{class_to_keep}{The classifier class to keep}
 
-\item{...}{arguments to be passed to \code{preprocess_corpus}}
+\item{stem}{stem words (in preprocessing)}
+
+\item{...}{other arguments to be passed to \code{preprocess_corpus}}
 }
 \value{
-The subset of the \code{docs_df} which is classified as \code{class_to_keep}
+Either the subset of the \code{docs_df} which is classified as \code{class_to_keep} or a logical vector indicating this subset (depending on value of \code{return_logical}).
 }
 \description{
 Subsets a dataframe of documents based on a classifier.

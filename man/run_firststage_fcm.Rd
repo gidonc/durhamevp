@@ -8,9 +8,9 @@ run_firststage_fcm(docs, docidvar = "fakeid", classvar = "classified",
   typevar = "EV_article", textvar = "description", stem = TRUE,
   min_termfreq = 20, min_docfreq = 20, max_termfreq = NULL,
   max_docfreq = NULL, remove_punct = TRUE, remove_numbers = TRUE,
-  remove_hyphens = TRUE, termfreq_type = "count",
-  docfreq_type = "count", dfm_tfidf = FALSE, cpoint1 = 0.8,
-  cpoint2 = 0.8)
+  remove_hyphens = TRUE, termfreq_type = "count", docfreq_type = "count",
+  dfm_tfidf = FALSE, initialkw = c("elect", "riot", "disturb", "incid"),
+  cpoint2 = 0.9)
 }
 \arguments{
 \item{docs}{Data frame of documents containing classified cases (R-set) and unclassified cases (S-set)}
@@ -23,7 +23,7 @@ run_firststage_fcm(docs, docidvar = "fakeid", classvar = "classified",
 
 \item{textvar}{Indicator identifying text field to classify on; default = "description"}
 
-\item{stem}{default TRUE}
+\item{stem}{default FALSE}
 
 \item{min_termfreq}{default 20}
 
@@ -45,9 +45,9 @@ run_firststage_fcm(docs, docidvar = "fakeid", classvar = "classified",
 
 \item{dfm_tfidf}{default FALSE}
 
-\item{cpoint1}{Cutpoint on predicability of keyword in step 1; default = 0.8}
+\item{initialkw}{Initial keywords used to retrive classified documents; default = c("elect", "riot", "disturb", "incid")}
 
-\item{cpoint2}{Cutpoint on predicability of keyword in step 2; default = 0.8}
+\item{cpoint2}{Cutpoint on predicability of keyword in step 2; default = 0.9}
 }
 \description{
 First stage function of the article selection process taking in a set of documents and returning a set of potential keywords

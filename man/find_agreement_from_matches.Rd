@@ -4,15 +4,15 @@
 \alias{find_agreement_from_matches}
 \title{Checks agreement on variables from dataframe of matched records.}
 \usage{
-find_agreement_from_matches(matched_all, match_type,
-  drop_cols = c("score", "report_type", "process_point", "event_type",
-  "event_id", "comment", "election_date", "summary", "contested", "tag_id",
-  "event_report_id", "proximity_relative", "id", "allocated_by",
-  "allocation_date", "allocation_type", "assigned_at", "coding_complete",
-  "difficulty_ranking", "document_id", "score.x", "score.y",
-  "article_date_man_verify", "ideal_coding_comments", "last_updated",
-  "status", "user_id", "event_timeframe_quantifier", "event_end",
-  "event_duration", "user_doc_id", "event_date",      "event_location"))
+find_agreement_from_matches(matched_all, match_type, drop_cols = c("score",
+  "report_type", "process_point", "event_type", "event_id", "comment",
+  "election_date", "summary", "contested", "tag_id", "event_report_id",
+  "proximity_relative", "id", "allocated_by", "allocation_date",
+  "allocation_type", "assigned_at", "coding_complete", "difficulty_ranking",
+  "document_id", "score.x", "score.y", "article_date_man_verify",
+  "ideal_coding_comments", "last_updated", "status", "user_id",
+  "event_timeframe_quantifier", "event_end", "event_duration", "user_doc_id",
+  "event_date",      "event_location"))
 }
 \arguments{
 \item{matched_all}{The dataframe of matches}

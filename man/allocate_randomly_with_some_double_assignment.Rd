@@ -6,8 +6,7 @@
 \usage{
 allocate_randomly_with_some_double_assignment(double_coding_user_ids,
   other_user_ids, set, n_double_coding, coder_rate = 1.1,
-  allocation_type = "coding",
-  allocated_by = "irregular_random_assignment",
+  allocation_type = "coding", allocated_by = "irregular_random_assignment",
   restrict_to_actual = TRUE, make_assignments = TRUE)
 }
 \arguments{
