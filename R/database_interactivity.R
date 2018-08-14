@@ -251,15 +251,23 @@ get_document<-function(document_id){
   documents
 }
 
-get_candidate_documents<-function(cand_document_id, url="all"){
+get_candidate_documents<-function(cand_document_id, url="all", include_ocr=TRUE){
   #' Returns the candidate document table filtered by candidate document id
   #'
+  #'Note that excluding the ocr from the download will significantly reduce the time for the query to execute.
   #' @param cand_document_id Candidate document id or ids to filter by.
   #' @param url document url or urls to filter by.
+  #' @param include_ocr should the ocr be downloaded.
   #' @export
 
   con <- manage_dbcons()
-  this_sql<-"SELECT * FROM portal_candidatedocument" # base query
+  if(include_ocr){
+    this_sql<-"SELECT * FROM portal_candidatedocument" # base query with ocr
+  } else {
+
+    this_sql<-"SELECT id, title, url, description, publication_title, publication_location, type, status, page, publication_date, word_count FROM portal_candidatedocument" # base query without ocr
+
+  }
 
   res<-build_where_condition("id", cand_document_id, this_sql, NULL)
   res<-build_where_condition("url", url, res$condition, res$interpolate_list)
