@@ -216,7 +216,7 @@ classifier_select_docs <- function(classifier, new_docs, text_field="description
   is.xgb<-function(x){
     "xgb.Booster" %in% class(x)
   }
-  if(is.dfm(new_docs)){
+  if(quanteda::is.dfm(new_docs)){
     the_dfm <- new_docs
 
   } else if(is.data.frame(new_docs)){
