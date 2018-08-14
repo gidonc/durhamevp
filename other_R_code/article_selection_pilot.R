@@ -44,8 +44,7 @@ switch_url_format<-Vectorize(function(url){
   switch_url
 })
 url_to_id<-function(url){
-  str_split(url, )
-
+  str_split(url, "bl/", simplify=TRUE)[,2]
 }
 ##----initial.keywords----
 # election riot, election incident, election disturbance
@@ -311,7 +310,14 @@ select_descript_nb<-classifier_selection_description(candocs.r, res_i_1841, clas
 
 ##----subset.on.description.1841.link.cand.doc----
 xgb_cand_docs<-get_candidates_fromarchivesearchresults(select_descript_xgb)
+xgb_cand_docs$status<-1
 
+
+dim(select_descript_xgb)
+select_descript_xgb %>%
+  group_by(bna_id) %>%
+  summarize(status=max(EV_article))
+aa<-left_join(select_descript_xgb, xgb_cand_docs, by="bna_id")
 #nb_cand_docs<-get_candidates_fromarchivesearchresults(select_descript_nb)
 
 ##----subset.on.ocr.after.keyword----
