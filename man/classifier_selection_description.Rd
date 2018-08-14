@@ -2,12 +2,13 @@
 % Please edit documentation in R/text_analysis.R
 \name{classifier_selection_description}
 \alias{classifier_selection_description}
-\title{Classifies new documents based on a labeled training set.}
+\title{Classifies new documents on a labeled training set (description).}
 \usage{
-classifier_selection_description(train, new_docs, text_field = "description",
-  class_to_keep = 1, training_classify_var = "EV_article",
-  prior = "uniform", classifier_type = "xgboost", stem = TRUE,
-  return_logical = FALSE, ...)
+classifier_selection_description(train, new_docs,
+  text_field = "description", class_to_keep = 1,
+  training_classify_var = "EV_article", prior = "uniform",
+  classifier_type = "xgboost", stem = TRUE, return_logical = FALSE,
+  ...)
 }
 \arguments{
 \item{train}{a data frame with the training documents.}
@@ -31,5 +32,5 @@ classifier_selection_description(train, new_docs, text_field = "description",
 \item{...}{other arguments to be passed to \code{preprocess_corpus}.}
 }
 \description{
-Classifies new documents based on a labeled training set.
+Classifies new documents on a labeled training set (description).
 }

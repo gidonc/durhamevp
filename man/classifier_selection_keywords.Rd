@@ -5,15 +5,20 @@
 \title{\code{classifier_selection_keyword} uses a classifier to select document from keywords.
 In 'select' mode the keywords are constructed from the archivesearchresults. In 'eval' mode the keywords are taken from the eval_options and a binary dfm is constructed from the document text.}
 \usage{
-classifier_selection_keywords(train, archivesearchresults, class_to_keep = 1,
-  training_classify_var = "EV_article", prior = "docfreq",
-  text_field = "ocr", classifier_type = "xgboost", mode = "select",
-  eval_options = list(keywords = c("candidate", "poll", "election", "stone",
-  "riot", "mob", "husting", "disturbance", "rough", "incident"), text_field =
-  "ocr", eval_classify_var = "EV_article"))
+classifier_selection_keywords(train, archivesearchresults,
+  class_to_keep = 1, training_classify_var = "EV_article",
+  prior = "docfreq", text_field = "ocr", classifier_type = "xgboost",
+  mode = "select", eval_options = list(keywords = c("candidate",
+  "poll", "election", "stone", "riot", "mob", "husting", "disturbance",
+  "rough", "incident"), text_field = "ocr", eval_classify_var =
+  "EV_article"))
 }
 \arguments{
 \item{train}{the training set of documents}
+
+\item{classifier_type}{The type of classifer to use ("nb" = naive bayes, "xgboost"=xgboost)}
+
+\item{mode}{Should the documents be selected ("select") or the document selection be evaluated ("eval"), (evaluation assumes search results have been classified)}
 }
 \description{
 \code{classifier_selection_keyword} uses a classifier to select document from keywords.

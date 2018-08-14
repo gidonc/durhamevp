@@ -8,9 +8,9 @@ run_firststage_fcm(docs, docidvar = "fakeid", classvar = "classified",
   typevar = "EV_article", textvar = "description", stem = TRUE,
   min_termfreq = 20, min_docfreq = 20, max_termfreq = NULL,
   max_docfreq = NULL, remove_punct = TRUE, remove_numbers = TRUE,
-  remove_hyphens = TRUE, termfreq_type = "count", docfreq_type = "count",
-  dfm_tfidf = FALSE, initialkw = c("elect", "riot", "disturb", "incid"),
-  cpoint2 = 0.9)
+  remove_hyphens = TRUE, termfreq_type = "count",
+  docfreq_type = "count", dfm_tfidf = FALSE, initialkw = c("elect",
+  "riot", "disturb", "incid"), cpoint2 = 0.9)
 }
 \arguments{
 \item{docs}{Data frame of documents containing classified cases (R-set) and unclassified cases (S-set)}

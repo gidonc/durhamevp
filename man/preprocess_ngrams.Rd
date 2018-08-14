@@ -6,8 +6,8 @@
 \usage{
 preprocess_ngrams(the_corpus, n, min_termfreq = 2, min_docfreq = 2,
   max_termfreq = NULL, max_docfreq = NULL, remove_punct = TRUE,
-  remove_numbers = TRUE, remove_hyphens = TRUE, termfreq_type = "count",
-  docfreq_type = "count", dfm_tfidf = FALSE)
+  remove_numbers = TRUE, remove_hyphens = TRUE,
+  termfreq_type = "count", docfreq_type = "count", dfm_tfidf = FALSE)
 }
 \arguments{
 \item{the_corpus}{The text corpus to be pre-processed.}

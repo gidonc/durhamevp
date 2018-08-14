@@ -9,7 +9,8 @@ By default it excludes articles from publications in Ireland and Scotland, and d
 as 3 (verbatim repeat), 4 (Ireland), 5 (Scotland), 6 (Abroad)}
 \usage{
 get_candidates_fromarchivesearchresults(archivesearchresults,
-  include_ocr = FALSE, restrict_EW = TRUE, restrict_classified = TRUE)
+  include_ocr = FALSE, restrict_EW = TRUE,
+  restrict_classified = TRUE)
 }
 \arguments{
 \item{archivesearchresults}{The archive search results (including a url column)}
