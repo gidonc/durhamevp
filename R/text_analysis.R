@@ -262,7 +262,7 @@ classifier_select_docs <- function(classifier, new_docs, text_field="description
 
 
 classifier_selection_description<-function(train, new_docs, text_field="description", class_to_keep=1, training_classify_var="EV_article", prior="uniform", classifier_type="xgboost", stem=TRUE, return_logical=FALSE, ...){
-  #' Classifies new documents based on a labeled training set.
+  #' Classifies new documents on a labeled training set (description).
   #' @param train a data frame with the training documents.
   #' @param new_docs the documents to classify.
   #' @param text_field the text field (must be the same in the training documents and the documents to classify).
@@ -286,7 +286,8 @@ classifier_selection_description<-function(train, new_docs, text_field="descript
 }
 
 classifier_selection_ocr<-function(train, new_docs, text_field="ocr", class_to_keep=1, training_classify_var="EV_article", prior="uniform", return_logical=FALSE){
-  #'
+
+  #' Classifies new documents on a labeled training set (description)
   #' @export
   train_corpus<-quanteda::corpus(train[,c(text_field, training_classify_var)], text_field = text_field)
   train_dfm<-durhamevp::preprocess_corpus(train_corpus)
@@ -343,8 +344,8 @@ classifier_selection_keywords<-function(train, archivesearchresults, class_to_ke
   #'\code{classifier_selection_keyword} uses a classifier to select document from keywords.
   #'In 'select' mode the keywords are constructed from the archivesearchresults. In 'eval' mode the keywords are taken from the eval_options and a binary dfm is constructed from the document text.
   #'@param train the training set of documents
-  #'@classifier_type The type of classifer to use ("nb" = naive bayes, "xgboost"=xgboost)
-  #'@mode Should the documents be selected ("select") or the document selection be evaluated ("eval"), (evaluation assumes search results have been classified)
+  #'@param classifier_type The type of classifer to use ("nb" = naive bayes, "xgboost"=xgboost)
+  #'@param mode Should the documents be selected ("select") or the document selection be evaluated ("eval"), (evaluation assumes search results have been classified)
   #'@export
 
 
@@ -386,6 +387,8 @@ classifier_selection_keywords<-function(train, archivesearchresults, class_to_ke
 
 evp_classifiers<-function(train_dfm, classifier_type, training_classify_var, prior){
   #' wrappers round classifiers
+  #'
+  #' @export
   if(classifier_type=="nb"){
     classifier<-quanteda::textmodel_nb(train_dfm, y=quanteda::docvars(train_dfm, training_classify_var), prior=prior)
 
