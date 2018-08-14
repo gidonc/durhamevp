@@ -2,20 +2,7 @@
 % Please edit documentation in R/text_analysis.R
 \name{split_dfm}
 \alias{split_dfm}
-\title{preprocess_corpus<-function(the_corpus, min_termfreq=2, min_docfreq=2, max_termfreq=NULL, max_docfreq=NULL,
-                            remove_punct=TRUE, remove_numbers=TRUE, remove_hyphens=TRUE, termfreq_type="count", docfreq_type="count",
-                            dfm_tfidf=FALSE){
-  #' Preprocess a text corpus and return a document feature matrix (wrapper round quanteda functions).
-  #' @param the_corpus The text corpus to be pre-processed.
-  #' @export
-  the_dfm <- quanteda::dfm(the_corpus, stem=TRUE, remove=quanteda::stopwords("english"), remove_punct=remove_punct, remove_numbers=remove_numbers, remove_hyphens=remove_hyphens)
-  the_dfm <- quanteda::dfm_trim(the_dfm, min_termfreq=min_termfreq, min_docfreq = min_docfreq, termfreq_type=termfreq_type, docfreq_type=docfreq_type)
-  if(dfm_tfidf){
-    the_dfm<-quanteda::dfm_tfidf(the_dfm)
-  }
-  the_dfm
-}
-Divide a document feature matrix into training and testing sets based on number of training items}
+\title{Divide a document feature matrix into training and testing sets based on number of training items}
 \usage{
 split_dfm(dfm, n_train)
 }
@@ -25,18 +12,5 @@ split_dfm(dfm, n_train)
 \item{n_train}{The number of documents in the training set.}
 }
 \description{
-preprocess_corpus<-function(the_corpus, min_termfreq=2, min_docfreq=2, max_termfreq=NULL, max_docfreq=NULL,
-                            remove_punct=TRUE, remove_numbers=TRUE, remove_hyphens=TRUE, termfreq_type="count", docfreq_type="count",
-                            dfm_tfidf=FALSE){
-  #' Preprocess a text corpus and return a document feature matrix (wrapper round quanteda functions).
-  #' @param the_corpus The text corpus to be pre-processed.
-  #' @export
-  the_dfm <- quanteda::dfm(the_corpus, stem=TRUE, remove=quanteda::stopwords("english"), remove_punct=remove_punct, remove_numbers=remove_numbers, remove_hyphens=remove_hyphens)
-  the_dfm <- quanteda::dfm_trim(the_dfm, min_termfreq=min_termfreq, min_docfreq = min_docfreq, termfreq_type=termfreq_type, docfreq_type=docfreq_type)
-  if(dfm_tfidf){
-    the_dfm<-quanteda::dfm_tfidf(the_dfm)
-  }
-  the_dfm
-}
 Divide a document feature matrix into training and testing sets based on number of training items
 }
