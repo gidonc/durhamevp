@@ -7,20 +7,24 @@ library(RTextTools) # not sure if this is included as part of the durhamevp pack
 
 
 ##----selection.pilot.custom.functions----
-documents_to_latex<-function(out_docs){
+documents_to_latex<-function(out_docs, include_description=TRUE, include_ocr=TRUE){
   for (doc in 1:nrow(out_docs)){
-    cat(paste0("\\subsection{", reportRx::sanitizestr(out_docs[doc, "title"]), " (candidate\\_document\\_id: ", out_docs[doc, "id"], ")}"))
+    cat(paste0("\\subsection{", reportRx::sanitizestr(out_docs[doc, "title"]), " (id: ", out_docs[doc, "id"], ")}"))
     cat(paste0("  \n"))
-    cat(paste0("\\subsubsection{description}"))
-    cat(paste0("  \n"))
-    #cat(Hmisc::latexTranslate(out_docs[doc, "description"]))
-    #knitr::knit_print(out_docs[doc, "description"])
-    cat(reportRx::sanitizestr(out_docs[doc, "description"]))
-    cat(paste0("\\subsubsection{OCR}"))
-    cat(paste0("  \n"))
-    #knitr::knit_print(out_docs[doc, "ocr"])
-    cat(reportRx::sanitizestr(out_docs[doc, "ocr"]))
-    cat("  \n")
+    if(include_description){
+      cat(paste0("\\subsubsection{description}"))
+      cat(paste0("  \n"))
+      #cat(Hmisc::latexTranslate(out_docs[doc, "description"]))
+      #knitr::knit_print(out_docs[doc, "description"])
+      cat(reportRx::sanitizestr(out_docs[doc, "description"]))
+    }
+    if(include_ocr){
+      cat(paste0("\\subsubsection{OCR}"))
+      cat(paste0("  \n"))
+      #knitr::knit_print(out_docs[doc, "ocr"])
+      cat(reportRx::sanitizestr(out_docs[doc, "ocr"]))
+      cat("  \n")
+    }
   }
 }
 
@@ -52,12 +56,14 @@ classdocs<-classdocs %>%
   dplyr::mutate(std_url = sub("download/", "", url)) %>%
   dplyr::mutate(unclass=0, classified=1)
 
+##----download.candocs----
 # also get candidate documents for description classification purposes
 candocs<-get_candidate_documents("all")
 actdocs<-get_document("all")
 candocs$status2<-candocs$status
 candocs$status2[(candocs$id %in% actdocs$candidate_document_id)]<-"1"
-summary(factor(candocs$status2[(candocs$id %in% actdocs$candidate_document_id)]))
+
+#summary(factor(candocs$status2[(candocs$id %in% actdocs$candidate_document_id)]))
 candocs$EV_article<-ifelse(candocs$status2 %in% c("1", "3"), 1, 0)
 candocs.r<-candocs[candocs$status2 %in% c("1", "3", "7", "8", "0"),]
 
