@@ -43,6 +43,10 @@ switch_url_format<-Vectorize(function(url){
   }
   switch_url
 })
+url_to_id<-function(url){
+  str_split(url, )
+
+}
 ##----initial.keywords----
 # election riot, election incident, election disturbance
 
@@ -307,11 +311,11 @@ select_descript_nb<-classifier_selection_description(candocs.r, res_i_1841, clas
 
 #select_descript_xgb$description
 #select_descript_nb$description
-# the unclassified archive search results don't have ocr column
-#xgb_cand_docs<-get_candidates_fromarchivesearchresults(select_descript_xgb)
+
+##----subset.on.description.1841.link.cand.doc----
+xgb_cand_docs<-get_candidates_fromarchivesearchresults(select_descript_xgb)
 
 #nb_cand_docs<-get_candidates_fromarchivesearchresults(select_descript_nb)
-
 
 ##----subset.on.ocr.after.keyword----
 code_these_fromkeywords_ocr <- classifier_selection_ocr(classified_boolean_returns, download_these_fromkeywords_ocr)

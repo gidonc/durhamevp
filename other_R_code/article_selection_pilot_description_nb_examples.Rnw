@@ -1,0 +1,74 @@
+\documentclass{article}
+\usepackage[margin=1in]{geometry}
+\title{Low Hanging Fruit: Descriptions of 1841 from the results returned by the new keyword searches}
+\begin{document}
+\maketitle
+
+
+
+\label{sect:packages}
+<<setuppath, echo=FALSE, results="hide", echo=FALSE>>=
+dropbox.path<-switch (Sys.info()["nodename"],
+                      "DM-GIA-051"="D:/Dropbox",
+                      "DM-GIA-055"="D:/Dropbox",
+                      "GIDON-ASUS-15"="C:/Users/Gidon/Dropbox",
+                      "GID-HOME-LENOVO"="C:/Users/Gidon/Dropbox")
+
+project.path<-paste0(dropbox.path, "/ESRC Grant EV 19th Century")
+
+knitr::read_chunk(paste0(project.path, "/Code/durhamevp/other_R_code/article_selection_pilot.R"))
+options(tidy=TRUE, width=50)
+@
+
+<<resetdb, echo=FALSE, results='hide', message=FALSE>>=
+# Is this necessary because of cached results below? Otherwise sometime get error messages like Corrupt MySQL handle
+durhamevp::killDbConnections()
+
+@
+
+<<selection.pilot.custom.functions, echo=FALSE>>=
+
+@
+
+
+
+<<pilot.packages, warning=FALSE, message=FALSE, echo=FALSE>>=
+
+@
+
+<<resetdbagain, echo=FALSE, results='hide', message=FALSE>>=
+# Is this necessary because of cached results below? Otherwise sometime get error messages like Corrupt MySQL handle
+durhamevp::killDbConnections()
+
+@
+
+<<download.R.set, cache=TRUE, echo=FALSE>>=
+
+@
+
+
+<<download.candocs, cache=TRUE, echo=FALSE>>=
+
+@
+
+
+<<subset.on.description.1841.data, cache=TRUE, echo=FALSE, message=FALSE, results='hide'>>=
+
+@
+
+Below are two randomly selected sets of articles from the two classificaiton methods. Which is the better set of articles?
+\section{First Set}
+<<printdoc1, results='asis', echo=FALSE>>=
+doc1<-dplyr::sample_n(select_descript_xgb, 30)
+
+documents_to_latex(doc1, include_ocr=FALSE)
+@
+
+\section{Second Set}
+<<printdoc2, results='asis', echo=FALSE>>=
+doc2<-dplyr::sample_n(select_descript_nb, 30)
+documents_to_latex(doc1, include_ocr=FALSE)
+
+@
+
+\end{document}
