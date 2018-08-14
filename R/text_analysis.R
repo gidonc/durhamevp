@@ -18,19 +18,6 @@ status_to_text<-function(status){
   )
 }
 
-#' preprocess_corpus<-function(the_corpus, min_termfreq=2, min_docfreq=2, max_termfreq=NULL, max_docfreq=NULL,
-#'                             remove_punct=TRUE, remove_numbers=TRUE, remove_hyphens=TRUE, termfreq_type="count", docfreq_type="count",
-#'                             dfm_tfidf=FALSE){
-#'   #' Preprocess a text corpus and return a document feature matrix (wrapper round quanteda functions).
-#'   #' @param the_corpus The text corpus to be pre-processed.
-#'   #' @export
-#'   the_dfm <- quanteda::dfm(the_corpus, stem=TRUE, remove=quanteda::stopwords("english"), remove_punct=remove_punct, remove_numbers=remove_numbers, remove_hyphens=remove_hyphens)
-#'   the_dfm <- quanteda::dfm_trim(the_dfm, min_termfreq=min_termfreq, min_docfreq = min_docfreq, termfreq_type=termfreq_type, docfreq_type=docfreq_type)
-#'   if(dfm_tfidf){
-#'     the_dfm<-quanteda::dfm_tfidf(the_dfm)
-#'   }
-#'   the_dfm
-#' }
 
 split_dfm <- function(dfm, n_train){
   #' Divide a document feature matrix into training and testing sets based on number of training items
@@ -274,8 +261,18 @@ classifier_select_docs <- function(classifier, new_docs, text_field="description
 }
 
 
-classifier_selection_description<-function(train, new_docs, text_field="description", class_to_keep=1, training_classify_var="EV_article", prior="uniform", classifier_type="xgboost", stem=TRUE, ...){
-  #' @param ... other arguments to be passed to \code{preprocess_corpus}
+classifier_selection_description<-function(train, new_docs, text_field="description", class_to_keep=1, training_classify_var="EV_article", prior="uniform", classifier_type="xgboost", stem=TRUE, return_logical=FALSE, ...){
+  #' Classifies new documents based on a labeled training set.
+  #' @param train a data frame with the training documents.
+  #' @param new_docs the documents to classify.
+  #' @param text_field the text field (must be the same in the training documents and the documents to classify).
+  #' @param class_to_keep the class (0 or 1) to keep.
+  #' @param training_classify_var the variable containing the labels in the training set.
+  #' @param prior for naive bayes classifier only.
+  #' @param classifier_type which classifier to use (xgboost or nb (naive Bayes))
+  #' @param stem for preprocessing
+  #' @param return_logical return the subset of documents or a logical vector indicating that subset.
+  #' @param ... other arguments to be passed to \code{preprocess_corpus}.
   #' @export
 
   train_corpus <- quanteda::corpus(train[,c(text_field, training_classify_var)], text_field = text_field)
@@ -283,32 +280,45 @@ classifier_selection_description<-function(train, new_docs, text_field="descript
   classifier <- evp_classifiers(train_dfm=train_dfm, classifier_type=classifier_type, training_classify_var=training_classify_var, prior=prior)
 
 
-  new_docs_subset<-durhamevp::classifier_select_docs(classifier=classifier, new_docs=new_docs, text_field = text_field, class_to_keep = class_to_keep, stem=stem, ...)
+  new_docs_subset<-durhamevp::classifier_select_docs(classifier=classifier, new_docs=new_docs, text_field = text_field, class_to_keep = class_to_keep, stem=stem, return_logical=return_logical, ...)
 
   new_docs_subset
 }
 
-classifier_selection_ocr<-function(train, new_docs, text_field="ocr", class_to_keep=1, training_classify_var="EV_article", prior="uniform"){
+classifier_selection_ocr<-function(train, new_docs, text_field="ocr", class_to_keep=1, training_classify_var="EV_article", prior="uniform", return_logical=FALSE){
   #'
   #' @export
   train_corpus<-quanteda::corpus(train[,c(text_field, training_classify_var)], text_field = text_field)
   train_dfm<-durhamevp::preprocess_corpus(train_corpus)
   classifier<-quanteda::textmodel_nb(train_dfm, y=quanteda::docvars(train_dfm, training_classify_var), prior=prior)
-  new_docs_subset<-durhamevp::classifier_select_docs(classifier=classifier, new_docs=new_docs, text_field = text_field, class_to_keep = class_to_keep)
+  new_docs_subset<-durhamevp::classifier_select_docs(classifier=classifier, new_docs=new_docs, text_field = text_field, class_to_keep = class_to_keep, return_logical = return_logical)
 
   new_docs_subset
 }
 
-get_candidates_fromarchivesearchresults<-function(archivesearchresults){
+get_candidates_fromarchivesearchresults<-function(archivesearchresults, include_ocr=FALSE, restrict_EW=TRUE, restrict_classified=TRUE){
   #' Gets candidate documents from archivesearchresults.
   #' This is somewhat challenging because sometimes the url has 'download' in sometimes it doesn't
-  #' This function is really a hack to find either case.
+  #' This function includes a hack to find either case.
+  #' By default it excludes articles from publications in Ireland and Scotland, and documents already classified
+  #' as 3 (verbatim repeat), 4 (Ireland), 5 (Scotland), 6 (Abroad)
+
   #' @param archivesearchresults The archive search results (including a url column)
+  #' @param include the ocr in the download (will slow down query)
+  #' @param restrict_EW remove results published in Republic of Ireland and Scotland
+  #' @param restrict_classified remove results already classified as 3, 4, 5 or 6
   #' @return Candidate documents with urls matching the urls in archivesearchresults
   #' @export
 
   archivesearchresults$url_std<-sub("/viewer/download", "/viewer", archivesearchresults$url)
-  the_candidates<-get_candidate_documents(cand_document_id = "all", c(archivesearchresults$url, archivesearchresults$url_std))
+  the_candidates<-get_candidate_documents(cand_document_id = "all", c(archivesearchresults$url, archivesearchresults$url_std), include_ocr=include_ocr)
+
+  if(restrict_EW){
+    the_candidates <- dplyr::filter(the_candidates, !grepl('Republic of Ireland|Scotland', publication_location))
+  }
+  if(restrict_classified){
+    the_candidates <- dplyr::filter(the_candidates, !status %in% c("3", "4", "5", "6"))
+  }
 
   the_candidates
 }
@@ -383,7 +393,7 @@ evp_classifiers<-function(train_dfm, classifier_type, training_classify_var, pri
     train_dfms <- split_dfm(train_dfm, n_train=floor(nrow(train_dfm)*.8))
     dtrain <- durhamevp::dfm_to_dgCMatrix(train_dfms$training_set, training_classify_var = training_classify_var)
     dval <- durhamevp::dfm_to_dgCMatrix(train_dfms$testing_set, training_classify_var = training_classify_var)
-    classifier<-xgboost::xgb.train(data=dtrain, nrounds=100, print_every_n = 10, early_stopping_rounds = 10, maximize = F, eval_metric="error", verbose = 1, watchlist=list(val=dval, train=dtrain))
+    classifier<-xgboost::xgb.train(data=dtrain, nrounds=1000, print_every_n = 20, early_stopping_rounds = 10, maximize = F, eval_metric="error", verbose = 1, watchlist=list(val=dval, train=dtrain))
   } else {
     stop(paste("Classifier type", classifier_type, "not supported."))
   }
