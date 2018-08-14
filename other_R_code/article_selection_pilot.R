@@ -298,10 +298,7 @@ initial_1841_searches<-all_searches%>%
                             "riot", "disturbance", "incident", "mob", "rough", "adjourn",
                             "prison", "police"))
 
-# a number of precisely duplicated searches here which return precisely duplicated results - we could handle this later on but here probably simplest to just use three distinct ones
-# election riot - id 73
-# election disturbance - id 81
-# election incident - id 85
+
 res_i_1841<-get_archivesearchresults(archive_search_id = initial_1841_searches$id) %>%
   left_join(all_searches, by=c("archive_search_id"="id")) %>%
   mutate(std_url = sub("download/", "", url))
