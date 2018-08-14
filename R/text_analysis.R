@@ -227,7 +227,7 @@ classifier_select_docs <- function(classifier, new_docs, text_field="description
   }
 
   if(boolean){
-    the_dfm<-dfm_weight(the_dfm, scheme="boolean")
+    the_dfm<-quanteda::dfm_weight(the_dfm, scheme="boolean")
   }
 
 
