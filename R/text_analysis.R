@@ -393,7 +393,7 @@ evp_classifiers<-function(train_dfm, classifier_type, training_classify_var, pri
     classifier<-quanteda::textmodel_nb(train_dfm, y=quanteda::docvars(train_dfm, training_classify_var), prior=prior)
 
   } else if (classifier_type=="xgboost"){
-    train_dfms <- split_dfm(train_dfm, n_train=floor(nrow(train_dfm)*.8))
+    train_dfms <- durhamevp::split_dfm(train_dfm, n_train=floor(nrow(train_dfm)*.8))
     dtrain <- durhamevp::dfm_to_dgCMatrix(train_dfms$training_set, training_classify_var = training_classify_var)
     dval <- durhamevp::dfm_to_dgCMatrix(train_dfms$testing_set, training_classify_var = training_classify_var)
     classifier<-xgboost::xgb.train(data=dtrain, nrounds=1000, print_every_n = 20, early_stopping_rounds = 10, maximize = F, eval_metric="error", verbose = 1, watchlist=list(val=dval, train=dtrain))
@@ -407,11 +407,11 @@ dfm_to_dgCMatrix<-function(the_dfm, boolean=FALSE, training_classify_var="EV_art
   #'@export
 
   if(boolean){
-    the_dfm<-dfm_weight(the_dfm, scheme="boolean")
+    the_dfm<-quanteda::dfm_weight(the_dfm, scheme="boolean")
   }
   the_dgCMatrix<-as(the_dfm, "dgCMatrix")
 
-  the_labels<-docvars(the_dfm, training_classify_var)
+  the_labels<-quanteda::docvars(the_dfm, training_classify_var)
 
   the_dgCMatrix<-xgboost::xgb.DMatrix(data=the_dgCMatrix, label=the_labels)
 
