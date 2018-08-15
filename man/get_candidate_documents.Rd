@@ -4,13 +4,15 @@
 \alias{get_candidate_documents}
 \title{Returns the candidate document table filtered by candidate document id}
 \usage{
-get_candidate_documents(cand_document_id, url = "all",
-  include_ocr = TRUE)
+get_candidate_documents(cand_document_id = "all", url = "all",
+  status = "all", include_ocr = TRUE)
 }
 \arguments{
 \item{cand_document_id}{Candidate document id or ids to filter by.}
 
 \item{url}{document url or urls to filter by.}
+
+\item{status}{document classification status to filter by.}
 
 \item{include_ocr}{should the ocr be downloaded.}
 }
