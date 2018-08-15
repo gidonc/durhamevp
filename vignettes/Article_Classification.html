@@ -80,9 +80,8 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 </div>
 <div id="get-the-training-data-description-classifications" class="section level2">
 <h2>Get The Training Data (Description Classifications)</h2>
-<p>For classification on description we will use the manual classification information in the candidate documents table. The code below obtains data and creates the EV_article column from the status information which we want the classifier to emulate.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">candocs&lt;-<span class="kw">get_candidate_documents</span>(<span class="dt">status =</span><span class="kw">c</span>(<span class="st">&quot;0&quot;</span>,<span class="st">&quot;1&quot;</span>, <span class="st">&quot;2&quot;</span>, <span class="st">&quot;3&quot;</span>, <span class="st">&quot;4&quot;</span>, <span class="st">&quot;5&quot;</span>, <span class="st">&quot;6&quot;</span>, <span class="st">&quot;7&quot;</span>, <span class="st">&quot;8&quot;</span>), <span class="dt">include_ocr=</span><span class="ot">FALSE</span>)
-<span class="co">#&gt; Warning: package 'bindrcpp' was built under R version 3.4.4</span>
+<p>For classification on description we will use the manual classification information in the candidate documents table. The code below obtains data and creates the EV_article column from the status information which we want the classifier to emulate. We exclude verbatim repeats (status=3). from the classification set because this text is classified once and we don’t want to overweight the particular phrases in these documents.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">candocs&lt;-<span class="kw">get_candidate_documents</span>(<span class="dt">status =</span><span class="kw">c</span>(<span class="st">&quot;0&quot;</span>,<span class="st">&quot;1&quot;</span>, <span class="st">&quot;2&quot;</span>, <span class="st">&quot;4&quot;</span>, <span class="st">&quot;5&quot;</span>, <span class="st">&quot;6&quot;</span>, <span class="st">&quot;7&quot;</span>, <span class="st">&quot;8&quot;</span>), <span class="dt">include_ocr=</span><span class="ot">FALSE</span>)
 
 candocs<span class="op">$</span>EV_article&lt;-<span class="kw">ifelse</span>(candocs<span class="op">$</span>status <span class="op">%in%</span><span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;1&quot;</span>, <span class="st">&quot;3&quot;</span>), <span class="dv">1</span>, <span class="dv">0</span>)</code></pre></div>
 </div>
@@ -99,12 +98,9 @@ candocs<span class="op">$</span>EV_article&lt;-<span class="kw">ifelse</span>(ca
                             <span class="st">&quot;prison&quot;</span>, <span class="st">&quot;police&quot;</span>))</code></pre></div>
 <p>These results can then be used to obtain the set of search results with that archive search id:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">res_i_<span class="dv">1841</span>&lt;-<span class="kw">get_archivesearchresults</span>(<span class="dt">archive_search_id =</span> initial_1841_searches<span class="op">$</span>id) 
-<span class="kw">dim</span>(res_i_<span class="dv">1841</span>)
-<span class="co">#&gt; [1] 109226     10</span></code></pre></div>
+<span class="kw">dim</span>(res_i_<span class="dv">1841</span>)</code></pre></div>
 <p>Or the search ids can be directly entered if known (for example search ids 228-255 all pertain to one day in 1832):</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">res_oneday_<span class="dv">1832</span>&lt;-<span class="kw">get_archivesearchresults</span>(<span class="dt">archive_search_id =</span> <span class="kw">c</span>(<span class="dv">228</span><span class="op">:</span><span class="dv">255</span>))
-<span class="kw">dim</span>(res_oneday_<span class="dv">1832</span>)
-<span class="co">#&gt; [1] 1759   10</span></code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">res_oneday_<span class="dv">1832</span>&lt;-<span class="kw">get_archivesearchresults</span>(<span class="dt">archive_search_id =</span> <span class="kw">c</span>(<span class="dv">228</span><span class="op">:</span><span class="dv">255</span>))</code></pre></div>
 <p>This should then be joined to the search parameters:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">
 res_i_<span class="dv">1841</span> &lt;-<span class="st"> </span>res_i_<span class="dv">1841</span> <span class="op">%&gt;%</span>
@@ -120,104 +116,18 @@ res_oneday_<span class="dv">1832</span> &lt;-<span class="st"> </span>res_oneday
 <p>The documents can be classified by xgboost. Here we classify the 1841 new data using xgboost. The default options return the subset of the search results which have been classified as Election Violence:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">
 select_descript_xgb&lt;-<span class="kw">classifier_selection_description</span>(candocs, res_i_<span class="dv">1841</span>, <span class="dt">classifier_type =</span> <span class="st">&quot;xgboost&quot;</span>)
-<span class="co">#&gt; [1]  val-error:0.106229  train-error:0.099914 </span>
-<span class="co">#&gt; Multiple eval metrics are present. Will use train_error for early stopping.</span>
-<span class="co">#&gt; Will train until train_error hasn't improved in 10 rounds.</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; [21] val-error:0.086615  train-error:0.071199 </span>
-<span class="co">#&gt; [41] val-error:0.080182  train-error:0.061902 </span>
-<span class="co">#&gt; [61] val-error:0.077985  train-error:0.055508 </span>
-<span class="co">#&gt; [81] val-error:0.075632  train-error:0.051232 </span>
-<span class="co">#&gt; [101]    val-error:0.075475  train-error:0.047152 </span>
-<span class="co">#&gt; [121]    val-error:0.074690  train-error:0.044485 </span>
-<span class="co">#&gt; [141]    val-error:0.074219  train-error:0.042249 </span>
-<span class="co">#&gt; [161]    val-error:0.074062  train-error:0.039110 </span>
-<span class="co">#&gt; [181]    val-error:0.073435  train-error:0.035972 </span>
-<span class="co">#&gt; [201]    val-error:0.073749  train-error:0.033697 </span>
-<span class="co">#&gt; [221]    val-error:0.074062  train-error:0.031304 </span>
-<span class="co">#&gt; [241]    val-error:0.073749  train-error:0.029774 </span>
-<span class="co">#&gt; [261]    val-error:0.073435  train-error:0.027930 </span>
-<span class="co">#&gt; [281]    val-error:0.073435  train-error:0.026008 </span>
-<span class="co">#&gt; [301]    val-error:0.073278  train-error:0.024400 </span>
-<span class="co">#&gt; [321]    val-error:0.073121  train-error:0.022988 </span>
-<span class="co">#&gt; [341]    val-error:0.072807  train-error:0.021654 </span>
-<span class="co">#&gt; [361]    val-error:0.072807  train-error:0.019653 </span>
-<span class="co">#&gt; [381]    val-error:0.072807  train-error:0.018359 </span>
-<span class="co">#&gt; [401]    val-error:0.073121  train-error:0.017417 </span>
-<span class="co">#&gt; [421]    val-error:0.072964  train-error:0.016358 </span>
-<span class="co">#&gt; [441]    val-error:0.072493  train-error:0.015338 </span>
-<span class="co">#&gt; [461]    val-error:0.072493  train-error:0.014514 </span>
-<span class="co">#&gt; [481]    val-error:0.072336  train-error:0.013259 </span>
-<span class="co">#&gt; [501]    val-error:0.072493  train-error:0.012475 </span>
-<span class="co">#&gt; [521]    val-error:0.072807  train-error:0.011533 </span>
-<span class="co">#&gt; [541]    val-error:0.073435  train-error:0.010552 </span>
-<span class="co">#&gt; [561]    val-error:0.073121  train-error:0.009925 </span>
-<span class="co">#&gt; [581]    val-error:0.073592  train-error:0.008866 </span>
-<span class="co">#&gt; [601]    val-error:0.073749  train-error:0.008199 </span>
-<span class="co">#&gt; [621]    val-error:0.073121  train-error:0.007571 </span>
-<span class="co">#&gt; [641]    val-error:0.073435  train-error:0.006983 </span>
-<span class="co">#&gt; [661]    val-error:0.072964  train-error:0.006473 </span>
-<span class="co">#&gt; [681]    val-error:0.073121  train-error:0.006080 </span>
-<span class="co">#&gt; [701]    val-error:0.073749  train-error:0.005570 </span>
-<span class="co">#&gt; [721]    val-error:0.073749  train-error:0.005139 </span>
-<span class="co">#&gt; [741]    val-error:0.074062  train-error:0.004707 </span>
-<span class="co">#&gt; Stopping. Best iteration:</span>
-<span class="co">#&gt; [745]    val-error:0.073906  train-error:0.004629</span>
 
-<span class="kw">dim</span>(select_descript_xgb)
-<span class="co">#&gt; [1] 1447   29</span></code></pre></div>
+<span class="kw">dim</span>(select_descript_xgb)</code></pre></div>
 <p>Or by naive Bayes. The below classifies the 1841 searches using naive Bayes:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">select_descript_nb&lt;-<span class="kw">classifier_selection_description</span>(candocs, res_i_<span class="dv">1841</span>, <span class="dt">classifier_type =</span> <span class="st">&quot;nb&quot;</span>)
-<span class="kw">dim</span>(select_descript_nb)
-<span class="co">#&gt; [1] 17342    29</span></code></pre></div>
+<span class="kw">dim</span>(select_descript_nb)</code></pre></div>
 </div>
 <div id="from-results-to-candidate-documents" class="section level1">
 <h1>From Results to Candidate Documents</h1>
 <p>The results set contains many references to the same document (perhaps with different descriptions). The next step is to identify the unique candidate documents which these results relate to. Add the classification (where this is a subset the classification is always 1)</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">xgb_cand_docs&lt;-<span class="kw">get_candidates_fromarchivesearchresults</span>(select_descript_xgb)
-knitr<span class="op">::</span><span class="kw">kable</span>(<span class="kw">head</span>(xgb_cand_docs[xgb_cand_docs<span class="op">$</span>status<span class="op">!=</span><span class="st">&quot;1&quot;</span>, <span class="kw">c</span>(<span class="st">&quot;status&quot;</span>, <span class="st">&quot;description&quot;</span>)]))</code></pre></div>
-<table>
-<thead>
-<tr class="header">
-<th></th>
-<th align="left">status</th>
-<th align="left">description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>11</td>
-<td align="left">2</td>
-<td align="left">… invalidate the election having come to his knowledge, would no longer endanger the life autl property the inhabitants keeping the poll open. TRK BLOOD MINISTRY !Serious riots have taken in various parts of the kingdom, during the present election contests …</td>
-</tr>
-<tr class="even">
-<td>13</td>
-<td align="left">2</td>
-<td align="left">… Mr. Huitoo, . Mr. Weiii, Mr. Grogan, Majority for over OConnell, Majority lor Grogan over lluiton, Election. Thur»il«y eeeninir, the election for this Borough concluded, tl.e return of Lord Newry. The numbers, the close the poll, were: LM.I Srwrt …</td>
-</tr>
-<tr class="odd">
-<td>15</td>
-<td align="left">7</td>
-<td align="left">… GENERAL ELECTION MORNING POST OFFICE, Saturday, Quarter to Five o’Clock, a.m. _. ?? DUBLIN ELECTION. (By Extraordinary Exrasss.) (From our own Reporter.) Thursday Evening, Eight o’Clock. The certainty of defeat has driven the O’Connellites to desperation …</td>
-</tr>
-<tr class="even">
-<td>16</td>
-<td align="left">7</td>
-<td align="left">… (hitherto) are daily redeeming their characters by electing good Conservatives, surely it behoves the metropolitan county to imitate so worthy an example, by eeudiug Mr. Byng to the right about, and electing two staunch champions to fight the battle of the …</td>
-</tr>
-<tr class="odd">
-<td>18</td>
-<td align="left">7</td>
-<td align="left">… the election was over. Monday, the Hon. W. O. Stanley was elected member for this county without opposition. Caa.xaßvoasHiaa.Col. Douglas Pennant was elected on Wednesday without opposition. Merionethshire.On Tuesday R. Richards, Esq. re-elected without …</td>
-</tr>
-<tr class="even">
-<td>20</td>
-<td align="left">7</td>
-<td align="left">… 221 These four were accordingly declared duly elected. The uumbers for the other four candidates were declared to be as follows : Attwood 6,212 Pattison 6,090 Crawford 6,065 Pirie 6,017 Nottingham Election, Tuesday. The Li- berals were stirrinpr with …</td>
-</tr>
-</tbody>
-</table>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">
+knitr<span class="op">::</span><span class="kw">kable</span>(<span class="kw">head</span>(xgb_cand_docs[xgb_cand_docs<span class="op">$</span>status<span class="op">!=</span><span class="st">&quot;1&quot;</span><span class="op">|</span><span class="kw">is.na</span>(xgb_cand_docs<span class="op">$</span>status), <span class="kw">c</span>(<span class="st">&quot;status&quot;</span>, <span class="st">&quot;description&quot;</span>)]))
+
 xgb_cand_docs<span class="op">$</span>status&lt;-<span class="dv">1</span>
 xgb_cand_docs<span class="op">$</span>g_status&lt;-<span class="st">&quot;&quot;</span>
 xgb_cand_docs<span class="op">$</span>status_writer&lt;-<span class="st">&quot;xgboost_description&quot;</span></code></pre></div>
@@ -231,216 +141,6 @@ csv_filename&lt;-<span class="kw">gsub</span>(<span class="st">&quot;:&quot;</sp
 <div id="view-classification-results" class="section level2">
 <h2>View classification results</h2>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">documents_to_latex</span>(<span class="kw">sample_n</span>(select_descript_xgb, <span class="dv">30</span>), <span class="dt">include_ocr=</span><span class="ot">FALSE</span>, <span class="dt">pandoc_output=</span><span class="ot">TRUE</span>)</code></pre></div>
-</div>
-<div id="evening-mail-from-friday-july-16-to-monday-july-19-1841-id-191638" class="section level2">
-<h2>EVENING MAIL, FROM FRIDAY, JULY 16, TO MONDAY, JULY 19, 1841 (id: 191638)</h2>
-<div id="description" class="section level3">
-<h3>description</h3>
-<p>… defeated by a legal defect in the registration, they showed themselves in all the trained ferocity of their faction. The local were lukewarm ; the police, of whom two-thirds are Roman Catholics, hung back; and the only protection of tliis great city …</p>
-</div>
-</div>
-<div id="births-deaths-marriages-and-obituaries-id-138857" class="section level2">
-<h2>Births, Deaths, Marriages and Obituaries (id: 138857)</h2>
-<div id="description-1" class="section level3">
-<h3>description</h3>
-<p>… OW THE .-On Monday, seven men, is, named Joseph Quire, James Adams, James Fita?atrick gad James Dreskill, Matthvew Connor, Martin Higginis, and I f Josepla Brophy, were charged with having committed En of assault on two of the night , who were …</p>
-</div>
-</div>
-<div id="general-election-7o-the-etecton-of-the-city-of-dublin-ctktlbmkm.-ihf.-westminster-society-eubli.hh-1792.-..-id-102992" class="section level2">
-<h2>GENERAL ELECTION 7o the Etecton of the City of Dublin, CtKTLBMKM. ’I’HF. WESTMINSTER SOCIETY, E»Ubli.hH 1792. .. (id: 102992)</h2>
-<div id="description-2" class="section level3">
-<h3>description</h3>
-<p>… there Wabater, tb. American Sccrelar, of ate; and lb. !<span class="math inline">\(&gt;\)</span>-. *» « not abo i . j w«» hogged or siranivd bjr storms and every replyto the forme. f hi. .. the pre- . , wll<span class="math inline">\(|\)</span>l JpT, time Ut.t Jt. «« mnt nmu dto Congresa w.th the Pntatd. nf. Meamge, at …</p>
-</div>
-</div>
-<div id="liverpool.dreadfi-l-riots-id-135422" class="section level2">
-<h2>LIVERPOOL.DREADFI L RIOTS (id: 135422)</h2>
-<div id="description-3" class="section level3">
-<h3>description</h3>
-<p>… LIVERPOOL. DREADFI L . (From the Liverpool Mail Thursday, the Ut in<span class="math inline">\(&gt;\)</span>t.) We regret to say that our election bus not passed off quietly ue h,id’supposed, but that some bloodshed and serious injury to property has occurred. And first it necessary to …</p>
-</div>
-</div>
-<div id="monei-market-and-city-news-id-172251" class="section level2">
-<h2>MONEi MARKET and CITY NEWS, (id: 172251)</h2>
-<div id="description-4" class="section level3">
-<h3>description</h3>
-<p>… A strong police force at the respective hustings will be indispensable, more particularly at Guildhall. The Conservative suffered greatly by the violence of the Radicals on the last occasion. BANK, OF ENGLAND. Quarterly Average of the Weekly L …</p>
-</div>
-</div>
-<div id="general-election-7o-the-etecton-of-the-city-of-dublin-ctktlbmkm.-ihf.-westminster-society-eubli.hh-1792.-..-id-173134" class="section level2">
-<h2>GENERAL ELECTION 7o the Etecton of the City of Dublin, CtKTLBMKM. ’I’HF. WESTMINSTER SOCIETY, E»Ubli.hH 1792. .. (id: 173134)</h2>
-<div id="description-5" class="section level3">
-<h3>description</h3>
-<p>… there Wabater, tb. American Sccrelar, of ate; and lb. !<span class="math inline">\(&gt;\)</span>-. *» « not abo i . j w«» hogged or siranivd bjr storms and every replyto the forme. f hi. .. the pre- . , wll<span class="math inline">\(|\)</span>l JpT, time Ut.t Jt. «« mnt nmu dto Congresa w.th the Pntatd. nf. Meamge, at …</p>
-</div>
-</div>
-<div id="general-election-id-79642" class="section level2">
-<h2>GENERAL ELECTION (id: 79642)</h2>
-<div id="description-6" class="section level3">
-<h3>description</h3>
-<p>… GENERAL . SOUTH LEICESTERSHIRE. The nomination was held on Saturday, at Leicester; the candidates were Messrs. Halford and Packe on Conservative principles, and Messrs. and Cheney in the Liberal iuterest. The polling took place 011 Tuesday and …</p>
-</div>
-</div>
-<div id="ho-use-id-186170" class="section level2">
-<h2>HO USE (id: 186170)</h2>
-<div id="description-7" class="section level3">
-<h3>description</h3>
-<p>… names of his accusers he was sud- ?? midnight, removed from his Palace by a military deprived of his property, and sent a to ,_ that such a course of proceeding must have the ’ destroying the confidence of the native Princes of st.cc and honour …</p>
-</div>
-</div>
-<div id="grand-coronation-gala-this-pre-s-an-m-2-3-evening-la-the-when-will-psrtortned-s-selection-of-national-id-152412" class="section level2">
-<h2>Grand Coronation Gala, THIS PRE S an M 2 3, EVENING, la the when will psrtortned s SELECTION of NATIONAL (id: 152412)</h2>
-<div id="description-8" class="section level3">
-<h3>description</h3>
-<p>… 28, 1841 To-morrow is fixed for the day of Nomination, and on Wednesday the polling will take place, i onseipient on the of a Member to serve in Parliament for the Borough of Cheltenham; both parties have declared their intention to abide by …</p>
-</div>
-</div>
-<div id="elections-id-89666" class="section level2">
-<h2>ELECTIONS (id: 89666)</h2>
-<div id="description-9" class="section level3">
-<h3>description</h3>
-<p>… Mr. Charlton 142 Carlisle. Iwo men killed.The Military called out. Carlisle, Wednesday Night, 5 o’clock. the nominaiion took place for this town. The old members, Messts. Marshall and Howard, were put nomination, and in addition had a Mr. Sergeant …</p>
-</div>
-</div>
-<div id="introduction-of-the-military-at-the-west-riding-election-id-144592" class="section level2">
-<h2>INTRODUCTION OF THE MILITARY AT THE WEST RIDING ELECTION (id: 144592)</h2>
-<div id="description-10" class="section level3">
-<h3>description</h3>
-<p>… INTRODUCTION OF THE MILITARY AT THE I WEST RIDING . he A MOST unconstitutional, unwarrantable, and beI he indecent act was committed by MR. BRANDLING, the Dn Tory Magistrate, at the Declaration of the Members for al the West Riding on Monday last …</p>
-</div>
-</div>
-<div id="dreadful-riots-in-liverpoolfour-men-and-one-woman-shot-from-the-liverpool-mail.-regret-to-tlml-our-..-id-130619" class="section level2">
-<h2>DREADFUL RIOTS IN LIVERPOOLFOUR MEN AND ONE WOMAN SHOT ! (From the Liverpool Mail.) regret to tlml our .. (id: 130619)</h2>
-<div id="description-11" class="section level3">
-<h3>description</h3>
-<p>… DREADFUL IN LIVERPOOLFOUR MEN AND ONE WOMAN SHOT ! (From the Liverpool Mail.) regret to tlml our election has not passed off so onietly we had supposed, but that some bloodshed and serious injury to property have occurred. have endeavoured to obtain …</p>
-</div>
-</div>
-<div id="the-appalling-accident-at-rotherham.sixty-four-lives-lost-id-134818" class="section level2">
-<h2>THE APPALLING ACCIDENT AT ROTHERHAM.SIXTY FOUR LIVES LOST, (id: 134818)</h2>
-<div id="description-12" class="section level3">
-<h3>description</h3>
-<p>… declared. The parties who were injured by the shots fired from the house of Mr. Casement, a publican, at Liverpool, whilst the were pulling down the house, breaking the windows, and maltreating his sons and daughters, are understood to doing well, and …</p>
-</div>
-</div>
-<div id="liverpool.dreadfi-l-riots-id-130612" class="section level2">
-<h2>LIVERPOOL.DREADFI L RIOTS (id: 130612)</h2>
-<div id="description-13" class="section level3">
-<h3>description</h3>
-<p>… LIVERPOOL. DREADFI L . (From the Liverpool Mail Thursday, the Ut in<span class="math inline">\(&gt;\)</span>t.) We regret to say that our election bus not passed off quietly ue h,id’supposed, but that some bloodshed and serious injury to property has occurred. And first it necessary to …</p>
-</div>
-</div>
-<div id="miss-langford-id-147864" class="section level2">
-<h2>miss Langford (id: 147864)</h2>
-<div id="description-14" class="section level3">
-<h3>description</h3>
-<p>… Varnishes, &amp;c.,&amp;c,; Genuine and Cattle Medicines. Nottingham, July 1, 1841. Wattifghaf* KtectUtn. YKOMANRIT CAVALRY. THE of Members of ParUimtnt, beiuff highly important Privilege, ought to parties carefully abstaining from all Outrage . sonal …</p>
-</div>
-</div>
-<div id="bristol-election-id-188534" class="section level2">
-<h2>BRISTOL ELECTION (id: 188534)</h2>
-<div id="description-15" class="section level3">
-<h3>description</h3>
-<p>… recorded his vote for Mr. Fortcscne, lia« just lieen attackca the street, and brutally beaten. Mr. White, the stipendiary stationed here, ran to his rescue, ana rc rough traatmeut. -Mr. I gentleman of property in the couatv, has also been savagely …</p>
-</div>
-</div>
-<div id="execution-and-resuscitation-of-a-murderer-id-172547" class="section level2">
-<h2>EXECUTION AND RESUSCITATION OF A MURDERER (id: 172547)</h2>
-<div id="description-16" class="section level3">
-<h3>description</h3>
-<p>… by which lice -captors had it moored to aI stake driven into lice sand wsin s napt in tarn like a piece of whlip-cord. The then fired a builict into its head; and after tle icifliction of sundry blows, tle protrcicted conflict was brought so a close …</p>
-</div>
-</div>
-<div id="apply-to-mr.gadu-on-the-premises-id-180585" class="section level2">
-<h2>Apply to Mr. GADU, on the premises (id: 180585)</h2>
-<div id="description-17" class="section level3">
-<h3>description</h3>
-<p>… GENTLEMEN,- The dissolution of Parliament having been announced, I take the liberty of again offering mvself to voiit notice, for the honor of repr , Sng iiie North Division the County of Nottingham, m %e M.fiesu’aSSfol*r» have thought «t to appeal …</p>
-</div>
-</div>
-<div id="contemporary-opinions-id-146033" class="section level2">
-<h2>Contemporary Opinions (id: 146033)</h2>
-<div id="description-18" class="section level3">
-<h3>description</h3>
-<p>… result the Nottingham , at which Mr. Walter was returned, and more than one during the present contest, that they are not utterly powerless The Chartists have done it! a favourite cry with thelosing party in , may indeed be the …</p>
-</div>
-</div>
-<div id="pujtishuent-op-death-id-137013" class="section level2">
-<h2>PUJtISHUENT Op DEATH (id: 137013)</h2>
-<div id="description-19" class="section level3">
-<h3>description</h3>
-<p>… take his teat. The Dragooo Guards, commanded by Col. Matinsell, were called out at Nottingham on Thursday to quell an election and commotion. The mob had smashed the windows of several houses in the interest of the liberals, and the military after bating …</p>
-</div>
-</div>
-<div id="city-of-londonderry-bi.ection-id-141648" class="section level2">
-<h2>CITY OF LONDONDERRY BI.ECTION (id: 141648)</h2>
-<div id="description-20" class="section level3">
-<h3>description</h3>
-<p>… owing to the precaution of our worthy Chief Magistrate, who, conceiving prevention belter than cure, hud a large body ol patrolling the town till lute hour. TYRONE ELECTION. (From our Special Reporter.) This election took place yesterday, in the …</p>
-</div>
-</div>
-<div id="stockport-id-162915" class="section level2">
-<h2>STOCKPORT (id: 162915)</h2>
-<div id="description-21" class="section level3">
-<h3>description</h3>
-<p>… pre. sented to the Secretary of State, to appoint additional magistrates for the borough of Stockport.-The con- serative objected to the motion, alleging that there were already a sufficient number. Some angry discussion took place on the subject; …</p>
-</div>
-</div>
-<div id="south-durham-election-id-167530" class="section level2">
-<h2>SOUTH DURHAM ELECTION (id: 167530)</h2>
-<div id="description-22" class="section level3">
-<h3>description</h3>
-<p>… i-s.-d their slaves, pretty bberady, tiie heads several, that they were able escape, and take shelter in the station house. boys directly commenced breaking the windows, and the greatest excitement prevailed. The police made their escape, in plain …</p>
-</div>
-</div>
-<div id="review-of-the-corn-trade-during-the-past-week-id-109401" class="section level2">
-<h2>REVIEW OF THE CORN TRADE DURING THE PAST WEEK (id: 109401)</h2>
-<div id="description-23" class="section level3">
-<h3>description</h3>
-<p>… Messrs. Murphy and Callaghan demolished the windows the private re. sidence of the preacher. Fortunately Constable Moylan, with of horse police, arrived and dispersed them, or still more se. rious damage might have been done. They saem peculiarly incensed …</p>
-</div>
-</div>
-<div id="the-nomination-id-137440" class="section level2">
-<h2>THE NOMINATION (id: 137440)</h2>
-<div id="description-24" class="section level3">
-<h3>description</h3>
-<p>… purpose tbey had enlisted great number of tbe surrounding villagers. We are sorry to obliged to say, that some disgraceful took place Parker’s Piece, near the hustings, different intervals during the dsy; in all which cases the 1 Tory mob were the …</p>
-</div>
-</div>
-<div id="windsor-id-130689" class="section level2">
-<h2>WINDSOR, (id: 130689)</h2>
-<div id="description-25" class="section level3">
-<h3>description</h3>
-<p>… Ramshottom and Neville the duly elected representatives of the borough. NOTTINGH AM-CALLING OUT OF THE MILITARY AND READING THE ACT. Monoat, Two oClock.Never the town Nottingham in such a state of excitement. Gangs of hired ruffians are parading the …</p>
-</div>
-</div>
-<div id="bedfordshire-electioni-id-151085" class="section level2">
-<h2>BEDFORDSHIRE ELECTIONi (id: 151085)</h2>
-<div id="description-26" class="section level3">
-<h3>description</h3>
-<p>… injured. She was immediately conveyed to her own residence, find it is hoped she will recover. . ..’j South Lincoln . The for South Lincoln appears to have been contested with some degree of violence, as several of the Lynn police were …</p>
-</div>
-</div>
-<div id="licenses-to-sell-game-id-189959" class="section level2">
-<h2>LICENSES TO SELL GAME (id: 189959)</h2>
-<div id="description-27" class="section level3">
-<h3>description</h3>
-<p>… Carrier, or Higgler, norbeing in tha employment of any of the above-mentioned Person*. By order, W. SCULTHOBPE, Cleik to the acting for the said Hundreds. Nottingham, July 20, 1841. …</p>
-</div>
-</div>
-<div id="election-news-id-194876" class="section level2">
-<h2>Election News (id: 194876)</h2>
-<div id="description-28" class="section level3">
-<h3>description</h3>
-<p>… ?? dlays he coald not have accomplished i. EAST CUMBERLAND ELECTION.-RIOTS AWV WIETON, -The quiet of our town has been with the scramble for’power of :the two great factions, who *are now moving heaven and earth for the suptemacy. Early on …</p>
-</div>
-</div>
-<div id="postscript-id-177946" class="section level2">
-<h2>Postscript (id: 177946)</h2>
-<div id="description-29" class="section level3">
-<h3>description</h3>
-<p>… borough representation; and accordingly they have been eycry; where lavish in their expenditure. At Nottingham’ the Treasury spent a mint of money. But so far are they from having succeeded in their design, that in the English boroughs, after the …</p>
-</div>
 </div>
 </div>
 
