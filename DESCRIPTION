@@ -25,7 +25,8 @@ Imports:
     hunspell,
     fuzzywuzzyR,
     Matrix,
-    xgboost
+    xgboost,
+    reportRx
 RoxygenNote: 6.1.0
 Suggests: knitr,
     rmarkdown,

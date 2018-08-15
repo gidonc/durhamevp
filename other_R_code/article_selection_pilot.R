@@ -85,14 +85,11 @@ classdocs<-classdocs %>%
 
 ##----download.candocs----
 # also get candidate documents for description classification purposes
-candocs<-get_candidate_documents("all")
-actdocs<-get_document("all")
-candocs$status2<-candocs$status
-candocs$status2[(candocs$id %in% actdocs$candidate_document_id)]<-"1"
+candocs<-get_candidate_documents(status =c("0","1", "2", "4", "5", "6", "7", "8"), include_ocr=FALSE)
 
-#summary(factor(candocs$status2[(candocs$id %in% actdocs$candidate_document_id)]))
-candocs$EV_article<-ifelse(candocs$status2 %in% c("1", "3"), 1, 0)
-candocs.r<-candocs[candocs$status2 %in% c("1", "3", "7", "8", "0"),]
+candocs$EV_article<-ifelse(candocs$status %in% c("1", "3"), 1, 0)
+
+candocs.r<-candocs[candocs$status %in% c("1", "3", "7", "8", "0"),]
 
 
 ##----initial.1832.results----
@@ -326,8 +323,8 @@ res_i_1841<-get_archivesearchresults(archive_search_id = initial_1841_searches$i
   left_join(all_searches, by=c("archive_search_id"="id")) %>%
   mutate(std_url = sub("download/", "", url))
 
-select_descript_xgb<-classifier_selection_description(candocs.r, res_i_1841, classifier_type = "xgboost")
-select_descript_nb<-classifier_selection_description(candocs.r, res_i_1841, classifier_type = "nb")
+select_descript_xgb<-classifier_selection_description(candocs, res_i_1841, classifier_type = "xgboost")
+select_descript_nb<-classifier_selection_description(candocs, res_i_1841, classifier_type = "nb")
 
 #select_descript_xgb$description
 #select_descript_nb$description
