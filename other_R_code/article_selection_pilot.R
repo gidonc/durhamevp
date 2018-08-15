@@ -7,26 +7,50 @@ library(RTextTools) # not sure if this is included as part of the durhamevp pack
 
 
 ##----selection.pilot.custom.functions----
-documents_to_latex<-function(out_docs, include_description=TRUE, include_ocr=TRUE){
+documents_to_latex<-function(out_docs, include_description=TRUE, include_ocr=TRUE, pandoc_output=FALSE){
   for (doc in 1:nrow(out_docs)){
-    cat(paste0("\\subsection{", reportRx::sanitizestr(out_docs[doc, "title"]), " (id: ", out_docs[doc, "id"], ")}"))
+    if(pandoc_output){
+      cat("\n\n")
+      cat(paste0("## ", reportRx::sanitizestr(out_docs[doc, "title"]), " (id: ", out_docs[doc, "id"], ")"))
+      cat("\n\n")
+    } else {
+      cat(paste0("\\subsection{", reportRx::sanitizestr(out_docs[doc, "title"]), " (id: ", out_docs[doc, "id"], ")}"))
+    }
     cat(paste0("  \n"))
     if(include_description){
-      cat(paste0("\\subsubsection{description}"))
-      cat(paste0("  \n"))
+      if(pandoc_output){
+        cat("\n\n")
+        cat(paste0("### description"))
+        cat("\n\n")
+        cat("  \n")
+      } else {
+        cat(paste0("\\subsubsection{description}"))
+        cat(paste0("  \n"))
+      }
       #cat(Hmisc::latexTranslate(out_docs[doc, "description"]))
       #knitr::knit_print(out_docs[doc, "description"])
       cat(reportRx::sanitizestr(out_docs[doc, "description"]))
     }
     if(include_ocr){
-      cat(paste0("\\subsubsection{OCR}"))
-      cat(paste0("  \n"))
+      if(pandoc_output){
+        cat("\n\n")
+        cat(paste0("### OCR"))
+        cat(paste0("  \n"))
+      } else {
+        cat(paste0("\\subsubsection{OCR}"))
+        cat(paste0("  \n"))
+      }
+
       #knitr::knit_print(out_docs[doc, "ocr"])
       cat(reportRx::sanitizestr(out_docs[doc, "ocr"]))
+      cat("\n\n")
+      cat("\n\n")
       cat("  \n")
     }
   }
 }
+
+
 
 get_random_candidates<-function(archivesearchresults, n_random){
   the_random<-dplyr::sample_n(archivesearchresults, n_random)
