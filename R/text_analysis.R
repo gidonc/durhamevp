@@ -417,3 +417,55 @@ dfm_to_dgCMatrix<-function(the_dfm, boolean=FALSE, training_classify_var="EV_art
 
   the_dgCMatrix
 }
+
+documents_to_latex<-function(out_docs, include_description=TRUE, include_ocr=TRUE, pandoc_output=FALSE){
+  #' Convert dataframe of documents to form suitable for asis printing in knitr or Rmarkdown documents.
+  #'
+  #' @param out_docs data frame containing the following fields: id, title, description (optional), ocr (optional)
+  #' @param include_description include description field in output
+  #' @param include_ocr include ocr field in output
+  #' @param pandoc_output should function produce pandoc output for Rmarkdown (if FALSE the output is LaTex output for knitr).
+  #' @export
+  for (doc in 1:nrow(out_docs)){
+    if(pandoc_output){
+      cat("\n\n")
+      cat(paste0("## ", reportRx::sanitizestr(out_docs[doc, "title"]), " (id: ", out_docs[doc, "id"], ")"))
+      cat("\n\n")
+    } else {
+      cat(paste0("\\subsection{", reportRx::sanitizestr(out_docs[doc, "title"]), " (id: ", out_docs[doc, "id"], ")}"))
+    }
+    cat(paste0("  \n"))
+    if(include_description){
+      if(pandoc_output){
+        cat("\n\n")
+        cat(paste0("### description"))
+        cat("\n\n")
+        cat("  \n")
+      } else {
+        cat(paste0("\\subsubsection{description}"))
+        cat(paste0("  \n"))
+      }
+      #cat(Hmisc::latexTranslate(out_docs[doc, "description"]))
+      #knitr::knit_print(out_docs[doc, "description"])
+      cat(reportRx::sanitizestr(out_docs[doc, "description"]))
+    }
+    if(include_ocr){
+      if(pandoc_output){
+        cat("\n\n")
+        cat(paste0("### OCR"))
+        cat(paste0("  \n"))
+      } else {
+        cat(paste0("\\subsubsection{OCR}"))
+        cat(paste0("  \n"))
+      }
+
+      #knitr::knit_print(out_docs[doc, "ocr"])
+      cat(reportRx::sanitizestr(out_docs[doc, "ocr"]))
+      cat("\n\n")
+      cat("\n\n")
+      cat("  \n")
+    }
+  }
+}
+
+
