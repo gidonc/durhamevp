@@ -166,8 +166,9 @@ xgb_cand_docs$status_writer<-"xgboost_description"
 ## Save results
 ```{r, eval=FALSE}
 to_csv<-xgb_cand_docs[,c("id", "url", "publication_title", "description", "status", "g_status", "title", "status_writer")]
-csv_filename<-gsub(" ", "_", paste0("britishnewspaperarchive_", Sys.time(), ".csv"))
-csv_filename<-gsub(":", "_", csv_filename)
+
+csv_filename<-gsub(" ", "_", paste0("britishnewspaperarchive_", format(Sys.time(), "%Y_%m_%d_%H_%M_%S"), ".csv"))
+
 write.csv(to_csv, file=csv_filename, row.names = FALSE)
 ```
 
