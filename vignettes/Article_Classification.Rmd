@@ -155,8 +155,9 @@ The results set contains many references to the same document (perhaps with diff
 xgb_cand_docs<-get_candidates_fromarchivesearchresults(select_descript_xgb)
 knitr::kable(head(xgb_cand_docs[xgb_cand_docs$status!="1"|is.na(xgb_cand_docs$status), c("status", "description")]))
 
+xgb_cand_docs$g_status<-xgb_cand_docs$status
 xgb_cand_docs$status<-1
-xgb_cand_docs$g_status<-""
+
 xgb_cand_docs$status_writer<-"xgboost_description"
 
 
@@ -167,7 +168,7 @@ xgb_cand_docs$status_writer<-"xgboost_description"
 to_csv<-xgb_cand_docs[,c("id", "url", "publication_title", "description", "status", "g_status", "title", "status_writer")]
 csv_filename<-gsub(" ", "_", paste0("britishnewspaperarchive_", Sys.time(), ".csv"))
 csv_filename<-gsub(":", "_", csv_filename)
-write.csv(to_csv, file=csv_filename)
+write.csv(to_csv, file=csv_filename, row.names = FALSE)
 ```
 
 ## View classification results
