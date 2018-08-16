@@ -266,7 +266,7 @@ get_candidate_documents<-function(cand_document_id="all", url="all", status="all
     this_sql<-"SELECT * FROM portal_candidatedocument" # base query with ocr
   } else {
 
-    this_sql<-"SELECT id, title, url, description, publication_title, publication_location, type, status, page, publication_date, word_count FROM portal_candidatedocument" # base query without ocr
+    this_sql<-"SELECT id, title, url, description, publication_title, publication_location, type, status, page, publication_date, word_count, g_status, status_writer FROM portal_candidatedocument" # base query without ocr
 
   }
 
