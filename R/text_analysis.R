@@ -302,12 +302,12 @@ get_candidates_fromarchivesearchresults<-function(archivesearchresults, include_
   #' This is somewhat challenging because sometimes the url has 'download' in sometimes it doesn't
   #' This function includes a hack to find either case.
   #' By default it excludes articles from publications in Ireland and Scotland, and documents already classified
-  #' as 3 (verbatim repeat), 4 (Ireland), 5 (Scotland), 6 (Abroad)
+  #' as 1 (already downloaded), 3 (verbatim repeat), 4 (Ireland), 5 (Scotland), 6 (Abroad)
 
   #' @param archivesearchresults The archive search results (including a url column)
   #' @param include the ocr in the download (will slow down query)
   #' @param restrict_EW remove results published in Republic of Ireland and Scotland
-  #' @param restrict_classified remove results already classified as 3, 4, 5 or 6
+  #' @param restrict_classified remove results already classified as 1, 3, 4, 5 or 6
   #' @return Candidate documents with urls matching the urls in archivesearchresults
   #' @export
 
@@ -318,7 +318,7 @@ get_candidates_fromarchivesearchresults<-function(archivesearchresults, include_
     the_candidates <- dplyr::filter(the_candidates, !grepl('Republic of Ireland|Scotland', publication_location))
   }
   if(restrict_classified){
-    the_candidates <- dplyr::filter(the_candidates, !status %in% c("3", "4", "5", "6"))
+    the_candidates <- dplyr::filter(the_candidates, !status %in% c("1", "3", "4", "5", "6"))
   }
 
   the_candidates
@@ -347,6 +347,9 @@ classifier_selection_keywords<-function(train, archivesearchresults, class_to_ke
   #'@param classifier_type The type of classifer to use ("nb" = naive bayes, "xgboost"=xgboost)
   #'@param mode Should the documents be selected ("select") or the document selection be evaluated ("eval"), (evaluation assumes search results have been classified)
   #'@export
+  #'
+
+  # This code does work but should be changed to run through evp_classifiers function
 
 
   if (mode=="select"){
