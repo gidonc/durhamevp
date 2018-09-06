@@ -6,7 +6,7 @@
 This is somewhat challenging because sometimes the url has 'download' in sometimes it doesn't
 This function includes a hack to find either case.
 By default it excludes articles from publications in Ireland and Scotland, and documents already classified
-as 3 (verbatim repeat), 4 (Ireland), 5 (Scotland), 6 (Abroad)}
+as 1 (already downloaded), 3 (verbatim repeat), 4 (Ireland), 5 (Scotland), 6 (Abroad)}
 \usage{
 get_candidates_fromarchivesearchresults(archivesearchresults,
   include_ocr = FALSE, restrict_EW = TRUE,
@@ -17,7 +17,7 @@ get_candidates_fromarchivesearchresults(archivesearchresults,
 
 \item{restrict_EW}{remove results published in Republic of Ireland and Scotland}
 
-\item{restrict_classified}{remove results already classified as 3, 4, 5 or 6}
+\item{restrict_classified}{remove results already classified as 1, 3, 4, 5 or 6}
 
 \item{include}{the ocr in the download (will slow down query)}
 }
@@ -29,5 +29,5 @@ Gets candidate documents from archivesearchresults.
 This is somewhat challenging because sometimes the url has 'download' in sometimes it doesn't
 This function includes a hack to find either case.
 By default it excludes articles from publications in Ireland and Scotland, and documents already classified
-as 3 (verbatim repeat), 4 (Ireland), 5 (Scotland), 6 (Abroad)
+as 1 (already downloaded), 3 (verbatim repeat), 4 (Ireland), 5 (Scotland), 6 (Abroad)
 }
