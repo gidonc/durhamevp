@@ -36,6 +36,39 @@ assign_article_to_user <- function (document_id, user_id, allocation_type, alloc
   return(NULL)
 }
 
+reassign_article_to_user <- function (user_doc_id, user_id, allocation_type, allocated_by, allocation_date=as.character(Sys.Date()), status="NEW", coding_complete=0){
+  #' Reassign article allocation to a new user.
+  #'
+  #' \code{reassign_article_to_user} reassigns and otherwise modifies a specific existing document allocation to a specific user, and otherwise modifies the allocation parmeters (updating allocation_type, allocated_by, allocation_date, status and coding_complete fields.
+  #' @param user_doc_id Id of the document to be assigned or a vector of document ids.
+  #' @param user_id Id of the user the document is to be assigned to or a vector of user ids.
+  #' @param allocation_type Type of allocation (training, testing, coding, checking, ideal).
+  #' @param allocation_date Date allocation made (usually today).
+  #' @param status Status of document coding (generally 'NEW' for newly reassigned documents).
+
+  #' @export
+
+  if(length(user_doc_id)>1|length(user_id)>1) stop("reassign_article_to_user requires single user_doc_id and user_id")
+  con <- manage_dbcons()
+
+  allocated_at <- as.character(Sys.time())
+
+  this_sql<-"UPDATE portal_userdocumentallocation SET user_id=?user_id, allocation_date=?allocation_date, allocation_type=?allocation_type, allocated_by=?allocated_by, status=?status, coding_complete=?coding_complete, assigned_at=?allocated_at, last_updated=?allocated_at WHERE id=?user_doc_id ;"
+
+      this_safe_sql<-DBI::sqlInterpolate(DBI::ANSI(), this_sql,
+                                         user_id=user_id,
+                                         allocation_date=allocation_date,
+                                         allocation_type=allocation_type,
+                                         allocated_by=allocated_by,
+                                         status=status,
+                                         coding_complete=coding_complete,
+                                         allocated_at=allocated_at,
+                                         user_doc_id=user_doc_id)
+
+      DBI::dbExecute(con, this_safe_sql)
+  return(NULL)
+}
+
 assign_set <- function(user_id, set, allocation_type, allocated_by = "assign_set", status="NEW"){
   #' Assigns set of articles to user
   #'
@@ -269,4 +302,73 @@ allocate_from_df<-function(assign_dat, allocation_type, allocated_by){
                            allocation_type = allocation_type,
                            allocated_by = allocated_by
                            ))
+}
+
+reallocate_from_df<-function(reassign_dat, allocation_type, allocated_by){
+  #' Assign users to documents from a dataframe
+  #'
+  #' Assign users to documents from a dataframe where dataframe has a user_id column and and a document_id column
+
+  #' @param reassign_dat A dataframe (or tibble) with a user_id column and a document_id column
+  #' @param allocation_type The allocation type to write to the database
+  #' @param allocated_by The allocated by to write to the database
+  #' @export
+
+
+  apply(reassign_dat, 1, function (x)
+    reassign_article_to_user(
+      x[["user_doc_id"]],
+      x[["user_id"]],
+      allocation_type = allocation_type,
+      allocated_by = allocated_by
+    ))
+}
+
+reallocate_randomly<- function (user_ids, user_doc_ids, allocated_by="random_reassignment", restrict_to_actual=TRUE, make_assignments=TRUE, force=FALSE){
+  #' Randomly reassign a set of articles amongst a set of users for coding
+  #'
+  #' \code{reallocate_randomly} reassigns a set of already existing articles amongst a set of users for them to code in the election violence database.
+  #' By default allocation_ids and user ids are checked against the database and codes which do not correspond to existing assignments and/or users are ignored.
+  #' @param user_ids The users to allocate the articles amongst (vector with single or multiple user_ids).
+  #' @param user_doc_ids The set of documents which are to be allocated (vector with single or multiple of document_ids).
+  #' @param allocated_by The value to write to the allocated_by field in the database document_allocations table.
+  #' @param restrict_to_actual Should the restriction to actual users and documents be enforced. Should only be set to FALSE for debugging purposes.
+  #' @param make_assignments Actually make changes to the database (TRUE) or only create a proposed set of changes as a dataframe (FALSE)
+  #' @param force Make changes even if usual conditions are violated (status=="NEW", allocation_type=="coding")
+  #' @export
+
+
+  # restrict to actual actual users (must already be in the database)
+  if(restrict_to_actual){
+    user_ids<-users_to_actual(user_ids)
+  }
+
+  reassign_dat <- data.frame(matrix(ncol=2, nrow=0))
+  names(reassign_dat) <- c("user_doc_id", "user_id")
+  n_assignments <- 1
+  to_change<-get_allocation(user_doc_id=user_doc_ids)
+  for (this_allocation in seq_along(1:nrow(to_change))){
+    this_doc<-to_change[this_allocation, "document_id"]
+    this_user_doc_id<-to_change[this_allocation, "id"]
+    users_already_coding <- get_allocation(document_id=this_doc)$user_id
+    available_users <- user_ids [!user_ids %in% users_already_coding]
+    if (length(available_users)< 1) {
+      warning(paste0("insufficient available users: for document ", this_doc, " in user_doc_id ", this_user_doc_id, ". ", length(available_users), " coder(s) available. No assignments made for this document."))
+    } else {
+      if (length(available_users)==1){ # prevent single number behaviour of sample function
+        these_users <- available_users
+      } else{
+        these_users <- sample(available_users, n_assignments)
+      }
+      for (this_user in these_users){
+        reassign_dat <- dplyr::bind_rows(reassign_dat,
+                                       data.frame(user_doc_id=this_user_doc_id, user_id=this_user))
+
+      }
+    }
+  }
+  if(make_assignments){
+    reallocate_from_df(reassign_dat, allocation_type, allocated_by)
+  }
+  reassign_dat
 }
