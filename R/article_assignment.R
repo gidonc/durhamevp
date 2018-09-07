@@ -347,6 +347,9 @@ reallocate_randomly<- function (user_ids, user_doc_ids, allocated_by="random_rea
   names(reassign_dat) <- c("user_doc_id", "user_id")
   n_assignments <- 1
   to_change<-get_allocation(user_doc_id=user_doc_ids)
+  if(!force){
+    to_change<-dplyr::filter(to_change, allocation_type=="coding", status=="NEW")
+  }
   for (this_allocation in seq_along(1:nrow(to_change))){
     this_doc<-to_change[this_allocation, "document_id"]
     this_user_doc_id<-to_change[this_allocation, "id"]
