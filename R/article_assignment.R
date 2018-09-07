@@ -375,3 +375,14 @@ reallocate_randomly<- function (user_ids, user_doc_ids, allocated_by="reallocate
   }
   reassign_dat
 }
+
+# Add two numbers together
+myfirstfunction<-function(four=2+2){
+  #' returns the result of two plus two
+  #' @param four The resultant answer
+  #' @export
+
+myfirstfunction
+}
+
+
