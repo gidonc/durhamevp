@@ -324,7 +324,7 @@ reallocate_from_df<-function(reassign_dat, allocation_type, allocated_by){
     ))
 }
 
-reallocate_randomly<- function (user_ids, user_doc_ids, allocated_by="random_reassignment", restrict_to_actual=TRUE, make_assignments=TRUE, force=FALSE){
+reallocate_randomly<- function (user_ids, user_doc_ids, allocated_by="reallocate_randomly", allocation_type="coding", restrict_to_actual=TRUE, make_assignments=TRUE, force=FALSE){
   #' Randomly reassign a set of articles amongst a set of users for coding
   #'
   #' \code{reallocate_randomly} reassigns a set of already existing articles amongst a set of users for them to code in the election violence database.
