@@ -26,7 +26,8 @@ Imports:
     fuzzywuzzyR,
     Matrix,
     xgboost,
-    reportRx
+    reportRx, 
+    RTextTools
 RoxygenNote: 6.1.0
 Suggests: knitr,
     rmarkdown,
