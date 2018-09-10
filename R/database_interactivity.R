@@ -251,7 +251,7 @@ get_document<-function(document_id){
   documents
 }
 
-get_candidate_documents<-function(cand_document_id="all", url="all", status="all", include_ocr=TRUE){
+get_candidate_documents<-function(cand_document_id="all", url="all", status="all", g_status="all", include_ocr=TRUE){
   #' Returns the candidate document table filtered by candidate document id
   #'
   #'Note that excluding the ocr from the download will significantly reduce the time for the query to execute.
@@ -273,6 +273,7 @@ get_candidate_documents<-function(cand_document_id="all", url="all", status="all
   res<-build_where_condition("id", cand_document_id, this_sql, NULL)
   res<-build_where_condition("url", url, res$condition, res$interpolate_list)
   res<-build_where_condition("status", status, res$condition, res$interpolate_list)
+  res<-build_where_condition("g_status", g_status, res$condition, res$interpolate_list)
   res[["condition"]] <- paste(res[["condition"]], ";")
   this_sql<-res[["condition"]]
   interpolate_list <- res[["interpolate_list"]]
