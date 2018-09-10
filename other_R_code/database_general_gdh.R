@@ -25,7 +25,7 @@ con1
 
 
 # Get user details for user X
-get_user(10)
+get_user(10) #get user 10
 userinfo<-get_user(10)
 View(userinfo)
 
