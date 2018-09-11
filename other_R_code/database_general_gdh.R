@@ -41,23 +41,23 @@ View(user7allocations)
 
 
 # reassign userdoc allocations
-reallocate_randomly(c(9, 16, 21), 4553:4860,
+reallocate_randomly(c(8, 11, 16, 19, 31, 39, 40), 4890:6126,
                     allocated_by = "random_reassignment", restrict_to_actual = TRUE,
                     make_assignments = TRUE, force = FALSE)
 
 
-usergroupresults2 <- get_allocation(8:47, allocation_type = "coding", document_id = 2113:2368)
+usergroupresults2 <- get_allocation(8:47, allocation_type = "coding", document_id = 2401:3608)
 View(usergroupresults2)
 
 
 # View individual user allocations (with scores)
-usergroupresults <- get_allocation(33, allocation_type = "coding", document_id = "all")
+usergroupresults <- get_allocation(27, allocation_type = "coding", document_id = "all")
 View(usergroupresults %>% filter(status == "NEW"))
 View(usergroupresults %>% filter(status == "COMPLETED"))
 View(usergroupresults)
 
 # View xgboost results
-usergroupresults <- get_allocation(8, allocation_type = "coding", document_id = 3170:3608)
+usergroupresults <- get_allocation(11, allocation_type = "coding", document_id = 3170:3608)
 View(usergroupresults %>% filter(status == "COMPLETED"))
 
 View(usergroupresults %>% filter(status == "NEW"))
@@ -76,7 +76,7 @@ View(user7)
 
 
 # Switch coders from training-testing, testing-coding, coding-checking
-set_user_mode (10,  new_mode = "training")
+set_user_mode (48,  new_mode = "testing")
 
 
 #Assign test set to user(s)
@@ -162,6 +162,45 @@ docs<-get_document(document_id="all")
 View(docs)
 
 
-eventreport <- get_event_report("ALL")
-View(eventreport)
+eventreports <- get_event_report("all")
+View(eventreports[c ("event_timeframe_quantifier", "event_start", "event_end", "summary")])
 
+OTDeventreports <- eventreports %>%
+  select(event_start, matches("01/02"))
+View(OTDeventreports)
+
+
+
+
+%>%
+  starts_with(event_start=="01/02")
+  filter(event_start=="01/02")
+
+
+
+
+
+articlesleft <- get_allocation(8:48, allocation_type = "coding", document_id = "all")
+articlesleft2 <- articlesleft %>%
+  filter(status=="NEW") %>%
+  group_by(user_id)
+View(articlesleft2)
+
+View(articlesleft2[,c("user_id")])
+
+
+
+View(articlesleft2[,c("id", "document_id")])
+
+
+
+
+
+activity %>%
+  #group_by(user_id) %>%
+  filter(user_id>7) %>%
+  group_by(user_id, allocation_id) %>%
+  summarize(start=min(date), end=max(date), time_take=difftime(end, start)) %>%
+  ggplot(aes(time_take))+
+  facet_wrap(~user_id)+
+  geom_histogram()
