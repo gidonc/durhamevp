@@ -1,0 +1,125 @@
+---
+title: "User Status Report"
+author: "Gidon Cohen"
+date: "14 June 2018"
+output: html_document
+runtime: shiny
+---
+
+```{r setup, include=FALSE, results='hide'}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(durhamevp)
+library(tidyverse)
+library(knitr)
+killDbConnections <- function () {
+
+  all_cons <- DBI::dbListConnections(RMySQL::MySQL())
+
+  print(all_cons)
+
+  for(con in all_cons) DBI::dbDisconnect(con)
+
+  print(paste(length(all_cons), " connections killed."))
+
+}
+killDbConnections()
+con<-evdb_connect(password_method = "keyring")
+activity<-DBI::dbGetQuery(con, 'select *
+                from portal_useractivitylogentry')
+doc_allocations<-DBI::dbGetQuery(con, 'select *
+                from portal_userdocumentallocation')
+documents<-DBI::dbGetQuery(con, 'select *
+                from portal_document')
+event_report<-DBI::dbGetQuery(con, 'select *
+                from portal_eventreport')
+
+
+
+```
+
+## Time Taken on Documents
+
+
+```{r timetaken, echo=FALSE}
+
+inputPanel(
+  selectInput("allocation_type", label = "Mode:",
+              choices = c("training", "testing", "coding")),
+    selectInput("facet_by", label = "Facet by:",
+              choices = c("user_id", "document_id"))
+)
+
+renderPlot({
+  doc_allocations$facet_col <- paste(input$facet_by, doc_allocations[,input$facet_by])
+  
+  activity %>%
+    left_join(doc_allocations, by=c("allocation_id"="id", "user_id")) %>%
+    filter(user_id>7) %>%
+    filter(allocation_type==input$allocation_type) %>%
+    filter(status=="COMPLETED") %>%
+    group_by(user_id, allocation_id, facet_col) %>%
+    summarize(start=min(date), end=max(date), time_taken=difftime(end, start)) %>%
+    ggplot(aes(time_taken))+
+    facet_wrap(~facet_col)+
+    geom_histogram()
+
+})
+```
+
+## Are Documents in Coding Mode Relevant to Election Violence?
+
+```{r, echo=FALSE, results='asis'}
+
+aa <- doc_allocations %>%
+  filter(user_id>7) %>%
+  filter(status=="COMPLETED") %>%
+  filter(allocation_type=="coding") %>%
+  group_by(violent_nature, violent_focus, electoral_nature, geo_relevant, time_relevant) %>%
+  tally()
+
+kable(aa)
+```
+
+## Is Time Taken in Coding Mode Related to Difficulty and/or Word Count?
+
+```{r echo=FALSE}
+
+time_summary<- activity %>%
+  left_join(doc_allocations, by=c("allocation_id"="id", "user_id")) %>%
+  left_join(documents, by=c("document_id"="id")) %>%
+  filter(user_id>7) %>%
+  filter(allocation_type=="coding") %>%
+  filter(word_count>0) %>%
+  filter(status=="COMPLETED") 
+
+time_summary %>%
+  group_by(user_id, allocation_id, word_count, violent_nature) %>%
+  summarize(start=min(date), end=max(date), time_taken=difftime(end, start), difficulty_ranking=mean(difficulty_ranking)) %>%
+  ggplot(aes(time_taken))+
+  facet_wrap(~violent_nature)+
+  geom_histogram()
+
+time_summary %>%
+  group_by(user_id, allocation_id, word_count) %>%
+  summarize(start=min(date), end=max(date), time_taken=difftime(end, start), difficulty_ranking=mean(difficulty_ranking)) %>%
+  ggplot(aes(difficulty_ranking, time_taken))+
+  #ggplot(aes(difficulty_ranking, time_taken))+
+  geom_point(position = position_jitter())+
+  stat_smooth(method="lm", se=FALSE, alpha=.2, colour="black", aes(group=user_id))+
+  stat_smooth(method="lm", se=TRUE) 
+
+time_summary %>%
+  filter(word_count>0) %>%
+  group_by(user_id, allocation_id, word_count) %>%
+  summarize(start=min(date), end=max(date), time_taken=difftime(end, start), difficulty_ranking=mean(difficulty_ranking)) %>%
+  ggplot(aes(log(word_count), time_taken))+
+  geom_point()+
+  stat_smooth(method="lm", se=TRUE
+  )
+
+
+```
+
+
+
