@@ -464,3 +464,19 @@ allocate_randomly(user_ids = fiftythree_coding_group,
                   set = fiftythree_tranche_docs, coder_rate = 1.1,
                   allocation_type = "coding", allocated_by = "regular_random_assignment",
                   restrict_to_actual = TRUE, make_assignments = TRUE)
+
+# Random allocation 54
+fiftyfour_coding_group <- c(17, 29)
+fiftyfour_tranche_docs <- c(3776:3810)
+allocate_randomly(user_ids = fiftyfour_coding_group,
+                  set = fiftyfour_tranche_docs, coder_rate = 1.1,
+                  allocation_type = "coding", allocated_by = "regular_random_assignment",
+                  restrict_to_actual = TRUE, make_assignments = TRUE)
+
+# Random allocation 55
+fiftyfour_coding_group <- c(17, 29)
+fiftyfour_tranche_docs <- c(3776:3810)
+allocate_randomly(user_ids = fiftyfour_coding_group,
+                  set = fiftyfour_tranche_docs, coder_rate = 1.1,
+                  allocation_type = "coding", allocated_by = "regular_random_assignment",
+                  restrict_to_actual = TRUE, make_assignments = TRUE)
