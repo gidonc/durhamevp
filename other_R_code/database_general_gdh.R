@@ -43,20 +43,25 @@ View(user7allocations)
 
 
 # reassign userdoc allocations
-reallocate_randomly(c(8, 11, 16, 19, 31, 39, 40), 4890:6126,
+reallocate_randomly(c(29), 4890:5050,
                     allocated_by = "random_reassignment", restrict_to_actual = TRUE,
                     make_assignments = TRUE, force = FALSE)
 
 
-usergroupresults2 <- get_allocation(8:47, allocation_type = "coding", document_id = 2401:3608)
+usergroupresults2 <- get_allocation(8:47, allocation_type = "coding", document_id = 2401:3169)
 View(usergroupresults2)
 
 
 # View individual user allocations (with scores)
-usergroupresults <- get_allocation(27, allocation_type = "coding", document_id = "all")
+usergroupresults <- get_allocation(41, allocation_type = "coding", document_id = "all")
 View(usergroupresults %>% filter(status == "NEW"))
 View(usergroupresults %>% filter(status == "COMPLETED"))
 View(usergroupresults)
+
+
+usergroupresults <- get_allocation(8:47, allocation_type = "coding", document_id = 2401:3169)
+View(usergroupresults %>% filter(status == "NEW", allocated_by == "random_reassignment"))
+
 
 # View xgboost results
 usergroupresults <- get_allocation(11, allocation_type = "coding", document_id = 3170:3608)
@@ -161,7 +166,7 @@ View(docs)
 
 eventreports <- get_event_report("all")
 eventreports2 <- eventreports %>%
-  filter(str_detect(event_start, "01/02"))
+  filter(str_detect(event_start, "05/02"))
 View(eventreports2[c ("event_timeframe_quantifier", "event_start", "event_end", "summary")])
 
 
