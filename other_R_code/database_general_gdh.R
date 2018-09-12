@@ -19,13 +19,15 @@ library(pool)
 library(tidyverse)
 library(dplyr)
 library(durhamevp)
+library(stringr)
+import pandas as pd
 con1 <- evdb_connect(password_method = "keyring") # connect to database and save connection as 'con'
 con1
 .evp_db_pool <- NULL
 
 
 # Get user details for user X
-get_user(10) #get user 10
+get_user(10)
 userinfo<-get_user(10)
 View(userinfo)
 
@@ -62,11 +64,6 @@ View(usergroupresults %>% filter(status == "COMPLETED"))
 
 View(usergroupresults %>% filter(status == "NEW"))
 View(usergroupresults)
-
-## - unused, for later
-View(usergroupresults %>%
-       group_by(user_id, allocation_type, status)%>%
-       summarize(mean(score)))
 
 
 # View Individual User Metadata
@@ -163,18 +160,10 @@ View(docs)
 
 
 eventreports <- get_event_report("all")
-View(eventreports[c ("event_timeframe_quantifier", "event_start", "event_end", "summary")])
+eventreports2 <- eventreports %>%
+  filter(str_detect(event_start, "01/02"))
+View(eventreports2[c ("event_timeframe_quantifier", "event_start", "event_end", "summary")])
 
-OTDeventreports <- eventreports %>%
-  select(event_start, matches("01/02"))
-View(OTDeventreports)
-
-
-
-
-%>%
-  starts_with(event_start=="01/02")
-  filter(event_start=="01/02")
 
 
 
@@ -193,7 +182,9 @@ View(articlesleft2[,c("user_id")])
 View(articlesleft2[,c("id", "document_id")])
 
 
-
+View(usergroupresults %>%
+       group_by(user_id, allocation_type, status)%>%
+       tally(mean(score)))
 
 
 activity %>%
