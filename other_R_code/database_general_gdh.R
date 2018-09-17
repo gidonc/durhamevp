@@ -20,7 +20,6 @@ library(tidyverse)
 library(dplyr)
 library(durhamevp)
 library(stringr)
-import pandas as pd
 con1 <- evdb_connect(password_method = "keyring") # connect to database and save connection as 'con'
 con1
 .evp_db_pool <- NULL
@@ -53,7 +52,7 @@ View(usergroupresults2)
 
 
 # View individual user allocations (with scores)
-usergroupresults <- get_allocation(41, allocation_type = "coding", document_id = "all")
+usergroupresults <- get_allocation(47, allocation_type = "coding", document_id = "all")
 View(usergroupresults %>% filter(status == "NEW"))
 View(usergroupresults %>% filter(status == "COMPLETED"))
 View(usergroupresults)
@@ -78,7 +77,7 @@ View(user7)
 
 
 # Switch coders from training-testing, testing-coding, coding-checking
-set_user_mode (48,  new_mode = "testing")
+set_user_mode (33,  new_mode = "training")
 
 
 #Assign test set to user(s)
@@ -166,10 +165,10 @@ View(docs)
 
 eventreports <- get_event_report("all")
 eventreports2 <- eventreports %>%
-  filter(str_detect(event_start, "05/02"))
+  filter(str_detect(event_start, "/10"))
 View(eventreports2[c ("event_timeframe_quantifier", "event_start", "event_end", "summary")])
 
-
+View(eventreports)
 
 
 
