@@ -474,9 +474,33 @@ allocate_randomly(user_ids = fiftyfour_coding_group,
                   restrict_to_actual = TRUE, make_assignments = TRUE)
 
 # Random allocation 55
-fiftyfour_coding_group <- c(17, 29)
-fiftyfour_tranche_docs <- c(3776:3810)
-allocate_randomly(user_ids = fiftyfour_coding_group,
-                  set = fiftyfour_tranche_docs, coder_rate = 1.1,
+fiftyfive_coding_group <- c(9, 12, 21, 21, 23, 24, 27, 34, 35, 36, 38, 41, 42, 43, 44, 47)
+fiftyfive_tranche_docs <- c(3811:3859)
+allocate_randomly(user_ids = fiftyfive_coding_group,
+                  set = fiftyfive_tranche_docs, coder_rate = 1.1,
+                  allocation_type = "coding", allocated_by = "regular_random_assignment",
+                  restrict_to_actual = TRUE, make_assignments = TRUE)
+
+# Random allocation 56
+fiftysix_coding_group <- c(9, 12, 20, 23, 24, 27, 35, 36, 38, 41, 42, 47)
+fiftysix_tranche_docs <- c(3860:4013)
+allocate_randomly(user_ids = fiftysix_coding_group,
+                  set = fiftysix_tranche_docs, coder_rate = 1.1,
+                  allocation_type = "coding", allocated_by = "regular_random_assignment",
+                  restrict_to_actual = TRUE, make_assignments = TRUE)
+
+# Random allocation 57
+fiftyseven_coding_group <- c(20, 23, 24, 41)
+fiftyseven_tranche_docs <- c(4014:4030)
+allocate_randomly(user_ids = fiftyseven_coding_group,
+                  set = fiftyseven_tranche_docs, coder_rate = 1.1,
+                  allocation_type = "coding", allocated_by = "regular_random_assignment",
+                  restrict_to_actual = TRUE, make_assignments = TRUE)
+
+# Random allocation 58
+fiftyeight_coding_group <- c(20, 23, 27, 41)
+fiftyeight_tranche_docs <- c(4031:4075)
+allocate_randomly(user_ids = fiftyeight_coding_group,
+                  set = fiftyeight_tranche_docs, coder_rate = 1.1,
                   allocation_type = "coding", allocated_by = "regular_random_assignment",
                   restrict_to_actual = TRUE, make_assignments = TRUE)
