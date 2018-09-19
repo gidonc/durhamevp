@@ -47,12 +47,12 @@ reallocate_randomly(c(29), 4890:5050,
                     make_assignments = TRUE, force = FALSE)
 
 
-usergroupresults2 <- get_allocation(8:47, allocation_type = "coding", document_id = 2401:3169)
+usergroupresults2 <- get_allocation("all", allocation_type = "coding", document_id = 3609:3859)
 View(usergroupresults2)
 
 
 # View individual user allocations (with scores)
-usergroupresults <- get_allocation(47, allocation_type = "coding", document_id = "all")
+usergroupresults <- get_allocation(39, allocation_type = "coding", document_id = "all")
 View(usergroupresults %>% filter(status == "NEW"))
 View(usergroupresults %>% filter(status == "COMPLETED"))
 View(usergroupresults)
@@ -62,8 +62,15 @@ usergroupresults <- get_allocation(8:47, allocation_type = "coding", document_id
 View(usergroupresults %>% filter(status == "NEW", allocated_by == "random_reassignment"))
 
 
+# View Individual Event Reports
+usereventreports <- get_event_report("all")
+usereventreports2 <- usereventreports %>%
+  filter(str_detect(summary, "Westport"))
+View(usereventreports2)
+
+
 # View xgboost results
-usergroupresults <- get_allocation(11, allocation_type = "coding", document_id = 3170:3608)
+usergroupresults <- get_allocation("all", allocation_type = "coding", document_id = 3609:3859)
 View(usergroupresults %>% filter(status == "COMPLETED"))
 
 View(usergroupresults %>% filter(status == "NEW"))
@@ -77,7 +84,7 @@ View(user7)
 
 
 # Switch coders from training-testing, testing-coding, coding-checking
-set_user_mode (33,  new_mode = "training")
+set_user_mode (48,  new_mode = "coding")
 
 
 #Assign test set to user(s)
