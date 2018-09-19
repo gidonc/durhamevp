@@ -492,3 +492,24 @@ killDbConnections <- function () {
   print(paste(length(all_cons), " connections killed."))
 
 }
+
+
+get_otd_event_report<-function(event_report_id="all", user_doc_id="all"){
+  #' Returns the event_report table filtered by event start date
+  #'
+  #' @param event_report_id Event report id or ids to filter by.
+  #' @export
+
+  usereventreports <- get_event_report("all")
+  usereventreports2 <- usereventreports %>%
+    filter(str_detect(summary, "Westport"))
+  View(usereventreports2)
+
+  eventreports <- get_event_report("all")
+  eventreports2 <- eventreports %>%
+    filter(str_detect(event_start, "/10"))
+  View(eventreports2[c ("event_timeframe_quantifier", "event_start", "event_end", "summary")])
+
+  View(eventreports)
+
+}
