@@ -10,6 +10,8 @@ coding_summary <- function(user_doc_id, allocation_type="all"){
   #' @export
   user_docs<-durhamevp::get_allocation(user_doc_id = user_doc_id, allocation_type=allocation_type)
 
+  user_docs<-filter(user_docs, status=="COMPLETED")
+
   event_report <- durhamevp::get_event_report(user_doc_id=dplyr::pull(user_docs, "id"))
   #model_event_report <- durhamevp::get_event_report(model_event_report_id)
   tags<-durhamevp::get_tag(event_report_id = dplyr::pull(event_report, "id"))
@@ -94,7 +96,7 @@ compare_summaries<- function(coding_summary){
                      long_coder_pairs,
                      by = c("user_doc_id", "user_id", "document_id"))
 
-  compare_summaries<-long_coding %>%
+  compare_res<-long_coding %>%
     ungroup() %>%
     dplyr::select(document_id, pair_no, which_user_id, n, level, variable, value) %>%
     spread(which_user_id, n, fill=0) %>%
@@ -103,10 +105,6 @@ compare_summaries<- function(coding_summary){
     left_join(coder_pairs, by=c("pair_no", "document_id"), suffix=c(".val", "")) %>%
     gather(which_case, user_id, user_id.case1, user_id.case2)
 
-  compare_summaries
+  compare_res
 }
 
-compare_summaries<-long_coding %>%
-  ungroup() %>%
-  #dplyr::select(document_id, pair_no, which_user_id, n, level, variable, value) %>%
-  slice(c(44138, 44146))
