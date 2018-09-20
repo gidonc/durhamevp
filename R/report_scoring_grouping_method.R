@@ -1,21 +1,31 @@
 
-coding_summary <- function(user_doc_id, allocation_type="all"){
+coding_summary <- function(user_doc_id, allocation_type="all", restrict_double_coded=TRUE){
   #' Summary of coding of document allocation.
   #'
   #' Returns tibble with number of items of each variable value combination types coded in the document by the user.
   #'
   #' @param user_doc_id The user_doc_id(s) to summarize.
   #' @param allocation_type The allocation type ("training", "testing","coding", "all").
+  #' @param restrict_double_coded Only summarize articles which have been coded more than once (in FALSE summarize all articles).
   #' @return Returns tibble with number of items of predefined types coded in the document by the user.
   #' @export
   user_docs<-durhamevp::get_allocation(user_doc_id = user_doc_id, allocation_type=allocation_type)
 
   user_docs<-filter(user_docs, status=="COMPLETED")
 
+  if(restrict_double_coded){
+    doublecoded_docs<-user_docs %>%
+      group_by(document_id) %>%
+      tally() %>%
+      filter(n>1)
+
+    user_docs<-filter(user_docs, document_id %in% doublecoded_docs$document_id)
+  }
+
   event_report <- durhamevp::get_event_report(user_doc_id=dplyr::pull(user_docs, "id"))
   #model_event_report <- durhamevp::get_event_report(model_event_report_id)
   tags<-durhamevp::get_tag(event_report_id = dplyr::pull(event_report, "id"))
-  attributes<-durhamevp::get_attribute(tag_id = tags$id)
+  attributes<-durhamevp::get_attribute(tag_id = dplyr::pull(tags, "id"))
 
   event_report<-dplyr::left_join(event_report, user_docs, by=c("user_doc_id"="id"), suffix=c("event_report", "user_doc"))
   tags<-dplyr::left_join(tags, event_report, by=c("event_report_id"="id"), suffix=c(".tags", "event_report"))
