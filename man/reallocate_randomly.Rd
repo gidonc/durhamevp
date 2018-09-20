@@ -5,8 +5,8 @@
 \title{Randomly reassign a set of articles amongst a set of users for coding}
 \usage{
 reallocate_randomly(user_ids, user_doc_ids,
-  allocated_by = "random_reassignment", restrict_to_actual = TRUE,
-  make_assignments = TRUE, force = FALSE)
+  allocated_by = "reallocate_randomly", allocation_type = "coding",
+  restrict_to_actual = TRUE, make_assignments = TRUE, force = FALSE)
 }
 \arguments{
 \item{user_ids}{The users to allocate the articles amongst (vector with single or multiple user_ids).}
