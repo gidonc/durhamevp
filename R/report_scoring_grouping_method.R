@@ -68,6 +68,10 @@ compare_summaries<- function(coding_summary){
     group_by(user_doc_id, document_id, user_id) %>%
     summarize()
 
+  # There are some duplicated coding allocations (9 on 20/9/2018) - need to find out why!
+  # For now remove them
+  coding_allocs <- coding_allocs[!duplicated(coding_allocs[,c("document_id", "user_id")]),]
+
 
   coder_pairs<- dplyr::full_join(coding_allocs,
                                           coding_allocs,
@@ -86,9 +90,9 @@ compare_summaries<- function(coding_summary){
     dplyr::left_join(coding_allocs, by = c("document_id", "user_id")) %>%
     dplyr::arrange(pair_no)
 
-  long_coding<-
-    dplyr::left_join(coding_summary,
-                     long_coder_pairs)
+  long_coding<-  dplyr::right_join(coding_summary,
+                     long_coder_pairs,
+                     by = c("user_doc_id", "user_id", "document_id"))
 
   compare_summaries<-long_coding %>%
     ungroup() %>%
@@ -102,3 +106,7 @@ compare_summaries<- function(coding_summary){
   compare_summaries
 }
 
+compare_summaries<-long_coding %>%
+  ungroup() %>%
+  #dplyr::select(document_id, pair_no, which_user_id, n, level, variable, value) %>%
+  slice(c(44138, 44146))
