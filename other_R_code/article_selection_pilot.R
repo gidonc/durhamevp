@@ -67,9 +67,7 @@ switch_url_format<-Vectorize(function(url){
   }
   switch_url
 })
-url_to_id<-function(url){
-  str_split(url, "bl/", simplify=TRUE)[,2]
-}
+
 ##----initial.keywords----
 # election riot, election incident, election disturbance
 
