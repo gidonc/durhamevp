@@ -1,84 +1,104 @@
 
-coding_summary <- function(user_doc_id){
+coding_summary <- function(user_doc_id, allocation_type="all"){
   #' Summary of coding of document allocation.
   #'
-  #' Returns tibble with number of items of predefined types coded in the document by the user.
+  #' Returns tibble with number of items of each variable value combination types coded in the document by the user.
   #'
-  #'
+  #' @param user_doc_id The user_doc_id(s) to summarize.
+  #' @param allocation_type The allocation type ("training", "testing","coding", "all").
   #' @return Returns tibble with number of items of predefined types coded in the document by the user.
   #' @export
-  user_docs<-durhamevp::get_allocation(user_doc_id = user_doc_id)
+  user_docs<-durhamevp::get_allocation(user_doc_id = user_doc_id, allocation_type=allocation_type)
 
   event_report <- durhamevp::get_event_report(user_doc_id=dplyr::pull(user_docs, "id"))
   #model_event_report <- durhamevp::get_event_report(model_event_report_id)
   tags<-durhamevp::get_tag(event_report_id = dplyr::pull(event_report, "id"))
   attributes<-durhamevp::get_attribute(tag_id = tags$id)
 
-  tags<-dplyr::left_join(tags, event_report, by=c("event_report_id"="id"), suffix=c(".tags", "event_report")) %>%
-    left_join(user_docs, by=c("user_doc_id"="id"), suffix=c(".x", "user_doc"))
+  event_report<-dplyr::left_join(event_report, user_docs, by=c("user_doc_id"="id"), suffix=c("event_report", "user_doc"))
+  tags<-dplyr::left_join(tags, event_report, by=c("event_report_id"="id"), suffix=c(".tags", "event_report"))
+
   attributes<-dplyr::left_join(attributes, tags, by=c("tag_id"="id"), suffix=c("attributes", "tags"))
 
+  user_doc_coding_counts<-user_docs %>%
+    mutate(level="user_doc") %>%
+    tidyr::gather(variable, value, article_type, geo_relevant, time_relevant, electoral_nature, violent_nature, violent_focus, legibility, recommend_qualitative) %>%
+    dplyr::rename(user_doc_id=id) %>%
+    dplyr::group_by(user_doc_id, user_id, document_id, level, variable, value) %>%
+    dplyr::tally()
 
-  # process by tag type
-  # tag types location, action (violence), action (cause, cause_association, consequence), actors, others
+  event_report_coding_counts<-event_report %>%
+    mutate(level="event_report") %>%
+    tidyr::gather(variable, value, event_type, environment, event_start, event_end) %>%
+    dplyr::group_by(user_doc_id, user_id, document_id, level, variable, value) %>%
+    dplyr::tally()
 
-  sorted_event_reports<-get_sorted(model_event_report, user_event_report)
-  sorted_tags<-NULL
-  sorted_attributes<-NULL
+  tag_coding_counts <- tags %>%
+    mutate(level="tag") %>%
+    dplyr::rename(value=tag_value) %>%
+    unite(variable, tag_table, tag_variable) %>%
+    group_by(user_doc_id, user_id, document_id, level, variable, value) %>%
+    tally()
 
-  for (the_pair in 1:nrow(sorted_event_reports)){
-    user_event_report_id <- sorted_event_reports[the_pair, "user_var"]
-    model_event_report_id<- sorted_event_reports[the_pair, "model_var"]
-    user_event_report_tags <- user_tags[user_tags$event_report_id %in% as.numeric(user_event_report_id), ]
-    model_event_report_tags <- model_tags[model_tags$event_report_id %in% as.numeric(model_event_report_id), ]
+  attribute_coding_counts <- attributes %>%
+    mutate(level="attribute") %>%
+    dplyr::rename(value=attribute_value, variable=attribute) %>%
+    group_by(user_doc_id, user_id, document_id, level, variable, value) %>%
+    tally()
 
 
-    for (type_n in 1:5){
-      if (type_n ==1){
-        user_this_type <- user_event_report_tags[user_event_report_tags$tag_table=="location",]
-        model_this_type <- model_event_report_tags[model_event_report_tags$tag_table=="location",]
-      } else if (type_n==2){
-        user_this_type <- user_event_report_tags[user_event_report_tags$tag_table=="actions" & user_event_report_tags$tag_variable=="violence",]
-        model_this_type <- model_event_report_tags[model_event_report_tags$tag_table=="actions"  & model_event_report_tags$tag_variable=="violence",]
-      } else if (type_n==3){
-        user_this_type <- user_event_report_tags[user_event_report_tags$tag_table=="actions" & user_event_report_tags$tag_variable %in% c("cause", "cause_association", "consequence"),]
-        model_this_type <-model_event_report_tags[model_event_report_tags$tag_table=="actions"  & model_event_report_tags$tag_variable %in% c("cause", "cause_association", "consequence"),]
-      } else if (type_n==4){
-        user_this_type <- user_event_report_tags[user_event_report_tags$tag_table=="actors",]
-        model_this_type <-model_event_report_tags[model_event_report_tags$tag_table=="actors",]
-      } else if (type_n==5){
-        user_this_type<-user_event_report_tags[!(user_event_report_tags$id %in% sorted_tags$user_var),]
-        model_this_type<-model_event_report_tags[!(model_event_report_tags$id %in% sorted_tags$model_var),]
-      }
-      if (is.null(sorted_tags)){
-        sorted_tags<- get_sorted(model_this_type, user_this_type, get_distance)
-        # print(the_pair)
-        # print(type_n)
-        # print(sorted_tags)
-      } else {
-        sorted_tags <- dplyr::bind_rows(sorted_tags,
-                                        get_sorted(model_this_type, user_this_type, get_distance))
-        # print(the_pair)
-        # print(type_n)
-        # print(sorted_tags)
-      }
-    }
-  }
+  coding_summary <- bind_rows(user_doc_coding_counts,
+            event_report_coding_counts,
+            tag_coding_counts,
+            attribute_coding_counts)
 
-  for (the_pair in 1:nrow(sorted_tags)){
-    user_tag_id <- sorted_tags[the_pair, "user_var"]
-    model_tag_id<- sorted_tags[the_pair, "model_var"]
-    user_tag_attributes <- user_attributes[user_attributes$tag_id %in% as.numeric(user_tag_id), ]
-    model_tag_attributes <- model_attributes[model_attributes$tag_id %in% as.numeric(model_tag_id), ]
 
-    if (is.null(sorted_attributes)){
-      sorted_attributes<-get_sorted(model_tag_attributes, user_tag_attributes, get_distance)
-    } else {
-      sorted_attributes <- dplyr::bind_rows(sorted_attributes,
-                                            get_sorted(model_tag_attributes, user_tag_attributes, get_distance))
-    }
-  }
+  coding_summary
+}
 
-  list(sorted_event_reports, sorted_tags, sorted_attributes)
+compare_summaries<- function(coding_summary){
+  #'
+  #'@param coding_summary A coding summary (usually generated by the \code{coding_summary} function.)
+  #'
+  #'
+
+
+  coding_allocs<-coding_summary %>%
+    ungroup() %>%
+    group_by(user_doc_id, document_id, user_id) %>%
+    summarize()
+
+
+  coder_pairs<- dplyr::full_join(coding_allocs,
+                                          coding_allocs,
+                                          by=c("document_id"),
+                                          suffix=c(".case1", ".case2"))
+  # create unique pairs of respondents
+
+  coder_pairs <- coder_pairs %>%
+    dplyr::group_by(document_id) %>%
+    tidyr::expand(user_id.case1, user_id.case2) %>%
+    dplyr::filter(user_id.case1 < user_id.case2) %>%
+    tibble::rowid_to_column("pair_no")
+
+  long_coder_pairs <- coder_pairs %>%
+    tidyr::gather(which_user_id, user_id, user_id.case1, user_id.case2) %>%
+    dplyr::left_join(coding_allocs, by = c("document_id", "user_id")) %>%
+    dplyr::arrange(pair_no)
+
+  long_coding<-
+    dplyr::left_join(coding_summary,
+                     long_coder_pairs)
+
+  compare_summaries<-long_coding %>%
+    ungroup() %>%
+    dplyr::select(document_id, pair_no, which_user_id, n, level, variable, value) %>%
+    spread(which_user_id, n, fill=0) %>%
+    mutate(abs_diff=abs(user_id.case1-user_id.case2)) %>%
+    dplyr::select(-user_id.case1, -user_id.case2) %>%
+    left_join(coder_pairs, by=c("pair_no", "document_id"), suffix=c(".val", "")) %>%
+    gather(which_case, user_id, user_id.case1, user_id.case2)
+
+  compare_summaries
 }
 
