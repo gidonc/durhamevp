@@ -1,0 +1,56 @@
+---
+title: "User Matched Scoring Report"
+author: "Gidon Cohen"
+date: '`r format(Sys.Date(), "%B %d, %Y")`'
+output: html_document
+---
+
+```{r setup, include=FALSE, echo=FALSE, message=FALSE, results='hide', warning=FALSE}
+library(magrittr)
+library(tidyverse)
+dropbox.path<-switch (Sys.info()["nodename"],
+                      "DM-GIA-051"="D:/Dropbox",
+                      "DM-GIA-055"="D:/Dropbox",
+                      "GIDON-ASUS-15"="C:/Users/Gidon/Dropbox",
+                      "GID-HOME-LENOVO"="C:/Users/Gidon/Dropbox")
+
+project.path<-paste0(dropbox.path, "/ESRC Grant EV 19th Century")
+match_data_path<-paste0(project.path, "/Code/database_interactivity/reporting/coder_scoring/data")
+
+knitr::read_chunk(paste0(project.path, "/Code/database_interactivity/reporting/coder_scoring/analyse_matches.R"))
+```
+
+
+
+
+```{r readdata, echo=FALSE, warning=FALSE}
+
+```
+
+## Overall Summary of Matching by Variable
+
+
+```{r overallagreement, echo=FALSE, warning=FALSE}
+
+```
+
+## Individual Users Contribution to Coding Agreement (Document Allocation Variables)
+
+
+```{r linearuserdoc, echo=FALSE, warning=FALSE}
+
+```
+
+## Individual Users Contribution to Coding Agreement (All Variables)
+
+
+```{r linearall, echo=FALSE, warning=FALSE}
+
+```
+
+## Summary of agreement by user
+
+```{r agreementsummarybyuser, results='asis', warning=FALSE, echo=FALSE}
+
+```
+

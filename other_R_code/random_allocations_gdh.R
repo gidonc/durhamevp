@@ -525,3 +525,27 @@ allocate_randomly_with_some_double_assignment(double_coding_user_ids = sixty_dou
                                               allocation_type = "coding",
                                               allocated_by = "irregular_random_assignment",
                                               restrict_to_actual = TRUE, make_assignments = TRUE)
+
+# Random allocation 61
+sixtyone_coding_group <- c(9, 24, 26, 29, 31, 35, 42, 43)
+sixtyone_tranche_docs <- c(4291:4360)
+allocate_randomly(user_ids = sixtyone_coding_group,
+                  set = sixtyone_tranche_docs, coder_rate = 1.1,
+                  allocation_type = "coding", allocated_by = "regular_random_assignment",
+                  restrict_to_actual = TRUE, make_assignments = TRUE)
+
+# Random allocation 62
+sixtyone_coding_group <- c(24, 31, 39)
+sixtyone_tranche_docs <- c(4361:4391)
+allocate_randomly(user_ids = sixtyone_coding_group,
+                  set = sixtyone_tranche_docs, coder_rate = 1.1,
+                  allocation_type = "coding", allocated_by = "regular_random_assignment",
+                  restrict_to_actual = TRUE, make_assignments = TRUE)
+
+# Random allocation 63
+sixtythree_coding_group <- c(24, 39)
+sixtythree_tranche_docs <- c(4392:4432)
+allocate_randomly(user_ids = sixtythree_coding_group,
+                  set = sixtythree_tranche_docs, coder_rate = 1.1,
+                  allocation_type = "coding", allocated_by = "regular_random_assignment",
+                  restrict_to_actual = TRUE, make_assignments = TRUE)

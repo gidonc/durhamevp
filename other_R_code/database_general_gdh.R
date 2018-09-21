@@ -47,30 +47,31 @@ reallocate_randomly(c(29), 4890:5050,
                     make_assignments = TRUE, force = FALSE)
 
 
-usergroupresults2 <- get_allocation("all", allocation_type = "coding", document_id = 3609:3859)
+usergroupresults2 <- get_allocation("all", allocation_type = "coding", document_id = 3860:4136)
 View(usergroupresults2)
 
 
 # View individual user allocations (with scores)
-usergroupresults <- get_allocation(39, allocation_type = "coding", document_id = "all")
+usergroupresults <- get_allocation(24, allocation_type = "coding", document_id = "all")
 View(usergroupresults %>% filter(status == "NEW"))
 View(usergroupresults %>% filter(status == "COMPLETED"))
 View(usergroupresults)
 
 
-usergroupresults <- get_allocation(8:47, allocation_type = "coding", document_id = 2401:3169)
+usergroupresults <- get_allocation(8:47, allocation_type = "coding", document_id = "all")
 View(usergroupresults %>% filter(status == "NEW", allocated_by == "random_reassignment"))
 
 
 # View Individual Event Reports
 usereventreports <- get_event_report("all")
 usereventreports2 <- usereventreports %>%
-  filter(str_detect(summary, "Westport"))
+  filter(str_detect(event_start, "1885"))
 View(usereventreports2)
+View(usereventreports)
 
 
 # View xgboost results
-usergroupresults <- get_allocation("all", allocation_type = "coding", document_id = 3609:3859)
+usergroupresults <- get_allocation("all", allocation_type = "coding", document_id = 4137:4468)
 View(usergroupresults %>% filter(status == "COMPLETED"))
 
 View(usergroupresults %>% filter(status == "NEW"))
