@@ -2,11 +2,7 @@
 % Please edit documentation in R/text_analysis.R
 \name{get_candidates_fromarchivesearchresults}
 \alias{get_candidates_fromarchivesearchresults}
-\title{Gets candidate documents from archivesearchresults.
-This is somewhat challenging because sometimes the url has 'download' in sometimes it doesn't
-This function includes a hack to find either case.
-By default it excludes articles from publications in Ireland and Scotland, and documents already classified
-as 1 (already downloaded), 3 (verbatim repeat), 4 (Ireland), 5 (Scotland), 6 (Abroad)}
+\title{Gets candidate documents from archivesearchresults.}
 \usage{
 get_candidates_fromarchivesearchresults(archivesearchresults,
   include_ocr = FALSE, restrict_EW = TRUE,
@@ -25,7 +21,6 @@ get_candidates_fromarchivesearchresults(archivesearchresults,
 Candidate documents with urls matching the urls in archivesearchresults
 }
 \description{
-Gets candidate documents from archivesearchresults.
 This is somewhat challenging because sometimes the url has 'download' in sometimes it doesn't
 This function includes a hack to find either case.
 By default it excludes articles from publications in Ireland and Scotland, and documents already classified

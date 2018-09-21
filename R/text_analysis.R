@@ -299,6 +299,7 @@ classifier_selection_ocr<-function(train, new_docs, text_field="ocr", class_to_k
 
 get_candidates_fromarchivesearchresults<-function(archivesearchresults, include_ocr=FALSE, restrict_EW=TRUE, restrict_classified=TRUE){
   #' Gets candidate documents from archivesearchresults.
+  #'
   #' This is somewhat challenging because sometimes the url has 'download' in sometimes it doesn't
   #' This function includes a hack to find either case.
   #' By default it excludes articles from publications in Ireland and Scotland, and documents already classified
@@ -472,3 +473,9 @@ documents_to_latex<-function(out_docs, include_description=TRUE, include_ocr=TRU
 }
 
 
+bnaurl_to_id<-function(url){
+  #' Function to extract id portion of BNA url.
+  #'
+  #' @export
+  str_split(url, "bl/", simplify=TRUE)[,2]
+}
