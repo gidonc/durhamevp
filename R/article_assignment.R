@@ -16,7 +16,7 @@ assign_article_to_user <- function (document_id, user_id, allocation_type, alloc
   allocated_at <- as.character(Sys.time())
   for (this_user_id in user_id){
     for (this_document_id in document_id){
-      this_sql<-"INSERT INTO portal_userdocumentallocation (document_id, user_id, allocation_date, allocation_type, allocated_by, status, coding_complete, article_type, geo_relevant, time_relevant, electoral_nature, electoralviolence_nature, violence_nature, legibility, comment_docinfo, recommend_qualitative, difficulty_ranking, ideal_coding_comments, score, assigned_at, last_updated) VALUES (?this_document_id, ?this_user_id, ?allocation_date, ?allocation_type, ?allocated_by, ?status, ?coding_complete, '' , '', '', '', '', '', '', '', '', -1, '', -1, ?allocated_at, ?allocated_at) ;"
+      this_sql<-"INSERT INTO portal_userdocumentallocation (document_id, user_id, allocation_date, allocation_type, allocated_by, status, coding_complete, article_type, geo_relevant, time_relevant, electoral_nature, electoralviolence_nature, violence_nature, legibility, comment_docinfo, recommend_qualitative, difficulty_ranking, ideal_coding_comments, score,last_updated) VALUES (?this_document_id, ?this_user_id, ?allocation_date, ?allocation_type, ?allocated_by, ?status, ?coding_complete, '' , '', '', '', '', '', '', '', '', -1, '', -1, ?allocated_at) ;"
 
       this_safe_sql<-DBI::sqlInterpolate(DBI::ANSI(), this_sql,
                                          this_document_id=this_document_id,
@@ -53,7 +53,7 @@ reassign_article_to_user <- function (user_doc_id, user_id, allocation_type, all
 
   allocated_at <- as.character(Sys.time())
 
-  this_sql<-"UPDATE portal_userdocumentallocation SET user_id=?user_id, allocation_date=?allocation_date, allocation_type=?allocation_type, allocated_by=?allocated_by, status=?status, coding_complete=?coding_complete, assigned_at=?allocated_at, last_updated=?allocated_at WHERE id=?user_doc_id ;"
+  this_sql<-"UPDATE portal_userdocumentallocation SET user_id=?user_id, allocation_date=?allocation_date, allocation_type=?allocation_type, allocated_by=?allocated_by, status=?status, coding_complete=?coding_complete, last_updated=?allocated_at WHERE id=?user_doc_id ;"
 
       this_safe_sql<-DBI::sqlInterpolate(DBI::ANSI(), this_sql,
                                          user_id=user_id,
