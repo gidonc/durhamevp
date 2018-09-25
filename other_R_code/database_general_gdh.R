@@ -52,7 +52,7 @@ View(usergroupresults2)
 
 
 # View individual user allocations (with scores)
-usergroupresults <- get_allocation(24, allocation_type = "coding", document_id = "all")
+usergroupresults <- get_allocation(42, allocation_type = "coding", document_id = "all")
 View(usergroupresults %>% filter(status == "NEW"))
 View(usergroupresults %>% filter(status == "COMPLETED"))
 View(usergroupresults)
@@ -65,7 +65,7 @@ View(usergroupresults %>% filter(status == "NEW", allocated_by == "random_reassi
 # View Individual Event Reports
 usereventreports <- get_event_report("all")
 usereventreports2 <- usereventreports %>%
-  filter(str_detect(event_start, "1885"))
+  filter(str_detect(summary, "Yarmouth"))
 View(usereventreports2)
 View(usereventreports)
 
