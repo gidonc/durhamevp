@@ -18,8 +18,8 @@ library(shiny)
 library(pool)
 library(tidyverse)
 library(dplyr)
-library(durhamevp)
 library(stringr)
+library(durhamevp)
 con1 <- evdb_connect(password_method = "keyring") # connect to database and save connection as 'con'
 con1
 .evp_db_pool <- NULL
@@ -42,19 +42,20 @@ View(user7allocations)
 
 
 # reassign userdoc allocations
-reallocate_randomly(c(29), 4890:5050,
+reallocate_randomly(c(24, 44, 19, 22, 36, 39, 47, 48), 8258,
                     allocated_by = "random_reassignment", restrict_to_actual = TRUE,
                     make_assignments = TRUE, force = FALSE)
 
 
-usergroupresults2 <- get_allocation("all", allocation_type = "coding", document_id = 3860:4136)
+usergroupresults2 <- get_allocation("all", allocation_type = "coding", document_id = 5811:5850)
 View(usergroupresults2)
 
 
 # View individual user allocations (with scores)
-usergroupresults <- get_allocation(42, allocation_type = "coding", document_id = "all")
+usergroupresults <- get_allocation(26, allocation_type = "coding", document_id = "all")
 View(usergroupresults %>% filter(status == "NEW"))
 View(usergroupresults %>% filter(status == "COMPLETED"))
+View(usergroupresults %>% filter(status == "SAVED"))
 View(usergroupresults)
 
 
@@ -65,7 +66,7 @@ View(usergroupresults %>% filter(status == "NEW", allocated_by == "random_reassi
 # View Individual Event Reports
 usereventreports <- get_event_report("all")
 usereventreports2 <- usereventreports %>%
-  filter(str_detect(summary, "Yarmouth"))
+  filter(str_detect(summary, "Newcastle"))
 View(usereventreports2)
 View(usereventreports)
 
@@ -85,7 +86,7 @@ View(user7)
 
 
 # Switch coders from training-testing, testing-coding, coding-checking
-set_user_mode (48,  new_mode = "coding")
+set_user_mode (28,  new_mode = "training")
 
 
 #Assign test set to user(s)
@@ -147,7 +148,7 @@ get_archivesearches(703)
 get_archivesearches("all")
 aa<-get_archivesearches(675:687)
 View(aa)
-bb<-get_archivesearchresults(704)
+bb<-get_archivesearchresults(1:100)
 View(bb)
 View(head(bb))
 cc<-left_join(bb, aa, by=c("archive_search_id"="id"))
@@ -158,8 +159,40 @@ duplicated(cc$url)
 duplicated(cc$url)
 
 
+# See double-coded articles, allocation numbers
+ee<-get_allocation("all")
+ff<-get_event_report("all")
+gg<- left_join(ee, ff)
+View(gg)
+hh<-gg  %>%
+filter(status=="COMPLETED") %>%
+  filter(allocation_type=="coding") %>%
+  filter(geo_relevant=="true") %>%
+  filter(time_relevant=="true") %>%
+  filter(electoral_nature=="true") %>%
+  filter(electoralviolence_nature=="true") %>%
+  filter(violence_nature=="true") %>%
+  filter(legibility=="true")
+ii<-hh[hh$document_id %in% hh$document_id[duplicated(hh$document_id)],] %>%
+  filter(str_detect(summary, "Durham"))
+View(hh)
+
+View(ii)
+
+jj <- get_attribute("all")
+View(jj)
+
+kk <- get_tag("all")
+View(kk)
+
 # Sandbox
 
+Attribute <- get_attribute("all")
+View(Attribute)
+
+
+Tag <- get_tag("all")
+View(Tag)
 
 allocations <- get_allocation
 is_complete <- allocations %>%

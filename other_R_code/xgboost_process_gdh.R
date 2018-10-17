@@ -304,3 +304,155 @@ getwd()
 
 # Write different sort of csv - see the descriptions the classifier is basing its judgement on
 write.csv(select_descript_xgb5[sample(nrow(select_descript_xgb6)),c("url", "description")], "checkit6.csv", row.names=FALSE)
+
+
+
+# Machine Learning 1857
+candocs<-get_candidate_documents(g_status =c("0","1", "2", "4", "5", "6", "7", "8"), include_ocr=FALSE)
+
+candocs$EV_article<-ifelse(candocs$g_status %in% c("1", "3"), 1, 0)
+
+all_searches<-get_archivesearches()
+
+initial_1857_searches<-all_searches%>%
+  dplyr::select(id, search_text, archive_date_start, archive_date_end) %>%
+  filter(archive_date_start>lubridate::ymd("1852-03-24"), archive_date_start<lubridate::ymd("1857-04-26")) %>%
+  filter(search_text %in% c("election", "candidate", "party", "husting", "magistrate",
+                            "riot", "disturbance", "incident", "mob", "rough", "adjourn",
+                            "prison", "police"))
+
+res_i_1857<-get_archivesearchresults(archive_search_id = initial_1857_searches$id)
+dim(res_i_1857)
+
+res_i_1857 <- res_i_1857 %>%
+  left_join(all_searches, by=c("archive_search_id"="id")) %>%
+  mutate(std_url = sub("download/", "", url))
+
+select_descript_xgb7<-classifier_selection_description(candocs, res_i_1857, classifier_type = "xgboost")
+
+dim(select_descript_xgb7)
+
+xgb_cand_docs<-get_candidates_fromarchivesearchresults(select_descript_xgb7)
+
+
+knitr::kable(head(xgb_cand_docs[xgb_cand_docs$g_status!="1"|is.na(xgb_cand_docs$status), c("status", "g_status", "description")]))
+
+xgb_cand_docs$status<-1
+
+xgb_cand_docs$status_writer<-"xgboost_description"
+
+
+
+to_csv<-xgb_cand_docs[,c("id", "url", "publication_title", "description", "status", "g_status", "title", "status_writer")]
+csv_filename<-gsub(" ", "_", paste0("britishnewspaperarchive_", Sys.time(), ".csv"))
+csv_filename<-gsub(":", "_", csv_filename)
+write.csv(to_csv, file=csv_filename, row.names=FALSE)
+
+getwd()
+
+
+
+# Write different sort of csv - see the descriptions the classifier is basing its judgement on
+write.csv(select_descript_xgb7[sample(nrow(select_descript_xgb7)),c("url", "description")], "checkit7.csv", row.names=FALSE)
+
+
+
+# Machine Learning 1859
+candocs<-get_candidate_documents(g_status =c("0","1", "2", "4", "5", "6", "7", "8"), include_ocr=FALSE)
+
+candocs$EV_article<-ifelse(candocs$g_status %in% c("1", "3"), 1, 0)
+
+all_searches<-get_archivesearches()
+
+initial_1859_searches<-all_searches%>%
+  dplyr::select(id, search_text, archive_date_start, archive_date_end) %>%
+  filter(archive_date_start>lubridate::ymd("1859-04-21"), archive_date_start<lubridate::ymd("1859-05-23")) %>%
+  filter(search_text %in% c("election", "candidate", "party", "husting", "magistrate",
+                            "riot", "disturbance", "incident", "mob", "rough", "adjourn",
+                            "prison", "police"))
+
+res_i_1859<-get_archivesearchresults(archive_search_id = initial_1859_searches$id)
+dim(res_i_1859)
+
+res_i_1859 <- res_i_1859 %>%
+  left_join(all_searches, by=c("archive_search_id"="id")) %>%
+  mutate(std_url = sub("download/", "", url))
+
+select_descript_xgb8<-classifier_selection_description(candocs, res_i_1859, classifier_type = "xgboost")
+
+dim(select_descript_xgb8)
+
+xgb_cand_docs<-get_candidates_fromarchivesearchresults(select_descript_xgb8)
+
+
+knitr::kable(head(xgb_cand_docs[xgb_cand_docs$g_status!="1"|is.na(xgb_cand_docs$status), c("status", "g_status", "description")]))
+
+xgb_cand_docs$status<-1
+
+xgb_cand_docs$status_writer<-"xgboost_description"
+
+
+
+to_csv<-xgb_cand_docs[,c("id", "url", "publication_title", "description", "status", "g_status", "title", "status_writer")]
+csv_filename<-gsub(" ", "_", paste0("britishnewspaperarchive_", Sys.time(), ".csv"))
+csv_filename<-gsub(":", "_", csv_filename)
+write.csv(to_csv, file=csv_filename, row.names=FALSE)
+
+getwd()
+
+
+
+# Write different sort of csv - see the descriptions the classifier is basing its judgement on
+write.csv(select_descript_xgb8[sample(nrow(select_descript_xgb8)),c("url", "description")], "checkit8.csv", row.names=FALSE)
+
+
+
+# Machine Learning 1865
+candocs<-get_candidate_documents(g_status =c("0","1", "2", "4", "5", "6", "7", "8"), include_ocr=FALSE)
+
+candocs$EV_article<-ifelse(candocs$g_status %in% c("1", "3"), 1, 0)
+
+all_searches<-get_archivesearches()
+
+initial_1865_searches<-all_searches%>%
+  dplyr::select(id, search_text, archive_date_start, archive_date_end) %>%
+  filter(archive_date_start>lubridate::ymd("1865-06-30"), archive_date_start<lubridate::ymd("1865-08-02")) %>%
+  filter(search_text %in% c("election", "candidate", "party", "husting", "magistrate",
+                            "riot", "disturbance", "incident", "mob", "rough", "adjourn",
+                            "prison", "police"))
+
+res_i_1865<-get_archivesearchresults(archive_search_id = initial_1865_searches$id)
+dim(res_i_1865)
+
+res_i_1865 <- res_i_1865 %>%
+  left_join(all_searches, by=c("archive_search_id"="id")) %>%
+  mutate(std_url = sub("download/", "", url))
+
+select_descript_xgb9<-classifier_selection_description(candocs, res_i_1865, classifier_type = "xgboost")
+
+dim(select_descript_xgb9)
+
+xgb_cand_docs<-get_candidates_fromarchivesearchresults(select_descript_xgb9)
+
+
+knitr::kable(head(xgb_cand_docs[xgb_cand_docs$g_status!="1"|is.na(xgb_cand_docs$status), c("status", "g_status", "description")]))
+
+xgb_cand_docs$status<-1
+
+xgb_cand_docs$status_writer<-"xgboost_description"
+
+
+
+to_csv<-xgb_cand_docs[,c("id", "url", "publication_title", "description", "status", "g_status", "title", "status_writer")]
+csv_filename<-gsub(" ", "_", paste0("britishnewspaperarchive_", Sys.time(), ".csv"))
+csv_filename<-gsub(":", "_", csv_filename)
+write.csv(to_csv, file=csv_filename, row.names=FALSE)
+
+getwd()
+
+
+
+# Write different sort of csv - see the descriptions the classifier is basing its judgement on
+write.csv(select_descript_xgb9[sample(nrow(select_descript_xgb9)),c("url", "description")], "checkit9.csv", row.names=FALSE)
+
+
