@@ -92,7 +92,173 @@ classdocs<-classdocs %>%
   dplyr::mutate(EV_article=ifelse(electoralviolence_nature=="true", 1, 0))
 
 
-## ---stage 1 test
+##----dataprep----
+systematic_search_terms<-c("election",
+                           "riot",
+                           "disturbance",
+                           "incident",
+                           "police",
+                           "husting",
+                           "magistrate",
+                           "party",
+                           "rough",
+                           "stone")
+all_searches<-get_archivesearches()
+systematic_searches<-all_searches%>%
+  dplyr::select(id, search_text, archive_date_start, archive_date_end) %>%
+  filter(search_text %in% systematic_search_terms)
+
+results_systematic_searches<-get_archivesearchresults(archive_search_id = systematic_searches$id) %>%
+  left_join(all_searches, by=c("archive_search_id"="id")) %>%
+  mutate(std_url = sub("download/", "", url))
+
+
+is_classified <-results_systematic_searches$std_url %in% classdocs$std_url
+
+classified_results<-results_systematic_searches[is_classified,]
+
+
+##----stage1----
+
+class_res_dfm<-durhamevp::searches_to_dfm(classified_results)
+the_urls<-docvars(class_res_dfm, "std_url")
+ordered_cr<-classified_results[match(docvars(class_res_dfm, "std_url"), classified_results$std_url),]
+
+summary_class <- classdocs %>%
+  group_by(std_url, document_id) %>%
+  mutate(EV_article=electoralviolence_nature=="true") %>%
+  summarize(EV_article=max(EV_article), sum_EV_article=sum(EV_article), n=n())
+
+ordered_classified<-summary_class[match(docvars(class_res_dfm, "std_url"), summary_class$std_url),]
+
+docvars(class_res_dfm, "EV_article")<-ordered_classified$EV_article
+
+
+the_sets<-split_dfm(class_res_dfm, n_train = 3000)
+testing_urls<-docvars(the_sets$testing_set, "std_url")
+training_urls<-docvars(the_sets$training_set, "std_url")
+
+classifier<-durhamevp::evp_classifiers(the_sets$training_set, "xgboost", "EV_article", "uniform")
+classifier_nb<-durhamevp::evp_classifiers(the_sets$training_set, "nb", "EV_article", "uniform")
+
+quanteda::docvars(the_sets$training_set, "predicted_keywords")<-predict(classifier, newdata = the_sets$training_set, type="class")
+quanteda::docvars(the_sets$testing_set, "predicted_keywords")<-predict(classifier, newdata = the_sets$testing_set, type="class")
+quanteda::docvars(the_sets$testing_set, "predicted_keywords_nb")<-predict(classifier_nb, newdata = the_sets$testing_set, type="prob")[,2]
+
+quanteda::docvars(the_sets$testing_set, "pred_class_keywords")<-factor(as.numeric(quanteda::docvars(the_sets$testing_set, "predicted_keywords")>.5))
+
+as.data.frame.matrix(caret::confusionMatrix(data=quanteda::docvars(the_sets$testing_set, "pred_class_keywords"), reference=factor(quanteda::docvars(the_sets$testing_set, "EV_article")), mode="prec_recall", positive="1")$table)
+
+ggplot(docvars(the_sets$training_set), aes(predicted_keywords, EV_article))+
+  geom_point(position=position_jitter(height=.1))+
+  stat_smooth(method="glm", method.args = list(family="binomial"))+
+  ggtitle("performance of the xgboost keyword classifier on the training set")
+
+ggplot(docvars(the_sets$testing_set), aes(predicted_keywords, EV_article))+
+  geom_point(position=position_jitter(height=.1))+
+  stat_smooth(method="glm", method.args = list(family="binomial"))+
+  ggtitle("performance of the xgboost keyword classifier on the testing set")
+ggplot(docvars(the_sets$testing_set), aes(predicted_nb, EV_article))+
+  geom_point(position=position_jitter(height=.1))+
+  stat_smooth(method="glm", method.args = list(family="binomial"))+
+  ggtitle("performance of the naive bayes keyword classifier on the testing set")
+
+ggplot(docvars(the_sets$testing_set), aes(y=EV_article))+
+  geom_point(colour="red", position=position_jitter(height=.1), aes(x=arm::logit(predicted_nb)))+
+  stat_smooth(method="glm",colour="red",  method.args = list(family="binomial"), aes(x=arm::logit(predicted_nb)))+
+  geom_point(colour="green", position=position_jitter(height=.1), aes(x=arm::logit(predicted_keywords)))+
+  stat_smooth(method="glm",colour="green",  method.args = list(family="binomial"), aes(x=arm::logit(predicted_keywords)))+
+  ggtitle("performance of the naive bayes keyword classifier on the testing set")
+
+##----stage2----
+candocs<-get_candidate_documents(status =c("0","1", "2", "4", "5", "6", "7", "8"), include_ocr=FALSE)
+
+candocs<-candocs %>%
+  dplyr::mutate(std_url = sub("download/", "", url))
+candocs$EV_article<-ifelse(candocs$g_status %in% c("1", "3"), 1, 0)
+
+
+candocs_training_set<-candocs[!candocs$std_url %in% testing_urls, ]
+candocs_testing_set<-candocs[candocs$std_url %in% testing_urls, ]
+descript_test<-classified_results[classified_results$std_url %in% testing_urls,]
+
+select_descript_xgb<-classifier_selection_description(candocs_training_set, descript_test, classifier_type="xgboost", return_logical = TRUE, logical_to_prob=TRUE, stem=FALSE, min_docfreq=20, min_termfreq=20)
+
+descript_test <- descript_test %>%
+  mutate(xgb_select=select_descript_xgb)
+
+compare_docs<-descript_test%>%
+  inner_join(candocs_testing_set, by="description")
+
+table(compare_docs$xgb_select>.5, compare_docs$g_status)
+
+ggplot(compare_docs, aes(xgb_select, as.numeric(g_status==1)))+
+  geom_point(position="jitter")+
+  stat_smooth(method="glm", method.args = list(family="binomial"))+
+  ggtitle("Performance of the xgboost descrition classifier on the testing set")
+
+compare_docs<-descript_test%>%
+  group_by(std_url) %>%
+  summarise(maxselect=max(xgb_select)) %>%
+  left_join(candocs_testing_set, by="std_url")
+
+check_descript_xgb<-classifier_selection_description(candocs_training_set, candocs_training_set, classifier_type="xgboost", return_logical = TRUE, logical_to_prob=TRUE, stem=FALSE, min_docfreq=50, min_termfreq=50)
+
+descript_test <- candocs_training_set %>%
+  mutate(xgb_select=check_descript_xgb)
+
+compare_docs<-descript_test%>%
+  inner_join(candocs_training_set, by="description")
+
+table(compare_docs$xgb_select>.5, compare_docs$g_status.x)
+
+ggplot(compare_docs, aes(xgb_select, as.numeric(g_status.x=="1")))+
+  geom_point(position="jitter")+
+  stat_smooth(method="glm", method.args = list(family="binomial"))+
+  ggtitle("Performance of the xgboost descrition classifier on the training set")
+
+##----stage3----
+classdocs_testing_set<-classdocs[classdocs$std_url %in% testing_urls, ]
+classdocs_training_set<-classdocs[classdocs$std_url %in% training_urls, ]
+
+select_ocr_xgb<-classifier_selection_ocr(classdocs_training_set, classdocs_testing_set, classifier_type="xgboost", return_logical = TRUE, logical_to_prob = TRUE, min_termfreq=20, min_docfreq=20, stem=FALSE)
+
+select_ocr_xgb<-classifier_selection_ocr(classdocs_training_set, classdocs_testing_set, classifier_type="xgboost.cv", return_logical = TRUE, logical_to_prob = TRUE, min_termfreq=20, min_docfreq=20, stem=FALSE)
+
+ocr_test <- classdocs_testing_set %>%
+  mutate(xgb_select=select_ocr_xgb) %>%
+  mutate(xgb_class=select_ocr_xgb>.5)
+compare_docs<-ocr_test%>%
+  inner_join(classdocs_testing_set)
+compare_docs<-mutate(compare_docs, EV_article=as.numeric(electoralviolence_nature=="true"))
+f1<-lm(EV_article~xgb_select, compare_docs)
+f2<-glm(EV_article~xgb_select, compare_docs, family="binomial")
+stargazer::stargazer(f1, f2, type="text")
+
+ggplot(compare_docs, aes(xgb_select, as.numeric(factor(electoralviolence_nature)=="true")))+
+  geom_point(position="jitter")+
+  stat_smooth(method="glm", method.args=list(family=binomial))+
+  ggtitle("Performance of xgboost on ocr on Testing Set")
+
+#xtable::xtable(table(compare_docs$xgb_class, compare_docs$EV_article))
+caret::confusionMatrix(factor(compare_docs$xgb_class), factor(compare_docs$electoralviolence_nature=="true"), mode="prec_recall")
+select_ocr_xgb<-classifier_selection_ocr(classdocs_training_set, classdocs_training_set, classifier_type="xgboost", return_logical = TRUE, logical_to_prob = TRUE, min_termfreq=20, min_docfreq=20, stem=FALSE)
+ocr_test <- classdocs_training_set %>%
+  mutate(xgb_select=select_ocr_xgb)
+compare_docs<-ocr_test%>%
+  inner_join(classdocs_training_set)
+
+f1<-lm(electoralviolence_nature=="true"~xgb_select, compare_docs)
+f2<-glm(electoralviolence_nature=="true"~xgb_select, compare_docs, family="binomial")
+stargazer::stargazer(f1, f2, type="text")
+
+ggplot(compare_docs, aes(xgb_select, as.numeric(factor(electoralviolence_nature)=="true")))+
+  geom_point(position="jitter")+
+  stat_smooth(method="glm", method.args=list(family=binomial))+
+  ggtitle("Performance of xgboost on ocr on Training Set")
+
+
+##----firstgostage1----
 systematic_search_terms<-c("election",
                            "riot",
                            "disturbance",
@@ -136,13 +302,29 @@ doit<-classifier_selection_keywords(classifed_results, classified_results, mode=
 the_sets_4<-split_dfm(class_res_dfm, n_train = 3000)
 
 classifier<-durhamevp::evp_classifiers(the_sets_4$training_set, "xgboost", "EV_article", "uniform")
-quanteda::docvars(the_sets_4$testing_set, "predicted")<-factor(as.numeric(predict(classifier, newdata = the_sets_4$testing_set, type="class")>.5))
+classifier<-durhamevp::evp_classifiers(the_sets_4$training_set, "nb", "EV_article", "uniform")
+quanteda::docvars(the_sets_4$training_set, "predicted")<-predict(classifier, newdata = the_sets_4$training_set, type="prob")[,2]
+quanteda::docvars(the_sets_4$training_set, "predicted")<-predict(classifier, newdata = the_sets_4$training_set, type="prob")
 
-caret::confusionMatrix(data=quanteda::docvars(the_sets_4$testing_set, "predicted"), reference=factor(quanteda::docvars(the_sets_4$testing_set, "EV_article")), mode="prec_recall", positive="1")
+ggplot(docvars(the_sets_4$training_set), aes(arm::logit(predicted), EV_article))+
+  geom_point(position=position_jitter())+
+  stat_smooth(method="glm", method.args = list(family="binomial"))
+
+quanteda::docvars(the_sets_4$testing_set, "predicted")<-predict(classifier, newdata = the_sets_4$testing_set, type="class")
+quanteda::docvars(the_sets_4$testing_set, "predicted")<-predict(classifier, newdata = the_sets_4$testing_set, type="prob")[,2]
+
+quanteda::docvars(the_sets_4$testing_set, "pred_class")<-factor(as.numeric(quanteda::docvars(the_sets_4$testing_set, "predicted")>.5))
+
+caret::confusionMatrix(data=quanteda::docvars(the_sets_4$testing_set, "pred_class"), reference=factor(quanteda::docvars(the_sets_4$testing_set, "EV_article")), mode="prec_recall", positive="1")
+
+
+ggplot(docvars(the_sets_4$testing_set), aes(arm::logit(predicted), EV_article))+
+  geom_point(position=position_jitter(height=.1))+
+  stat_smooth(method="glm", method.args = list(family="binomial"))
 
 
 
-##----stage2test----
+##----firstgostage2----
 
 candocs<-get_candidate_documents(status =c("0","1", "2", "4", "5", "6", "7", "8"), include_ocr=FALSE)
 
@@ -156,7 +338,8 @@ training_urls<-docvars(the_sets_4$testing_set, "std_url")
 candocs_training_set<-candocs[!candocs$std_url %in% testing_urls, ]
 candocs_testing_set<-candocs[candocs$std_url %in% testing_urls, ]
 descript_test<-classified_results[classified_results$std_url %in% testing_urls,]
-select_descript_xgb<-classifier_selection_description(candocs_training_set, descript_test, classifier_type="xgboost", return_logical = TRUE)
+candocs_training_set$EV_article
+select_descript_xgb<-classifier_selection_description(candocs_training_set, descript_test, classifier_type="xgboost", return_logical = TRUE, logical_to_prob=TRUE, stem=FALSE, min_docfreq=50, min_termfreq=50)
 
 descript_test <- descript_test %>%
   mutate(xgb_select=select_descript_xgb)
@@ -164,20 +347,36 @@ descript_test <- descript_test %>%
 compare_docs<-descript_test%>%
   inner_join(candocs_testing_set, by="description")
 
+table(compare_docs$xgb_select, compare_docs$EV_article)
+
+ggplot(compare_docs, aes(xgb_select, EV_article))+
+  geom_point()+
+  stat_smooth(method="glm", method.args = list(family="binomial"))
 
 compare_docs<-descript_test%>%
   group_by(std_url) %>%
   summarise(maxselect=max(xgb_select)) %>%
   left_join(candocs_testing_set, by="std_url")
 
-table(compare_docs$xgb_select, compare_docs$g_status)
+check_descript_xgb<-classifier_selection_description(candocs_training_set, candocs_training_set, classifier_type="xgboost", return_logical = TRUE, logical_to_prob=TRUE, stem=FALSE, min_docfreq=50, min_termfreq=50)
+
+descript_test <- candocs_training_set %>%
+  mutate(xgb_select=check_descript_xgb)
+
+compare_docs<-descript_test%>%
+  inner_join(candocs_training_set, by="description")
+
+table(compare_docs$xgb_select, compare_docs$g_status.x)
+
+ggplot(compare_docs, aes(xgb_select, as.numeric(g_status.x=="1")))+
+  geom_point(position="jitter")+
+  stat_smooth(method="glm", method.args = list(family="binomial"))
 
 
-classdocs_training_set<-classdocs[!classdocs$std_url %in% testing_urls, ]
 classdocs_testing_set<-classdocs[classdocs$std_url %in% testing_urls, ]
 aa<-classifier_selection_ocr(classdocs_training_set, classdocs_testing_set)
 
-select_ocr_xgb<-classifier_selection_ocr(classdocs_training_set, classdocs_testing_set, classifier_type="xgboost", return_logical = TRUE, logical_to_prob = TRUE, min_termfreq=100, min_docfreq=100, stem=FALSE)
+select_ocr_xgb<-classifier_selection_ocr(classdocs_training_set, classdocs_testing_set, classifier_type="xgboost", return_logical = TRUE, logical_to_prob = TRUE, min_termfreq=10, min_docfreq=10, stem=FALSE)
 
 ocr_test <- classdocs_testing_set %>%
   mutate(xgb_select=select_ocr_xgb) %>%
@@ -190,6 +389,9 @@ f2<-glm(electoralviolence_nature=="true"~xgb_select, compare_docs, family="binom
 stargazer::stargazer(f1, f2, type="text")
 
 ggplot(compare_docs, aes(arm::logit(xgb_select), as.numeric(factor(electoralviolence_nature)=="true")))+
+  geom_point(position="jitter")+
+  stat_smooth(method="glm", method.args=list(family=binomial))
+ggplot(compare_docs, aes(xgb_select, as.numeric(factor(electoralviolence_nature)=="true")))+
   geom_point(position="jitter")+
   stat_smooth(method="glm", method.args=list(family=binomial))
 

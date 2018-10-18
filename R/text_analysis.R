@@ -403,13 +403,49 @@ evp_classifiers<-function(train_dfm, classifier_type, training_classify_var, pri
     classifier<-quanteda::textmodel_nb(train_dfm, y=quanteda::docvars(train_dfm, training_classify_var), prior=prior)
 
   } else if (classifier_type=="xgboost"){
-    #train_dfms <- durhamevp::split_dfm(train_dfm, n_train=floor(nrow(train_dfm)*.8))
-    #dtrain <- durhamevp::dfm_to_dgCMatrix(train_dfms$training_set, training_classify_var = training_classify_var)
-    #dval <- durhamevp::dfm_to_dgCMatrix(train_dfms$testing_set, training_classify_var = training_classify_var)
-    #classifier<-xgboost::xgb.train(data=dtrain, nrounds=1000, print_every_n = 20, early_stopping_rounds = 10, maximize = F, eval_metric="error", verbose = 1, watchlist=list(val=dval, train=dtrain))
-    dtrain <- durhamevp::dfm_to_dgCMatrix(train_dfm, training_classify_var = training_classify_var)
-    classifier<-xgboost::xgboost(data=dtrain, nrounds=1000, print_every_n = 20, early_stopping_rounds = 10, objective="binary:logistic")
-  } else {
+    train_dfms <- durhamevp::split_dfm(train_dfm, n_train=floor(nrow(train_dfm)*.8))
+    dtrain <- durhamevp::dfm_to_dgCMatrix(train_dfms$training_set, training_classify_var = training_classify_var)
+    dval <- durhamevp::dfm_to_dgCMatrix(train_dfms$testing_set, training_classify_var = training_classify_var)
+    classifier<-xgboost::xgb.train(data=dtrain,
+                                   nrounds=1000,
+                                   print_every_n = 20,
+                                   early_stopping_rounds = 10,
+                                   maximize = F,
+                                   eval_metric="logloss",
+                                   verbose = 1,
+                                   watchlist=list(train=dtrain, val=dval),
+                                   eta=.03,
+                                   max_depth=6,
+                                   gamma=1,
+                                   n_estimators=100,
+                                   objective="binary:logistic",
+                                   booster="dart")
+    #dtrain <- durhamevp::dfm_to_dgCMatrix(train_dfm, training_classify_var = training_classify_var)
+    #classifier<-xgboost::xgboost(data=dtrain, nrounds=1000, print_every_n = 20, early_stopping_rounds = 10, objective="binary:logistic")
+    } else if (classifier_type=="xgboost.cv"){
+      train_dfms <- durhamevp::split_dfm(train_dfm, n_train=floor(nrow(train_dfm)*.8))
+      dtrain <- durhamevp::dfm_to_dgCMatrix(train_dfms$training_set, training_classify_var = training_classify_var)
+      dval <- durhamevp::dfm_to_dgCMatrix(train_dfms$testing_set, training_classify_var = training_classify_var)
+      classifier<-xgboost::xgb.cv(params=list("eta", "gamma"),
+                                  data=dtrain,
+                                  nrounds=300,
+                                  nfold=4,
+                                  print_every_n = 20,
+                                     early_stopping_rounds = 10,
+                                     maximize = F,
+                                     eval_metric="logloss",
+                                     verbose = 1,
+                                     watchlist=list(train=dtrain, val=dval),
+                                     eta=.03,
+                                     max_depth=6,
+                                     gamma=1,
+                                     n_estimators=100,
+                                     objective="binary:logistic",
+                                     booster="dart")
+      print(classifier)
+      #dtrain <- durhamevp::dfm_to_dgCMatrix(train_dfm, training_classify_var = training_classify_var)
+      #classifier<-xgboost::xgboost(data=dtrain, nrounds=1000, print_every_n = 20, early_stopping_rounds = 10, objective="binary:logistic")
+    } else {
     stop(paste("Classifier type", classifier_type, "not supported."))
   }
 
