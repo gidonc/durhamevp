@@ -332,6 +332,7 @@ get_candidates_fromarchivesearchresults<-function(archivesearchresults, include_
 searches_to_dfm<- function(archivesearches){
   #' Convert a set of search results to a dfm.
   #' @param archivesearches the results of archivesearches
+  #' @export
   searches_to_string<-archivesearches %>%
     dplyr::mutate(std_url = sub("download/", "", url)) %>%
     group_by(std_url) %>%
@@ -426,22 +427,14 @@ evp_classifiers<-function(train_dfm, classifier_type, training_classify_var, pri
       train_dfms <- durhamevp::split_dfm(train_dfm, n_train=floor(nrow(train_dfm)*.8))
       dtrain <- durhamevp::dfm_to_dgCMatrix(train_dfms$training_set, training_classify_var = training_classify_var)
       dval <- durhamevp::dfm_to_dgCMatrix(train_dfms$testing_set, training_classify_var = training_classify_var)
-      classifier<-xgboost::xgb.cv(params=list("eta", "gamma"),
+      classifier<-xgboost::xgb.cv(
                                   data=dtrain,
                                   nrounds=300,
-                                  nfold=4,
-                                  print_every_n = 20,
-                                     early_stopping_rounds = 10,
-                                     maximize = F,
-                                     eval_metric="logloss",
-                                     verbose = 1,
+                                  nfold=5,
+                                  early_stopping_rounds = 10,
+                                     metrics="logloss",
                                      watchlist=list(train=dtrain, val=dval),
-                                     eta=.03,
-                                     max_depth=6,
-                                     gamma=1,
-                                     n_estimators=100,
-                                     objective="binary:logistic",
-                                     booster="dart")
+                                     objective="binary:logistic")
       print(classifier)
       #dtrain <- durhamevp::dfm_to_dgCMatrix(train_dfm, training_classify_var = training_classify_var)
       #classifier<-xgboost::xgboost(data=dtrain, nrounds=1000, print_every_n = 20, early_stopping_rounds = 10, objective="binary:logistic")
