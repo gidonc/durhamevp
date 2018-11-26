@@ -12,7 +12,7 @@
 
 <meta name="author" content="Gidon Cohen" />
 
-<meta name="date" content="2018-08-15" />
+<meta name="date" content="2018-11-26" />
 
 <title>Article Classification Process Incorporating Machine Learning</title>
 
@@ -70,7 +70,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 
 <h1 class="title toc-ignore">Article Classification Process Incorporating Machine Learning</h1>
 <h4 class="author"><em>Gidon Cohen</em></h4>
-<h4 class="date"><em>2018-08-15</em></h4>
+<h4 class="date"><em>2018-11-26</em></h4>
 
 
 
@@ -78,65 +78,315 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <h2>Introduction</h2>
 <p>This vignette covers the process of article classification using machine learning.</p>
 </div>
-<div id="get-the-training-data-description-classifications" class="section level2">
-<h2>Get The Training Data (Description Classifications)</h2>
-<p>For classification on description we will use the manual classification information in the candidate documents table. The code below obtains data and creates the EV_article column from the status information which we want the classifier to emulate. We exclude verbatim repeats (status=3). from the classification set because this text is classified once and we don’t want to overweight the particular phrases in these documents.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">candocs&lt;-<span class="kw">get_candidate_documents</span>(<span class="dt">status =</span><span class="kw">c</span>(<span class="st">&quot;0&quot;</span>,<span class="st">&quot;1&quot;</span>, <span class="st">&quot;2&quot;</span>, <span class="st">&quot;4&quot;</span>, <span class="st">&quot;5&quot;</span>, <span class="st">&quot;6&quot;</span>, <span class="st">&quot;7&quot;</span>, <span class="st">&quot;8&quot;</span>), <span class="dt">include_ocr=</span><span class="ot">FALSE</span>)
-
-candocs<span class="op">$</span>EV_article&lt;-<span class="kw">ifelse</span>(candocs<span class="op">$</span>status <span class="op">%in%</span><span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;1&quot;</span>, <span class="st">&quot;3&quot;</span>), <span class="dv">1</span>, <span class="dv">0</span>)</code></pre></div>
-</div>
-<div id="get-the-data-to-be-classified" class="section level2">
-<h2>Get the Data to be Classified</h2>
-<p>This is obtained based on joining search parameters to search results. The search parameters (like date and search text) are obtained by:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">all_searches&lt;-<span class="kw">get_archivesearches</span>()</code></pre></div>
-<p>The results obtained from these search parameters can be obtained either by knowing the search ids which you are interested in in advance, or by finding these via queries. For example the code below finds the 1841 queries on the ten search terms specified:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">initial_1841_searches&lt;-all_searches<span class="op">%&gt;%</span>
-<span class="st">  </span>dplyr<span class="op">::</span><span class="kw">select</span>(id, search_text, archive_date_start, archive_date_end) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">filter</span>(archive_date_start<span class="op">&gt;</span>lubridate<span class="op">::</span><span class="kw">ymd</span>(<span class="st">&quot;1841-01-01&quot;</span>), archive_date_start<span class="op">&lt;</span>lubridate<span class="op">::</span><span class="kw">ymd</span>(<span class="st">&quot;1841-12-31&quot;</span>)) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">filter</span>(search_text <span class="op">%in%</span><span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;election&quot;</span>, <span class="st">&quot;candidate&quot;</span>, <span class="st">&quot;party&quot;</span>, <span class="st">&quot;husting&quot;</span>, <span class="st">&quot;magistrate&quot;</span>,
-                            <span class="st">&quot;riot&quot;</span>, <span class="st">&quot;disturbance&quot;</span>, <span class="st">&quot;incident&quot;</span>, <span class="st">&quot;mob&quot;</span>, <span class="st">&quot;rough&quot;</span>, <span class="st">&quot;adjourn&quot;</span>,
-                            <span class="st">&quot;prison&quot;</span>, <span class="st">&quot;police&quot;</span>))</code></pre></div>
-<p>These results can then be used to obtain the set of search results with that archive search id:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">res_i_<span class="dv">1841</span>&lt;-<span class="kw">get_archivesearchresults</span>(<span class="dt">archive_search_id =</span> initial_1841_searches<span class="op">$</span>id) 
-<span class="kw">dim</span>(res_i_<span class="dv">1841</span>)</code></pre></div>
-<p>Or the search ids can be directly entered if known (for example search ids 228-255 all pertain to one day in 1832):</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">res_oneday_<span class="dv">1832</span>&lt;-<span class="kw">get_archivesearchresults</span>(<span class="dt">archive_search_id =</span> <span class="kw">c</span>(<span class="dv">228</span><span class="op">:</span><span class="dv">255</span>))</code></pre></div>
-<p>This should then be joined to the search parameters:</p>
+<div id="obtain-classified-and-unclassified-document-sets-and-relate-to-systematic-searches" class="section level2">
+<h2>Obtain Classified and Unclassified Document Sets and Relate to Systematic Searches</h2>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">
-res_i_<span class="dv">1841</span> &lt;-<span class="st"> </span>res_i_<span class="dv">1841</span> <span class="op">%&gt;%</span>
+
+alldocs&lt;-<span class="kw">get_document</span>(<span class="st">&quot;all&quot;</span>)
+alldocs&lt;-alldocs <span class="op">%&gt;%</span>
+<span class="st">  </span>dplyr<span class="op">::</span><span class="kw">mutate</span>(<span class="dt">std_url =</span> <span class="kw">sub</span>(<span class="st">&quot;download/&quot;</span>, <span class="st">&quot;&quot;</span>, url))
+
+docallocs&lt;-<span class="kw">get_allocation</span>(<span class="st">&quot;all&quot;</span>, <span class="dt">allocation_type =</span> <span class="st">&quot;coding&quot;</span>)
+
+docallocs&lt;-<span class="kw">left_join</span>(docallocs, alldocs, <span class="dt">by=</span><span class="kw">c</span>(<span class="st">&quot;document_id&quot;</span>=<span class="st">&quot;id&quot;</span>))
+
+classdocs&lt;-<span class="kw">filter</span>(docallocs, coding_complete<span class="op">==</span><span class="dv">1</span>, electoralviolence_nature <span class="op">%in%</span><span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;false&quot;</span>, <span class="st">&quot;true&quot;</span>))
+classdocs&lt;-classdocs <span class="op">%&gt;%</span>
+<span class="st">  </span>dplyr<span class="op">::</span><span class="kw">mutate</span>(<span class="dt">std_url =</span> <span class="kw">sub</span>(<span class="st">&quot;download/&quot;</span>, <span class="st">&quot;&quot;</span>, url)) <span class="op">%&gt;%</span>
+<span class="st">  </span>dplyr<span class="op">::</span><span class="kw">mutate</span>(<span class="dt">unclass=</span><span class="dv">0</span>, <span class="dt">classified=</span><span class="dv">1</span>) <span class="op">%&gt;%</span>
+<span class="st">  </span>dplyr<span class="op">::</span><span class="kw">mutate</span>(<span class="dt">EV_article=</span><span class="kw">ifelse</span>(electoralviolence_nature<span class="op">==</span><span class="st">&quot;true&quot;</span>, <span class="dv">1</span>, <span class="dv">0</span>))
+
+
+systematic_search_terms&lt;-<span class="kw">c</span>(<span class="st">&quot;incident&quot;</span>,
+                           <span class="st">&quot;riot&quot;</span>,
+                           <span class="st">&quot;mob&quot;</span>,
+                           <span class="st">&quot;rough&quot;</span>,
+                           <span class="st">&quot;disturbance&quot;</span>,
+                           <span class="st">&quot;husting&quot;</span>,
+                           <span class="st">&quot;adjourn&quot;</span>,
+                           <span class="st">&quot;magistrate&quot;</span>,
+                           <span class="st">&quot;police&quot;</span>,
+                           <span class="st">&quot;prison&quot;</span>,
+                           <span class="st">&quot;candidate&quot;</span>,
+                           <span class="st">&quot;election&quot;</span>,
+                           <span class="st">&quot;party&quot;</span>)
+all_searches&lt;-<span class="kw">get_archivesearches</span>()
+systematic_searches&lt;-all_searches<span class="op">%&gt;%</span>
+<span class="st">  </span>dplyr<span class="op">::</span><span class="kw">select</span>(id, search_text, archive_date_start, archive_date_end) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">filter</span>(search_text <span class="op">%in%</span><span class="st"> </span>systematic_search_terms)
+
+results_systematic_searches&lt;-<span class="kw">get_archivesearchresults</span>(<span class="dt">archive_search_id =</span> systematic_searches<span class="op">$</span>id) <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="kw">left_join</span>(all_searches, <span class="dt">by=</span><span class="kw">c</span>(<span class="st">&quot;archive_search_id&quot;</span>=<span class="st">&quot;id&quot;</span>)) <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="kw">mutate</span>(<span class="dt">std_url =</span> <span class="kw">sub</span>(<span class="st">&quot;download/&quot;</span>, <span class="st">&quot;&quot;</span>, url))
 
-res_oneday_<span class="dv">1832</span> &lt;-<span class="st"> </span>res_oneday_<span class="dv">1832</span> <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">left_join</span>(all_searches, <span class="dt">by=</span><span class="kw">c</span>(<span class="st">&quot;archive_search_id&quot;</span>=<span class="st">&quot;id&quot;</span>)) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">std_url =</span> <span class="kw">sub</span>(<span class="st">&quot;download/&quot;</span>, <span class="st">&quot;&quot;</span>, url))</code></pre></div>
-</div>
-<div id="perform-the-classification" class="section level1">
-<h1>Perform the Classification</h1>
-<p>The documents can be classified by xgboost. Here we classify the 1841 new data using xgboost. The default options return the subset of the search results which have been classified as Election Violence:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">
-select_descript_xgb&lt;-<span class="kw">classifier_selection_description</span>(candocs, res_i_<span class="dv">1841</span>, <span class="dt">classifier_type =</span> <span class="st">&quot;xgboost&quot;</span>)
 
-<span class="kw">dim</span>(select_descript_xgb)</code></pre></div>
-<p>Or by naive Bayes. The below classifies the 1841 searches using naive Bayes:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">select_descript_nb&lt;-<span class="kw">classifier_selection_description</span>(candocs, res_i_<span class="dv">1841</span>, <span class="dt">classifier_type =</span> <span class="st">&quot;nb&quot;</span>)
-<span class="kw">dim</span>(select_descript_nb)</code></pre></div>
+is_classified &lt;-results_systematic_searches<span class="op">$</span>std_url <span class="op">%in%</span><span class="st"> </span>classdocs<span class="op">$</span>std_url
+
+classified_results&lt;-results_systematic_searches[is_classified,]</code></pre></div>
 </div>
-<div id="from-results-to-candidate-documents" class="section level1">
-<h1>From Results to Candidate Documents</h1>
+<div id="train-keyword-classifier" class="section level2">
+<h2>Train Keyword Classifier</h2>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">class_res_dfm&lt;-durhamevp<span class="op">::</span><span class="kw">searches_to_dfm</span>(classified_results)
+the_urls&lt;-quanteda<span class="op">::</span><span class="kw">docvars</span>(class_res_dfm, <span class="st">&quot;std_url&quot;</span>)
+ordered_cr&lt;-classified_results[<span class="kw">match</span>(quanteda<span class="op">::</span><span class="kw">docvars</span>(class_res_dfm, <span class="st">&quot;std_url&quot;</span>), classified_results<span class="op">$</span>std_url),]
+
+summary_class &lt;-<span class="st"> </span>classdocs <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">group_by</span>(std_url, document_id) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">EV_article=</span>electoralviolence_nature<span class="op">==</span><span class="st">&quot;true&quot;</span>) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">summarize</span>(<span class="dt">EV_article=</span><span class="kw">max</span>(EV_article), <span class="dt">sum_EV_article=</span><span class="kw">sum</span>(EV_article), <span class="dt">n=</span><span class="kw">n</span>())
+
+ordered_classified&lt;-summary_class[<span class="kw">match</span>(quanteda<span class="op">::</span><span class="kw">docvars</span>(class_res_dfm, <span class="st">&quot;std_url&quot;</span>), summary_class<span class="op">$</span>std_url),]
+
+quanteda<span class="op">::</span><span class="kw">docvars</span>(class_res_dfm, <span class="st">&quot;EV_article&quot;</span>)&lt;-ordered_classified<span class="op">$</span>EV_article
+
+<span class="co"># use 85 per cent of the classified data to train classifier</span>
+<span class="co"># the other 15 per cent are used to as the testing set</span>
+n_train &lt;-<span class="st"> </span><span class="kw">round</span>(<span class="kw">nrow</span>(class_res_dfm)<span class="op">*</span>.<span class="dv">85</span>)
+the_sets&lt;-<span class="kw">split_dfm</span>(class_res_dfm, <span class="dt">n_train =</span> n_train)
+testing_urls&lt;-quanteda<span class="op">::</span><span class="kw">docvars</span>(the_sets<span class="op">$</span>testing_set, <span class="st">&quot;std_url&quot;</span>)
+training_urls&lt;-quanteda<span class="op">::</span><span class="kw">docvars</span>(the_sets<span class="op">$</span>training_set, <span class="st">&quot;std_url&quot;</span>)
+
+<span class="co"># train xgboost keyword classifier</span>
+classifier&lt;-durhamevp<span class="op">::</span><span class="kw">evp_classifiers</span>(the_sets<span class="op">$</span>training_set, <span class="st">&quot;xgboost&quot;</span>, <span class="st">&quot;EV_article&quot;</span>, <span class="st">&quot;uniform&quot;</span>)
+
+<span class="co"># train naive bayes keyword classifier</span>
+classifier_nb&lt;-durhamevp<span class="op">::</span><span class="kw">evp_classifiers</span>(the_sets<span class="op">$</span>training_set, <span class="st">&quot;nb&quot;</span>, <span class="st">&quot;EV_article&quot;</span>, <span class="st">&quot;uniform&quot;</span>)</code></pre></div>
+</div>
+<div id="evaluate-classifier-on-test-set" class="section level2">
+<h2>Evaluate Classifier on Test Set</h2>
+<p>Note this step should be regularly implemented to check that performance of classifier is improving not degrading. However, it is not necessary for the process.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># add predictions to the training and testing sets</span>
+quanteda<span class="op">::</span><span class="kw">docvars</span>(the_sets<span class="op">$</span>training_set, <span class="st">&quot;predicted_keywords&quot;</span>)&lt;-<span class="kw">predict</span>(classifier, <span class="dt">newdata =</span> the_sets<span class="op">$</span>training_set, <span class="dt">type=</span><span class="st">&quot;class&quot;</span>)
+quanteda<span class="op">::</span><span class="kw">docvars</span>(the_sets<span class="op">$</span>testing_set, <span class="st">&quot;predicted_keywords&quot;</span>)&lt;-<span class="kw">predict</span>(classifier, <span class="dt">newdata =</span> the_sets<span class="op">$</span>testing_set, <span class="dt">type=</span><span class="st">&quot;class&quot;</span>)
+quanteda<span class="op">::</span><span class="kw">docvars</span>(the_sets<span class="op">$</span>testing_set, <span class="st">&quot;predicted_keywords_nb&quot;</span>)&lt;-<span class="kw">predict</span>(classifier_nb, <span class="dt">newdata =</span> the_sets<span class="op">$</span>testing_set, <span class="dt">type=</span><span class="st">&quot;prob&quot;</span>)[,<span class="dv">2</span>]
+
+quanteda<span class="op">::</span><span class="kw">docvars</span>(the_sets<span class="op">$</span>testing_set, <span class="st">&quot;pred_class_keywords&quot;</span>)&lt;-<span class="kw">factor</span>(<span class="kw">as.numeric</span>(quanteda<span class="op">::</span><span class="kw">docvars</span>(the_sets<span class="op">$</span>testing_set, <span class="st">&quot;predicted_keywords&quot;</span>)<span class="op">&gt;</span>.<span class="dv">5</span>))
+
+results_table&lt;-<span class="kw">as.data.frame.matrix</span>(caret<span class="op">::</span><span class="kw">confusionMatrix</span>(<span class="dt">data=</span>quanteda<span class="op">::</span><span class="kw">docvars</span>(the_sets<span class="op">$</span>testing_set, <span class="st">&quot;pred_class_keywords&quot;</span>), <span class="dt">reference=</span><span class="kw">factor</span>(quanteda<span class="op">::</span><span class="kw">docvars</span>(the_sets<span class="op">$</span>testing_set, <span class="st">&quot;EV_article&quot;</span>)), <span class="dt">mode=</span><span class="st">&quot;prec_recall&quot;</span>, <span class="dt">positive=</span><span class="st">&quot;1&quot;</span>)<span class="op">$</span>table)
+
+## **** probably delete****
+tmp_train&lt;-quanteda<span class="op">::</span><span class="kw">docvars</span>(the_sets<span class="op">$</span>training_set)
+p1&lt;-<span class="kw">ggplot</span>(tmp_train, <span class="kw">aes</span>(predicted_keywords, EV_article))<span class="op">+</span>
+<span class="st">  </span><span class="kw">geom_point</span>(<span class="dt">position=</span><span class="kw">position_jitter</span>(<span class="dt">height=</span>.<span class="dv">1</span>))<span class="op">+</span>
+<span class="st">  </span><span class="kw">stat_smooth</span>(<span class="dt">method=</span><span class="st">&quot;glm&quot;</span>, <span class="dt">method.args =</span> <span class="kw">list</span>(<span class="dt">family=</span><span class="st">&quot;binomial&quot;</span>))<span class="op">+</span>
+<span class="st">  </span><span class="kw">ggtitle</span>(<span class="st">&quot;performance of the xgboost keyword classifier on the training set&quot;</span>)
+
+tmp_test&lt;-quanteda<span class="op">::</span><span class="kw">docvars</span>(the_sets<span class="op">$</span>testing_set)
+p2&lt;-<span class="kw">ggplot</span>(tmp_test, <span class="kw">aes</span>(predicted_keywords, EV_article))<span class="op">+</span>
+<span class="st">  </span><span class="kw">geom_point</span>(<span class="dt">position=</span><span class="kw">position_jitter</span>(<span class="dt">height=</span>.<span class="dv">1</span>))<span class="op">+</span>
+<span class="st">  </span><span class="kw">stat_smooth</span>(<span class="dt">method=</span><span class="st">&quot;glm&quot;</span>, <span class="dt">method.args =</span> <span class="kw">list</span>(<span class="dt">family=</span><span class="st">&quot;binomial&quot;</span>))<span class="op">+</span>
+<span class="st">  </span><span class="kw">ggtitle</span>(<span class="st">&quot;performance of the xgboost keyword classifier on the testing set&quot;</span>)
+p2
+
+p3&lt;-<span class="kw">ggplot</span>(tmp_test, <span class="kw">aes</span>(predicted_keywords_nb, EV_article))<span class="op">+</span>
+<span class="st">  </span><span class="kw">geom_point</span>(<span class="dt">position=</span><span class="kw">position_jitter</span>(<span class="dt">height=</span>.<span class="dv">1</span>))<span class="op">+</span>
+<span class="st">  </span><span class="kw">stat_smooth</span>(<span class="dt">method=</span><span class="st">&quot;glm&quot;</span>, <span class="dt">method.args =</span> <span class="kw">list</span>(<span class="dt">family=</span><span class="st">&quot;binomial&quot;</span>))<span class="op">+</span>
+<span class="st">  </span><span class="kw">ggtitle</span>(<span class="st">&quot;performance of the naive bayes keyword classifier on the testing set&quot;</span>)
+<span class="kw">print</span>(p3)
+p4&lt;-<span class="kw">ggplot</span>(tmp_test, <span class="kw">aes</span>(<span class="dt">y=</span>EV_article))<span class="op">+</span>
+<span class="st">  </span><span class="kw">geom_point</span>(<span class="dt">colour=</span><span class="st">&quot;red&quot;</span>, <span class="dt">position=</span><span class="kw">position_jitter</span>(<span class="dt">height=</span>.<span class="dv">1</span>), <span class="kw">aes</span>(<span class="dt">x=</span>predicted_keywords_nb))<span class="op">+</span>
+<span class="st">  </span><span class="kw">stat_smooth</span>(<span class="dt">method=</span><span class="st">&quot;glm&quot;</span>,<span class="dt">colour=</span><span class="st">&quot;red&quot;</span>,  <span class="dt">method.args =</span> <span class="kw">list</span>(<span class="dt">family=</span><span class="st">&quot;binomial&quot;</span>), <span class="kw">aes</span>(<span class="dt">x=</span>predicted_keywords_nb))<span class="op">+</span>
+<span class="st">  </span><span class="kw">geom_point</span>(<span class="dt">colour=</span><span class="st">&quot;green&quot;</span>, <span class="dt">position=</span><span class="kw">position_jitter</span>(<span class="dt">height=</span>.<span class="dv">1</span>), <span class="kw">aes</span>(<span class="dt">x=</span>predicted_keywords))<span class="op">+</span>
+<span class="st">  </span><span class="kw">stat_smooth</span>(<span class="dt">method=</span><span class="st">&quot;glm&quot;</span>,<span class="dt">colour=</span><span class="st">&quot;green&quot;</span>,  <span class="dt">method.args =</span> <span class="kw">list</span>(<span class="dt">family=</span><span class="st">&quot;binomial&quot;</span>), <span class="kw">aes</span>(<span class="dt">x=</span>predicted_keywords))<span class="op">+</span>
+<span class="st">  </span><span class="kw">ggtitle</span>(<span class="st">&quot;performance of the naive bayes keyword classifier on the testing set&quot;</span>)</code></pre></div>
+</div>
+<div id="use-classifier-on-unclassified-cases" class="section level1">
+<h1>Use Classifier on Unclassified Cases</h1>
+<p>We do not examine status 1 or status 3 documents.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">undownloaded_candidates&lt;-<span class="kw">get_candidate_documents</span>(<span class="dt">status =</span><span class="kw">c</span>(<span class="st">&quot;0&quot;</span>, <span class="st">&quot;2&quot;</span>, <span class="st">&quot;4&quot;</span>, <span class="st">&quot;5&quot;</span>, <span class="st">&quot;6&quot;</span>, <span class="st">&quot;7&quot;</span>, <span class="st">&quot;8&quot;</span>, <span class="st">&quot;&quot;</span>), <span class="dt">include_ocr=</span><span class="ot">FALSE</span>)
+undownloaded_candidates&lt;-<span class="st"> </span>undownloaded_candidates <span class="op">%&gt;%</span>
+<span class="st">  </span>dplyr<span class="op">::</span><span class="kw">mutate</span>(<span class="dt">std_url =</span> <span class="kw">sub</span>(<span class="st">&quot;download/&quot;</span>, <span class="st">&quot;&quot;</span>, url))
+
+need_classifying &lt;-results_systematic_searches<span class="op">$</span>std_url <span class="op">%in%</span><span class="st"> </span>undownloaded_candidates<span class="op">$</span>std_url
+
+toclassify_results&lt;-results_systematic_searches[need_classifying,]
+
+toclass_res_dfm&lt;-durhamevp<span class="op">::</span><span class="kw">searches_to_dfm</span>(toclassify_results)
+classify_urls&lt;-quanteda<span class="op">::</span><span class="kw">docvars</span>(toclass_res_dfm, <span class="st">&quot;std_url&quot;</span>)
+
+toclass_othervars &lt;-<span class="st"> </span>toclassify_results <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">select</span>(newspaper_title, publication_date, publication_location, type, std_url) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">group_by</span>(std_url,newspaper_title, publication_date, publication_location, type) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">summarize</span> ()
+
+ordered_tcov&lt;-toclass_othervars[<span class="kw">match</span>(quanteda<span class="op">::</span><span class="kw">docvars</span>(toclass_res_dfm, <span class="st">&quot;std_url&quot;</span>), toclass_othervars<span class="op">$</span>std_url),]
+
+quanteda<span class="op">::</span><span class="kw">docvars</span>(toclass_res_dfm, <span class="st">&quot;publication_date&quot;</span>)&lt;-ordered_tcov<span class="op">$</span>publication_date
+quanteda<span class="op">::</span><span class="kw">docvars</span>(toclass_res_dfm, <span class="st">&quot;publication_location&quot;</span>)&lt;-ordered_tcov<span class="op">$</span>publication_location
+quanteda<span class="op">::</span><span class="kw">docvars</span>(toclass_res_dfm, <span class="st">&quot;newspaper_title&quot;</span>)&lt;-ordered_tcov<span class="op">$</span>newspaper_title
+quanteda<span class="op">::</span><span class="kw">docvars</span>(toclass_res_dfm, <span class="st">&quot;type&quot;</span>)&lt;-ordered_tcov<span class="op">$</span>type
+
+<span class="co"># this step reorders the dfm to have the columns in the same order as the training_set dfm</span>
+toclass_res_dfm&lt;-quanteda<span class="op">::</span><span class="kw">dfm_select</span>(toclass_res_dfm, the_sets<span class="op">$</span>training_set)
+
+<span class="co"># this step actually implements the prediction</span>
+quanteda<span class="op">::</span><span class="kw">docvars</span>(toclass_res_dfm, <span class="st">&quot;predicted_keywords&quot;</span>)&lt;-<span class="kw">predict</span>(classifier, <span class="dt">newdata =</span> toclass_res_dfm, <span class="dt">type=</span><span class="st">&quot;class&quot;</span>)</code></pre></div>
+</div>
+<div id="from-document-feature-matrix-results-to-candidate-documents-results" class="section level1">
+<h1>From Document Feature Matrix Results to Candidate Documents Results</h1>
 <p>The results set contains many references to the same document (perhaps with different descriptions). The next step is to identify the unique candidate documents which these results relate to. Add the classification (where this is a subset the classification is always 1)</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">xgb_cand_docs&lt;-<span class="kw">get_candidates_fromarchivesearchresults</span>(select_descript_xgb)
-knitr<span class="op">::</span><span class="kw">kable</span>(<span class="kw">head</span>(xgb_cand_docs[xgb_cand_docs<span class="op">$</span>status<span class="op">!=</span><span class="st">&quot;1&quot;</span><span class="op">|</span><span class="kw">is.na</span>(xgb_cand_docs<span class="op">$</span>status), <span class="kw">c</span>(<span class="st">&quot;status&quot;</span>, <span class="st">&quot;description&quot;</span>)]))
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">undownloaded_candidates_with_kwpred&lt;-<span class="kw">left_join</span>(undownloaded_candidates, quanteda<span class="op">::</span><span class="kw">docvars</span>(toclass_res_dfm), <span class="dt">by=</span><span class="kw">c</span>(<span class="st">&quot;std_url&quot;</span>, <span class="st">&quot;publication_date&quot;</span>, <span class="st">&quot;publication_location&quot;</span>, <span class="st">&quot;type&quot;</span>))
 
-xgb_cand_docs<span class="op">$</span>status&lt;-<span class="dv">1</span>
-xgb_cand_docs<span class="op">$</span>g_status&lt;-<span class="st">&quot;&quot;</span>
-xgb_cand_docs<span class="op">$</span>status_writer&lt;-<span class="st">&quot;xgboost_description&quot;</span></code></pre></div>
+<span class="co"># add election name</span>
+undownloaded_candidates_with_kwpred&lt;-undownloaded_candidates_with_kwpred <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">group_by</span>(publication_date) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">summarise</span>() <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">election_name=</span><span class="kw">date_to_election</span>(publication_date)) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">right_join</span>(undownloaded_candidates_with_kwpred, <span class="dt">by=</span><span class="st">&quot;publication_date&quot;</span>)
+
+##  If working by election subset to 1874 (or other desired election)
+
+kwclass_<span class="dv">1874</span>&lt;-undownloaded_candidates_with_kwpred <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">filter</span>(election_name<span class="op">==</span><span class="st">&quot;1874&quot;</span>) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">arrange</span>(<span class="op">-</span>predicted_keywords)
+
+<span class="kw">hist</span>(kwclass_<span class="dv">1874</span><span class="op">$</span>predicted_keywords)
+
+
+kwclass_1874_top5000&lt;-kwclass_<span class="dv">1874</span> <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">slice</span>(<span class="dv">1</span><span class="op">:</span><span class="dv">5000</span>) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">select</span>(id, url, publication_title, description, status, g_status, title, status_writer, predicted_keywords)
+  
+kwclass_1874_top5000<span class="op">$</span>status&lt;-<span class="dv">1</span>
+kwclass_1874_top5000<span class="op">$</span>status_writer&lt;-<span class="st">&quot;xgboost_keyword&quot;</span></code></pre></div>
 <div id="save-results" class="section level2">
 <h2>Save results</h2>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">to_csv&lt;-xgb_cand_docs[,<span class="kw">c</span>(<span class="st">&quot;id&quot;</span>, <span class="st">&quot;url&quot;</span>, <span class="st">&quot;publication_title&quot;</span>, <span class="st">&quot;description&quot;</span>, <span class="st">&quot;status&quot;</span>, <span class="st">&quot;g_status&quot;</span>, <span class="st">&quot;title&quot;</span>, <span class="st">&quot;status_writer&quot;</span>)]
-csv_filename&lt;-<span class="kw">gsub</span>(<span class="st">&quot; &quot;</span>, <span class="st">&quot;_&quot;</span>, <span class="kw">paste0</span>(<span class="st">&quot;britishnewspaperarchive_&quot;</span>, <span class="kw">Sys.time</span>(), <span class="st">&quot;.csv&quot;</span>))
-csv_filename&lt;-<span class="kw">gsub</span>(<span class="st">&quot;:&quot;</span>, <span class="st">&quot;_&quot;</span>, csv_filename)
-<span class="kw">write.csv</span>(to_csv, <span class="dt">file=</span>csv_filename)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">to_csv&lt;-kwclass_1874_top5000[,<span class="kw">c</span>(<span class="st">&quot;id&quot;</span>, <span class="st">&quot;url&quot;</span>, <span class="st">&quot;publication_title&quot;</span>, <span class="st">&quot;description&quot;</span>, <span class="st">&quot;status&quot;</span>, <span class="st">&quot;g_status&quot;</span>, <span class="st">&quot;title&quot;</span>, <span class="st">&quot;status_writer&quot;</span>, <span class="st">&quot;predicted_keywords&quot;</span>)]
+
+csv_filename&lt;-<span class="kw">gsub</span>(<span class="st">&quot; &quot;</span>, <span class="st">&quot;_&quot;</span>, <span class="kw">paste0</span>(<span class="st">&quot;britishnewspaperarchive_&quot;</span>, <span class="kw">format</span>(<span class="kw">Sys.time</span>(), <span class="st">&quot;%Y_%m_%d_%H_%M_%S&quot;</span>), <span class="st">&quot;.csv&quot;</span>))
+
+<span class="kw">write.csv</span>(to_csv, <span class="dt">file=</span>csv_filename, <span class="dt">row.names =</span> <span class="ot">FALSE</span>)</code></pre></div>
+</div>
+<div id="some-more-evaluation-code" class="section level2">
+<h2>Some more evaluation code</h2>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">
+top_ones&lt;-quanteda<span class="op">::</span><span class="kw">docvars</span>(toclass_res_dfm, <span class="st">&quot;predicted_keywords&quot;</span>)<span class="op">&gt;</span>.<span class="dv">9</span>
+quanteda<span class="op">::</span><span class="kw">docvars</span>(toclass_res_dfm, <span class="st">&quot;std_url&quot;</span>)[top_ones][<span class="dv">1</span><span class="op">:</span><span class="dv">5</span>]
+
+as_df&lt;-<span class="kw">as.tbl</span>(quanteda<span class="op">::</span><span class="kw">docvars</span>(toclass_res_dfm)) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">pubyear=</span>lubridate<span class="op">::</span><span class="kw">year</span>(publication_date))
+
+<span class="co">#system.time(as_df &lt;- as_df %&gt;%</span>
+<span class="co">#  mutate(election=date_to_election(publication_date)))</span>
+
+as_df&lt;-as_df <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">group_by</span>(publication_date) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">summarise</span>() <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">election_name=</span><span class="kw">date_to_election</span>(publication_date)) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">right_join</span>(as_df, <span class="dt">by=</span><span class="st">&quot;publication_date&quot;</span>) 
+pp1&lt;-as_df <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">left_join</span>(election_dates, <span class="dt">by=</span><span class="st">&quot;election_name&quot;</span>) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">filter</span>(keywords_13_complete<span class="op">==</span><span class="st">&quot;Y&quot;</span>) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">ggplot</span>(<span class="kw">aes</span>(election_name, predicted_keywords, <span class="dt">group=</span>election_name)) <span class="op">+</span>
+<span class="st">  </span><span class="kw">geom_boxplot</span>()
+
+pp1&lt;-as_df <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">left_join</span>(election_dates, <span class="dt">by=</span><span class="st">&quot;election_name&quot;</span>) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">filter</span>(keywords_13_complete<span class="op">==</span><span class="st">&quot;Y&quot;</span>) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">ggplot</span>(<span class="kw">aes</span>(election_name, predicted_keywords, <span class="dt">group=</span>election_name)) <span class="op">+</span>
+<span class="st">  </span><span class="kw">geom_violin</span>(<span class="dt">trim=</span><span class="ot">FALSE</span>)
+
+as_df &lt;-<span class="st"> </span>as_df <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">electionn=</span><span class="kw">as.numeric</span>(election))
+
+prob_class&lt;-<span class="cf">function</span>(x){
+  <span class="kw">case_when</span>(
+    x<span class="op">&gt;</span>.<span class="dv">75</span> <span class="op">~</span><span class="st"> &quot;highly likely (&gt;.75)&quot;</span>,
+    x<span class="op">&gt;</span>.<span class="dv">5</span>  <span class="op">~</span><span class="st"> &quot;likely (&gt;.5 &amp; &lt;.75)&quot;</span>,
+    x<span class="op">&gt;</span>.<span class="dv">25</span> <span class="op">~</span><span class="st"> &quot;unlikely (&lt;.5 &amp; &gt;.25)&quot;</span>,
+    x<span class="op">&lt;</span>.<span class="dv">25</span> <span class="op">~</span><span class="st"> &quot;very unlikely(&lt;.25)&quot;</span>,
+    <span class="ot">TRUE</span> <span class="op">~</span><span class="st"> </span><span class="ot">NA_character_</span>
+  )
+}
+pp4&lt;-as_df <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">prob_EV_keywords=</span><span class="kw">prob_class</span>(predicted_keywords)) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">electionn=</span><span class="kw">as.numeric</span>(election_name)) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">filter</span>(electionn<span class="op">&lt;</span><span class="dv">1875</span>) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">group_by</span>(election_name, electionn, prob_EV_keywords) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">tally</span>() <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">ggplot</span>(<span class="kw">aes</span>(electionn, n))<span class="op">+</span>
+<span class="st">  </span><span class="kw">facet_wrap</span>(<span class="op">~</span>prob_EV_keywords, <span class="dt">scales=</span><span class="st">&quot;free&quot;</span>)<span class="op">+</span>
+<span class="st">  </span><span class="kw">geom_point</span>()<span class="op">+</span>
+<span class="st">  </span><span class="kw">geom_line</span>()<span class="op">+</span>
+<span class="st">  </span><span class="kw">ylim</span>(<span class="dv">0</span>, <span class="ot">NA</span>) <span class="op">+</span>
+<span class="st">  </span><span class="kw">ggtitle</span>(<span class="st">&quot;Number of Currently Undownloaded Articles in Each Election by EV_Article Likelihood (Keyword Classifier)&quot;</span>)
+
+pp2&lt;-as_df <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">group_by</span>(electionn) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">tally</span>()<span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">ggplot</span>(<span class="kw">aes</span>(electionn, n)) <span class="op">+</span>
+<span class="st">  </span><span class="kw">geom_point</span>() <span class="op">+</span>
+<span class="st">  </span><span class="kw">geom_line</span>()
+pp2
+
+<span class="kw">dim</span>(results_systematic_searches)
+rss&lt;-results_systematic_searches <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">group_by</span>(publication_date) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">summarise</span>() <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">election_name=</span><span class="kw">date_to_election</span>(publication_date)) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">right_join</span>(results_systematic_searches, <span class="dt">by=</span><span class="st">&quot;publication_date&quot;</span>)
+pp3&lt;-rss <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">group_by</span>(election_name, search_text) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">tally</span>()<span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">electionn=</span><span class="kw">as.numeric</span>(election_name)) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">left_join</span>(durhamevp<span class="op">::</span>election_dates, <span class="dt">by=</span><span class="st">&quot;election_name&quot;</span>) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">articles_per_day=</span>n<span class="op">/</span>monthsearch_duration) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">filter</span>(keywords_13_complete<span class="op">==</span><span class="st">&quot;Y&quot;</span>) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">ggplot</span>(<span class="kw">aes</span>(electionn, articles_per_day)) <span class="op">+</span>
+<span class="st">  </span><span class="kw">facet_wrap</span>(<span class="op">~</span>search_text, <span class="dt">scales=</span><span class="st">&quot;free&quot;</span>)<span class="op">+</span>
+<span class="st">  </span><span class="kw">geom_point</span>() <span class="op">+</span>
+<span class="st">  </span><span class="kw">geom_line</span>() <span class="op">+</span>
+<span class="st">  </span><span class="kw">ylim</span>(<span class="dv">0</span>, <span class="ot">NA</span>) <span class="op">+</span>
+<span class="st">  </span><span class="kw">ggtitle</span>(<span class="st">&quot;Articles (per day) Containing 13 Systematic Search Terms During Month Around Elections&quot;</span>)<span class="op">+</span>
+<span class="st">  </span><span class="kw">theme_bw</span>()
+pp3
+<span class="co">#link to searchers</span>
+
+candocs&lt;-<span class="kw">get_candidate_documents</span>(<span class="dt">status =</span><span class="kw">c</span>(<span class="st">&quot;0&quot;</span>,<span class="st">&quot;1&quot;</span>, <span class="st">&quot;2&quot;</span>, <span class="st">&quot;4&quot;</span>, <span class="st">&quot;5&quot;</span>, <span class="st">&quot;6&quot;</span>, <span class="st">&quot;7&quot;</span>, <span class="st">&quot;8&quot;</span>), <span class="dt">include_ocr=</span><span class="ot">FALSE</span>)
+
+candocs&lt;-candocs <span class="op">%&gt;%</span>
+<span class="st">  </span>dplyr<span class="op">::</span><span class="kw">mutate</span>(<span class="dt">std_url =</span> <span class="kw">sub</span>(<span class="st">&quot;download/&quot;</span>, <span class="st">&quot;&quot;</span>, url))
+candocs<span class="op">$</span>EV_article&lt;-<span class="kw">ifelse</span>(candocs<span class="op">$</span>g_status <span class="op">%in%</span><span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;1&quot;</span>, <span class="st">&quot;3&quot;</span>), <span class="dv">1</span>, <span class="dv">0</span>)
+
+
+candocs_training_set&lt;-candocs[<span class="op">!</span>candocs<span class="op">$</span>std_url <span class="op">%in%</span><span class="st"> </span>testing_urls, ]
+candocs_testing_set&lt;-candocs[candocs<span class="op">$</span>std_url <span class="op">%in%</span><span class="st"> </span>testing_urls, ]
+descript_test&lt;-classified_results[classified_results<span class="op">$</span>std_url <span class="op">%in%</span><span class="st"> </span>testing_urls,]
+
+select_descript_xgb&lt;-<span class="kw">classifier_selection_description</span>(candocs_training_set, descript_test, <span class="dt">classifier_type=</span><span class="st">&quot;xgboost&quot;</span>, <span class="dt">return_logical =</span> <span class="ot">TRUE</span>, <span class="dt">logical_to_prob=</span><span class="ot">TRUE</span>, <span class="dt">stem=</span><span class="ot">FALSE</span>, <span class="dt">min_docfreq=</span><span class="dv">20</span>, <span class="dt">min_termfreq=</span><span class="dv">20</span>)
+
+descript_test &lt;-<span class="st"> </span>descript_test <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">xgb_select=</span>select_descript_xgb)
+
+compare_docs&lt;-descript_test<span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">inner_join</span>(candocs_testing_set, <span class="dt">by=</span><span class="st">&quot;description&quot;</span>)
+
+<span class="kw">table</span>(compare_docs<span class="op">$</span>xgb_select<span class="op">&gt;</span>.<span class="dv">5</span>, compare_docs<span class="op">$</span>g_status)
+
+<span class="kw">ggplot</span>(compare_docs, <span class="kw">aes</span>(xgb_select, <span class="kw">as.numeric</span>(g_status<span class="op">==</span><span class="dv">1</span>)))<span class="op">+</span>
+<span class="st">  </span><span class="kw">geom_point</span>(<span class="dt">position=</span><span class="st">&quot;jitter&quot;</span>)<span class="op">+</span>
+<span class="st">  </span><span class="kw">stat_smooth</span>(<span class="dt">method=</span><span class="st">&quot;glm&quot;</span>, <span class="dt">method.args =</span> <span class="kw">list</span>(<span class="dt">family=</span><span class="st">&quot;binomial&quot;</span>))<span class="op">+</span>
+<span class="st">  </span><span class="kw">ggtitle</span>(<span class="st">&quot;Performance of the xgboost descrition classifier on the testing set&quot;</span>)
+
+compare_docs&lt;-descript_test<span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">group_by</span>(std_url) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">summarise</span>(<span class="dt">maxselect=</span><span class="kw">max</span>(xgb_select)) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">left_join</span>(candocs_testing_set, <span class="dt">by=</span><span class="st">&quot;std_url&quot;</span>)
+
+check_descript_xgb&lt;-<span class="kw">classifier_selection_description</span>(candocs_training_set, candocs_training_set, <span class="dt">classifier_type=</span><span class="st">&quot;xgboost&quot;</span>, <span class="dt">return_logical =</span> <span class="ot">TRUE</span>, <span class="dt">logical_to_prob=</span><span class="ot">TRUE</span>, <span class="dt">stem=</span><span class="ot">FALSE</span>, <span class="dt">min_docfreq=</span><span class="dv">50</span>, <span class="dt">min_termfreq=</span><span class="dv">50</span>)
+
+descript_test &lt;-<span class="st"> </span>candocs_training_set <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">xgb_select=</span>check_descript_xgb)
+
+compare_docs&lt;-descript_test<span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">inner_join</span>(candocs_training_set, <span class="dt">by=</span><span class="st">&quot;description&quot;</span>)
+
+<span class="kw">table</span>(compare_docs<span class="op">$</span>xgb_select<span class="op">&gt;</span>.<span class="dv">5</span>, compare_docs<span class="op">$</span>g_status.x)
+
+<span class="kw">ggplot</span>(compare_docs, <span class="kw">aes</span>(xgb_select, <span class="kw">as.numeric</span>(g_status.x<span class="op">==</span><span class="st">&quot;1&quot;</span>)))<span class="op">+</span>
+<span class="st">  </span><span class="kw">geom_point</span>(<span class="dt">position=</span><span class="st">&quot;jitter&quot;</span>)<span class="op">+</span>
+<span class="st">  </span><span class="kw">stat_smooth</span>(<span class="dt">method=</span><span class="st">&quot;glm&quot;</span>, <span class="dt">method.args =</span> <span class="kw">list</span>(<span class="dt">family=</span><span class="st">&quot;binomial&quot;</span>))<span class="op">+</span>
+<span class="st">  </span><span class="kw">ggtitle</span>(<span class="st">&quot;Performance of the xgboost descrition classifier on the training set&quot;</span>)</code></pre></div>
 </div>
 <div id="view-classification-results" class="section level2">
 <h2>View classification results</h2>
