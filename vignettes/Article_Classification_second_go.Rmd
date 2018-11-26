@@ -1,0 +1,181 @@
+---
+title: "Article Classification Process Incorporating Machine Learning"
+author: "Gidon Cohen"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Article Classification with Machine Learning}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  eval=FALSE,
+  comment = "#>"
+)
+
+documents_to_latex<-function(out_docs, include_description=TRUE, include_ocr=TRUE, pandoc_output=FALSE){
+  for (doc in 1:nrow(out_docs)){
+    if(pandoc_output){
+      cat("\n\n")
+      cat(paste0("## ", reportRx::sanitizestr(out_docs[doc, "title"]), " (id: ", out_docs[doc, "id"], ")"))
+      cat("\n\n")
+    } else {
+      cat(paste0("\\subsection{", reportRx::sanitizestr(out_docs[doc, "title"]), " (id: ", out_docs[doc, "id"], ")}"))
+      cat(paste0("  \n"))
+    }
+    if(include_description){
+      if(pandoc_output){      
+        cat("\n\n")
+        cat(paste0("### description"))
+        cat("\n\n")
+      } else {
+        cat(paste0("\\subsubsection{description}"))
+        cat(paste0("  \n"))
+      }
+      #cat(Hmisc::latexTranslate(out_docs[doc, "description"]))
+      #knitr::knit_print(out_docs[doc, "description"])
+      cat(reportRx::sanitizestr(out_docs[doc, "description"]))
+      cat("\n\n")
+    }
+    if(include_ocr){
+      if(pandoc_output){
+        cat("\n\n")
+        cat(paste0("### OCR"))
+        cat("\n\n")
+      } else {
+        cat(paste0("\\subsubsection{OCR}"))
+        cat(paste0("  \n"))
+      }
+
+      #knitr::knit_print(out_docs[doc, "ocr"])
+      cat(reportRx::sanitizestr(out_docs[doc, "ocr"]))
+      if(pandoc_output){
+        cat("  ")
+      } else {
+        cat("   \n")
+      }
+    }
+  }
+}
+
+```
+
+## Introduction
+
+This vignette covers the process of article classification using machine learning.
+
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+library(durhamevp)
+
+## also using tidyverse functions
+library(tidyverse)
+```
+
+## Get The Training Data (Description Classifications)
+For classification on description we will use the manual classification information in the candidate documents table. The code below obtains data and creates the EV_article column from the status information which we want the classifier to emulate. We exclude verbatim repeats (status=3). from the classification set because this text is classified once and we don't want to overweight the particular phrases in these documents. 
+```{r, eval=FALSE}
+candocs<-get_candidate_documents(status =c("0","1", "2", "4", "5", "6", "7", "8"), include_ocr=FALSE)
+
+candocs$EV_article<-ifelse(candocs$status %in% c("1", "3"), 1, 0)
+
+```
+
+## Get the Data to be Classified 
+This is obtained based on joining search parameters to search results. The search parameters (like date and search text) are obtained by:
+```{r, eval=FALSE}
+all_searches<-get_archivesearches()
+
+```
+
+The results obtained from these search parameters can be obtained either by knowing the search ids which you are interested in in advance, or by finding these via queries. For example the code below finds the 1841 queries on the ten search terms specified:
+
+```{r, eval=FALSE}
+initial_1841_searches<-all_searches%>%
+  dplyr::select(id, search_text, archive_date_start, archive_date_end) %>%
+  filter(archive_date_start>lubridate::ymd("1841-01-01"), archive_date_start<lubridate::ymd("1841-12-31")) %>%
+  filter(search_text %in% c("election", "candidate", "party", "husting", "magistrate",
+                            "riot", "disturbance", "incident", "mob", "rough", "adjourn",
+                            "prison", "police"))
+
+
+```
+
+These results can then be used to obtain the set of search results with that archive search id:
+```{r, eval=FALSE}
+res_i_1841<-get_archivesearchresults(archive_search_id = initial_1841_searches$id) 
+dim(res_i_1841)
+```
+
+Or the search ids can be directly entered if known (for example search ids 228-255 all pertain to one day in 1832):
+
+```{r, eval=FALSE}
+res_oneday_1832<-get_archivesearchresults(archive_search_id = c(228:255))
+
+```
+
+This should then be joined to the search parameters:
+```{r, eval=FALSE}
+
+res_i_1841 <- res_i_1841 %>%
+  left_join(all_searches, by=c("archive_search_id"="id")) %>%
+  mutate(std_url = sub("download/", "", url))
+
+res_oneday_1832 <- res_oneday_1832 %>%
+  left_join(all_searches, by=c("archive_search_id"="id")) %>%
+  mutate(std_url = sub("download/", "", url))
+
+```
+
+# Perform the Classification
+The documents can be classified by xgboost. Here we classify the 1841 new data using xgboost. The default options return the subset of the search results which have been classified as Election Violence:
+```{r}
+
+select_descript_xgb<-classifier_selection_description(candocs, res_i_1841, classifier_type = "xgboost")
+
+dim(select_descript_xgb)
+
+```
+
+Or by naive Bayes. The below classifies the 1841 searches using naive Bayes:
+```{r}
+select_descript_nb<-classifier_selection_description(candocs, res_i_1841, classifier_type = "nb")
+dim(select_descript_nb)
+
+```
+
+
+# From Results to Candidate Documents
+
+The results set contains many references to the same document (perhaps with different descriptions). The next step is to identify the unique candidate documents which these results relate to. Add the classification (where this is a subset the classification is always 1)
+
+```{r}
+xgb_cand_docs<-get_candidates_fromarchivesearchresults(select_descript_xgb)
+knitr::kable(head(xgb_cand_docs[xgb_cand_docs$status!="1"|is.na(xgb_cand_docs$status), c("status", "description")]))
+
+xgb_cand_docs$g_status<-xgb_cand_docs$status
+xgb_cand_docs$status<-1
+
+xgb_cand_docs$status_writer<-"xgboost_description"
+
+
+
+```
+## Save results
+```{r, eval=FALSE}
+to_csv<-xgb_cand_docs[,c("id", "url", "publication_title", "description", "status", "g_status", "title", "status_writer")]
+
+csv_filename<-gsub(" ", "_", paste0("britishnewspaperarchive_", format(Sys.time(), "%Y_%m_%d_%H_%M_%S"), ".csv"))
+
+write.csv(to_csv, file=csv_filename, row.names = FALSE)
+```
+
+## View classification results
+
+```{r, results='asis'}
+documents_to_latex(sample_n(select_descript_xgb, 30), include_ocr=FALSE, pandoc_output=TRUE)
+
+```
+
