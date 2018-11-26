@@ -374,7 +374,7 @@ classifier_selection_keywords<-function(train, archivesearchresults, class_to_ke
     search_dfm<-quanteda::dfm_select(search_dfm, train_dfm)
   } else if (mode=="eval_dfm"){
     search_dfm<-searches_to_dfm(archivesearchresults)
-    docvars(search_dfm, "EV_article")<-eval_options$eval_dfm_classifications
+    quanteda::docvars(search_dfm, "EV_article")<-eval_options$eval_dfm_classifications
     train_dfm<-search_dfm
 
   } else {
