@@ -5,8 +5,10 @@ date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Article Classification with Machine Learning}
-  %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r setup, include = FALSE}
@@ -271,6 +273,79 @@ csv_filename<-gsub(" ", "_", paste0("britishnewspaperarchive_", format(Sys.time(
 
 write.csv(to_csv, file=csv_filename, row.names = FALSE)
 ```
+
+## Download OCR
+
+Then Download OCR of Documents Identified by Keyword Classifier
+
+## Classify OCR: Train Classifier
+
+```{r trainocrclassifier}
+#classdocs$ocr
+classified_corpus<-quanteda::corpus(classdocs[,c("ocr", "EV_article")], text_field = "ocr")
+ocr_class_dfm<-durhamevp::preprocess_corpus(classified_corpus, min_termfreq=20, min_docfreq=20, stem=FALSE)
+ocr_sets<-durhamevp::split_dfm(ocr_class_dfm, round(nrow(ocr_class_dfm)*.85))
+ocr_classifier<-durhamevp::evp_classifiers(ocr_sets$training_set, classifier_type = "xgboost", training_classify_var = "EV_article")
+
+quanteda::docvars(ocr_sets$testing_set, "ocr_predict_xgb")<-predict(ocr_classifier, ocr_sets$testing_set)
+quanteda::docvars(ocr_sets$testing_set, "ocr_predict_class_xgb")<-as.numeric(quanteda::docvars(ocr_sets$testing_set, "ocr_predict_xgb")>.5)
+
+ggplot(quanteda::docvars(ocr_sets$testing_set), aes(ocr_predict_xgb, EV_article))+
+  geom_point(position="jitter")+
+  geom_smooth(method="glm", method.args=list(family="binomial"))
+caret::confusionMatrix(factor(quanteda::docvars(ocr_sets$testing_set, "EV_article")), factor(quanteda::docvars(ocr_sets$testing_set, "ocr_predict_class_xgb")), mode="prec_recall")
+
+```
+## Use Classifier on New Material
+```{r}
+kwclass_1874_top5000$id[1:5]
+needs_ocr_classify<-get_candidate_documents(cand_document_id = kwclass_1874_top5000$id, include_ocr = TRUE)
+
+needs_classify_corpus<-quanteda::corpus(needs_ocr_classify, text_field = "ocr")
+needs_classify_dfm<-durhamevp::preprocess_corpus(needs_classify_corpus, min_termfreq=20, min_docfreq=20, stem=FALSE)
+needs_classify_dfm<-quanteda::dfm_select(needs_classify_dfm, ocr_sets$training_set)
+
+# this step actually implements the prediction
+quanteda::docvars(needs_classify_dfm, "predicted_ocr")<-predict(ocr_classifier, newdata = needs_classify_dfm, type="class")
+
+hist(quanteda::docvars(needs_classify_dfm, "predicted_ocr"))
+
+classified_by_ocr<-quanteda::docvars(needs_classify_dfm)
+aa<-left_join(classified_by_ocr, select(kwclass_1874_top5000, id, url, predicted_keywords)) %>%
+  dplyr::mutate(std_url = sub("download/", "", url)) %>%
+  arrange(-predicted_ocr)
+
+ggplot(aa, aes(predicted_ocr))+
+  geom_histogram()
+
+ggplot(aa, aes(predicted_keywords, predicted_ocr))+
+  geom_point()+
+  stat_smooth(method="lm")
+
+bb<-aa[aa$predicted_keywords>.7&aa$predicted_ocr<.1,]
+
+f1<-lm(predicted_ocr~predicted_keywords, aa)
+stargazer::stargazer(f1, type="text")
+cor(aa$predicted_keywords, aa$predicted_ocr)
+
+
+importance <- xgboost::xgb.importance(feature_names = colnames(ocr_sets$training_set), model = ocr_classifier)
+```
+## Save results
+```{r}
+
+download_these<-classified_by_ocr[,c("id", "url", "publication_title", "description", "status", "g_status", "title", "status_writer", "predicted_ocr")] %>%
+  filter(predicted_ocr>.75) %>%
+  mutate(status=1, status_writer="xgb_ocr") %>%
+  as_tibble()
+
+
+csv_filename<-gsub(" ", "_", paste0("britishnewspaperarchive_", format(Sys.time(), "%Y_%m_%d_%H_%M_%S"), ".csv"))
+
+write.csv(download_these, file=csv_filename, row.names = FALSE)
+```
+
+
 ## Some more evaluation code
 
 ```{r}
@@ -410,7 +485,10 @@ ggplot(compare_docs, aes(xgb_select, as.numeric(g_status.x=="1")))+
 ## View classification results
 
 ```{r, results='asis'}
-documents_to_latex(sample_n(select_descript_xgb, 30), include_ocr=FALSE, pandoc_output=TRUE)
+aa<-left_join(needs_ocr_classify, classified_by_ocr, by=c("id", "url")) %>%
+  filter(predicted_ocr>.75)
+documents_to_latex(sample_n(aa, 30), include_ocr=TRUE, pandoc_output=TRUE)
+
 
 ```
 
