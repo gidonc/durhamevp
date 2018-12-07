@@ -10,10 +10,12 @@ status_to_text<-function(status){
     status==3 ~ "ev verbatim repeat",
     status==4 ~ "ev but Ireland",
     status==5 ~ "ev but Scotland",
-    status==6 ~ "ev abroad",
+    status==6 ~ "violence or election abroad",
     status==7 ~ "election but not violence",
     status==8 ~ "violence but not election",
     status==9 ~ "EV but not timing",
+    status==10 ~ "Error code",
+    status==11 ~ "EV but no event or no location",
     TRUE ~ "other code"
   )
 }
