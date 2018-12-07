@@ -10,10 +10,12 @@ status_to_text<-function(status){
     status==3 ~ "ev verbatim repeat",
     status==4 ~ "ev but Ireland",
     status==5 ~ "ev but Scotland",
-    status==6 ~ "ev abroad",
+    status==6 ~ "violence or election abroad",
     status==7 ~ "election but not violence",
     status==8 ~ "violence but not election",
     status==9 ~ "EV but not timing",
+    status==10 ~ "Error code",
+    status==11 ~ "EV but no event or no location",
     TRUE ~ "other code"
   )
 }
@@ -196,13 +198,14 @@ has_word <- function(the_dataframe, contains_words, text_col="ocr", results_col=
   return(res)
 }
 
-classifier_select_docs <- function(classifier, new_docs, text_field="description", return_logical=FALSE, class_to_keep=1, boolean=TRUE, xgb.cutpoint=.5, stem=FALSE, ...){
+classifier_select_docs <- function(classifier, new_docs, text_field="description", return_logical=FALSE, logical_to_prob=FALSE, class_to_keep=1, boolean=FALSE, xgb.cutpoint=.5, stem=FALSE, ...){
   #' Subsets a dataframe of documents based on a classifier.
   #'
   #' @param classifier A classifier to perform the classification: either a naive bayes (quanteda) or xgboost (xgboost)
   #' @param new_docs A data frame or dfm containing the documents to classify
   #' @param text_field The field containing the text to classify
   #' @param return_logical Should the function return the subset of documents (FALSE) or a logical vector indicating the subset of document (TRUE).
+  #' @param logical_to_prob return_logical == TRUE class probabilities can be returned instead of class categories (TRUE).
   #' @param class_to_keep The classifier class to keep
   #' @param stem stem words (in preprocessing)
   #' @param ... other arguments to be passed to \code{preprocess_corpus}
@@ -246,7 +249,7 @@ classifier_select_docs <- function(classifier, new_docs, text_field="description
     colnames(missing_dat)<-missing_cols
     the_matrix<-cbind(the_matrix, missing_dat)
     the_matrix<-the_matrix[,match(classifier$feature_names, colnames(the_matrix))]
-    probs<-predict(classifier, the_matrix)
+    probs<-predict(classifier, the_matrix, outputmargin = FALSE)
     the_class<- as.numeric(probs > xgb.cutpoint)
     want_these <- the_class==class_to_keep
   } else {
@@ -254,14 +257,18 @@ classifier_select_docs <- function(classifier, new_docs, text_field="description
   }
 
   if(return_logical){
-    return(want_these)
+    if (logical_to_prob){
+      return(probs)
+    } else {
+      return(want_these)
+    }
   }
 
   new_docs[want_these,]
 }
 
 
-classifier_selection_description<-function(train, new_docs, text_field="description", class_to_keep=1, training_classify_var="EV_article", prior="uniform", classifier_type="xgboost", stem=TRUE, return_logical=FALSE, ...){
+classifier_selection_description<-function(train, new_docs, text_field="description", class_to_keep=1, training_classify_var="EV_article", prior="uniform", classifier_type="xgboost", stem_dfm=FALSE, return_logical=FALSE, logical_to_prob=FALSE, ...){
   #' Classifies new documents on a labeled training set (description).
   #' @param train a data frame with the training documents.
   #' @param new_docs the documents to classify.
@@ -276,23 +283,23 @@ classifier_selection_description<-function(train, new_docs, text_field="descript
   #' @export
 
   train_corpus <- quanteda::corpus(train[,c(text_field, training_classify_var)], text_field = text_field)
-  train_dfm <- durhamevp::preprocess_corpus(train_corpus, stem=stem, ...)
+  train_dfm <- durhamevp::preprocess_corpus(train_corpus, stem=stem_dfm, ...)
   classifier <- evp_classifiers(train_dfm=train_dfm, classifier_type=classifier_type, training_classify_var=training_classify_var, prior=prior)
 
 
-  new_docs_subset<-durhamevp::classifier_select_docs(classifier=classifier, new_docs=new_docs, text_field = text_field, class_to_keep = class_to_keep, stem=stem, return_logical=return_logical, ...)
+  new_docs_subset<-durhamevp::classifier_select_docs(classifier=classifier, new_docs=new_docs, text_field = text_field, class_to_keep = class_to_keep, stem=stem_dfm, return_logical=return_logical, logical_to_prob=logical_to_prob, ...)
 
   new_docs_subset
 }
 
-classifier_selection_ocr<-function(train, new_docs, text_field="ocr", class_to_keep=1, training_classify_var="EV_article", prior="uniform", return_logical=FALSE){
+classifier_selection_ocr<-function(train, new_docs, text_field="ocr", class_to_keep=1, training_classify_var="EV_article", prior="uniform", return_logical=FALSE, logical_to_prob=FALSE, classifier_type="xgboost", ...){
 
   #' Classifies new documents on a labeled training set (description)
   #' @export
   train_corpus<-quanteda::corpus(train[,c(text_field, training_classify_var)], text_field = text_field)
-  train_dfm<-durhamevp::preprocess_corpus(train_corpus)
-  classifier<-quanteda::textmodel_nb(train_dfm, y=quanteda::docvars(train_dfm, training_classify_var), prior=prior)
-  new_docs_subset<-durhamevp::classifier_select_docs(classifier=classifier, new_docs=new_docs, text_field = text_field, class_to_keep = class_to_keep, return_logical = return_logical)
+  train_dfm<-durhamevp::preprocess_corpus(train_corpus, ...)
+  classifier<-evp_classifiers(train_dfm=train_dfm, classifier_type=classifier_type, training_classify_var=training_classify_var, prior=prior)
+  new_docs_subset<-durhamevp::classifier_select_docs(classifier=classifier, new_docs=new_docs, text_field = text_field, class_to_keep = class_to_keep, return_logical = return_logical, logical_to_prob=logical_to_prob)
 
   new_docs_subset
 }
@@ -328,6 +335,7 @@ get_candidates_fromarchivesearchresults<-function(archivesearchresults, include_
 searches_to_dfm<- function(archivesearches){
   #' Convert a set of search results to a dfm.
   #' @param archivesearches the results of archivesearches
+  #' @export
   searches_to_string<-archivesearches %>%
     dplyr::mutate(std_url = sub("download/", "", url)) %>%
     group_by(std_url) %>%
@@ -341,12 +349,15 @@ searches_to_dfm<- function(archivesearches){
 classifier_selection_keywords<-function(train, archivesearchresults, class_to_keep=1, training_classify_var="EV_article", prior="docfreq", text_field="ocr", classifier_type="xgboost", mode="select",
                                         eval_options=list(keywords=c("candidate","poll","election", "stone","riot", "mob", "husting", "disturbance", "rough", "incident"),
                                                           text_field="ocr",
-                                                          eval_classify_var="EV_article")){
+                                                          eval_classify_var="EV_article",
+                                                          eval_dfm_classifications="foo")){
+  #'Classify documents based on keywords.
+  #'
   #'\code{classifier_selection_keyword} uses a classifier to select document from keywords.
-  #'In 'select' mode the keywords are constructed from the archivesearchresults. In 'eval' mode the keywords are taken from the eval_options and a binary dfm is constructed from the document text.
+  #'In 'select' mode the keywords are constructed from the archivesearchresults. In 'eval' mode the keywords are taken from the eval_options and a binary dfm is constructed from the document text. In 'eval_dfm' mode the keywords are taken from the dfm columns, and the eval_classify_var should be a docvar of the dfm.
   #'@param train the training set of documents
   #'@param classifier_type The type of classifer to use ("nb" = naive bayes, "xgboost"=xgboost)
-  #'@param mode Should the documents be selected ("select") or the document selection be evaluated ("eval"), (evaluation assumes search results have been classified)
+  #'@param mode Should the documents be selected ("select") or the document selection be evaluated from text field("eval"), or evaluated from a dfm ("eval_dfm") (evaluation assumes search results have been classified)
   #'@export
   #'
 
@@ -364,24 +375,23 @@ classifier_selection_keywords<-function(train, archivesearchresults, class_to_ke
     train_corpus<-quanteda::corpus(train[,c(text_field, training_classify_var)], text_field = text_field)
     train_dfm<-quanteda::dfm(train_corpus, select=colnames(search_dfm))
     search_dfm<-quanteda::dfm_select(search_dfm, train_dfm)
+  } else if (mode=="eval_dfm"){
+    search_dfm<-searches_to_dfm(archivesearchresults)
+    quanteda::docvars(search_dfm, "EV_article")<-eval_options$eval_dfm_classifications
+    train_dfm<-search_dfm
+
   } else {
     stop("Unsupported mode.")
   }
-  if(classifier_type=="nb"){
-    classifier<-quanteda::textmodel_nb(train_dfm, y=quanteda::docvars(train_dfm, training_classify_var), prior=prior)
+  classifier<-durhamevp::evp_classifiers(train_dfm, classifier_type, training_classify_var, prior)
 
-  } else if (classifier_type=="xgboost"){
-    train_dfms <- split_dfm(train_dfm, n_train=floor(nrow(train_dfm)*.8))
-    dtrain <- durhamevp::dfm_to_dgCMatrix(train_dfms$training_set, training_classify_var = training_classify_var)
-    dval <- durhamevp::dfm_to_dgCMatrix(train_dfms$testing_set, training_classify_var = training_classify_var)
-    classifier<-xgboost::xgb.train(data=dtrain, nrounds=100, print_every_n = 10, early_stopping_rounds = 10, maximize = F, eval_metric="error", verbose = 1, watchlist=list(val=dval, train=dtrain))
-  } else {
-    stop(paste("Classifier type", classifier_type, "not supported."))
-  }
-
-  if(mode=="eval"){
+  if(mode %in% c("eval")){
     archivesearchresults$selected<-classifier_select_docs(classifier, search_dfm, boolean = TRUE, return_logical=TRUE)
     return(archivesearchresults)
+  }
+  if(mode %in% c("eval_dfm")){
+    docvars(search_dfm, "selected")<-classifier_select_docs(classifier, search_dfm, boolean = TRUE, return_logical=TRUE)
+    return(search_dfm)
   }
   want_these_std_url<-docvars(classifier_select_docs(classifier, search_dfm, boolean = TRUE), "std_url")
 
@@ -400,8 +410,38 @@ evp_classifiers<-function(train_dfm, classifier_type, training_classify_var, pri
     train_dfms <- durhamevp::split_dfm(train_dfm, n_train=floor(nrow(train_dfm)*.8))
     dtrain <- durhamevp::dfm_to_dgCMatrix(train_dfms$training_set, training_classify_var = training_classify_var)
     dval <- durhamevp::dfm_to_dgCMatrix(train_dfms$testing_set, training_classify_var = training_classify_var)
-    classifier<-xgboost::xgb.train(data=dtrain, nrounds=1000, print_every_n = 20, early_stopping_rounds = 10, maximize = F, eval_metric="error", verbose = 1, watchlist=list(val=dval, train=dtrain))
-  } else {
+    classifier<-xgboost::xgb.train(data=dtrain,
+                                   nrounds=1000,
+                                   print_every_n = 20,
+                                   early_stopping_rounds = 10,
+                                   maximize = F,
+                                   eval_metric="logloss",
+                                   verbose = 1,
+                                   watchlist=list(train=dtrain, val=dval),
+                                   eta=.03,
+                                   max_depth=6,
+                                   gamma=1,
+                                   n_estimators=100,
+                                   objective="binary:logistic",
+                                   booster="dart")
+    #dtrain <- durhamevp::dfm_to_dgCMatrix(train_dfm, training_classify_var = training_classify_var)
+    #classifier<-xgboost::xgboost(data=dtrain, nrounds=1000, print_every_n = 20, early_stopping_rounds = 10, objective="binary:logistic")
+    } else if (classifier_type=="xgboost.cv"){
+      train_dfms <- durhamevp::split_dfm(train_dfm, n_train=floor(nrow(train_dfm)*.8))
+      dtrain <- durhamevp::dfm_to_dgCMatrix(train_dfms$training_set, training_classify_var = training_classify_var)
+      dval <- durhamevp::dfm_to_dgCMatrix(train_dfms$testing_set, training_classify_var = training_classify_var)
+      classifier<-xgboost::xgb.cv(
+                                  data=dtrain,
+                                  nrounds=300,
+                                  nfold=5,
+                                  early_stopping_rounds = 10,
+                                     metrics="logloss",
+                                     watchlist=list(train=dtrain, val=dval),
+                                     objective="binary:logistic")
+      print(classifier)
+      #dtrain <- durhamevp::dfm_to_dgCMatrix(train_dfm, training_classify_var = training_classify_var)
+      #classifier<-xgboost::xgboost(data=dtrain, nrounds=1000, print_every_n = 20, early_stopping_rounds = 10, objective="binary:logistic")
+    } else {
     stop(paste("Classifier type", classifier_type, "not supported."))
   }
 
@@ -479,3 +519,4 @@ bnaurl_to_id<-function(url){
   #' @export
   str_split(url, "bl/", simplify=TRUE)[,2]
 }
+

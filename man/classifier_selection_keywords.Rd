@@ -2,8 +2,7 @@
 % Please edit documentation in R/text_analysis.R
 \name{classifier_selection_keywords}
 \alias{classifier_selection_keywords}
-\title{\code{classifier_selection_keyword} uses a classifier to select document from keywords.
-In 'select' mode the keywords are constructed from the archivesearchresults. In 'eval' mode the keywords are taken from the eval_options and a binary dfm is constructed from the document text.}
+\title{Classify documents based on keywords.}
 \usage{
 classifier_selection_keywords(train, archivesearchresults,
   class_to_keep = 1, training_classify_var = "EV_article",
@@ -11,16 +10,16 @@ classifier_selection_keywords(train, archivesearchresults,
   mode = "select", eval_options = list(keywords = c("candidate",
   "poll", "election", "stone", "riot", "mob", "husting", "disturbance",
   "rough", "incident"), text_field = "ocr", eval_classify_var =
-  "EV_article"))
+  "EV_article", eval_dfm_classifications = "foo"))
 }
 \arguments{
 \item{train}{the training set of documents}
 
 \item{classifier_type}{The type of classifer to use ("nb" = naive bayes, "xgboost"=xgboost)}
 
-\item{mode}{Should the documents be selected ("select") or the document selection be evaluated ("eval"), (evaluation assumes search results have been classified)}
+\item{mode}{Should the documents be selected ("select") or the document selection be evaluated from text field("eval"), or evaluated from a dfm ("eval_dfm") (evaluation assumes search results have been classified)}
 }
 \description{
 \code{classifier_selection_keyword} uses a classifier to select document from keywords.
-In 'select' mode the keywords are constructed from the archivesearchresults. In 'eval' mode the keywords are taken from the eval_options and a binary dfm is constructed from the document text.
+In 'select' mode the keywords are constructed from the archivesearchresults. In 'eval' mode the keywords are taken from the eval_options and a binary dfm is constructed from the document text. In 'eval_dfm' mode the keywords are taken from the dfm columns, and the eval_classify_var should be a docvar of the dfm.
 }
