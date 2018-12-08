@@ -17,12 +17,12 @@ date_to_election<-function(the_date, election_start_col="monthsearch_start", ele
   #' Finds the election relating to any specific date.
   #'
   #'
-  #' @param the_date the date to classifiy
-  #' @param election_start_col the column in the election data frame which identifies when the election starts.
-  #'  @param election_end_col the column in the election data frame which identifies when the election ends.
-  #'  @param election_data the data frame containing the election data.
-  #'  @param return_col the column in the data frame containing the name of the election (to be returned by the function).
-  #'  @export
+  #'@param the_date the date to classifiy
+  #'@param election_start_col the column in the election data frame which identifies when the election starts.
+  #'@param election_end_col the column in the election data frame which identifies when the election ends.
+  #'@param election_data the data frame containing the election data.
+  #'@param return_col the column in the data frame containing the name of the election (to be returned by the function).
+  #'@export
   the_date<-lubridate::date(the_date)
   starts<-lubridate::date(election_data[, election_start_col, drop=TRUE])
   ends<-lubridate::date(election_data[, election_end_col, drop=TRUE])

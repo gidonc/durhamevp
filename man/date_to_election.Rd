@@ -12,11 +12,13 @@ date_to_election(the_date, election_start_col = "monthsearch_start",
 \arguments{
 \item{the_date}{the date to classifiy}
 
-\item{election_start_col}{the column in the election data frame which identifies when the election starts.
-@param election_end_col the column in the election data frame which identifies when the election ends.
-@param election_data the data frame containing the election data.
-@param return_col the column in the data frame containing the name of the election (to be returned by the function).
-@export}
+\item{election_start_col}{the column in the election data frame which identifies when the election starts.}
+
+\item{election_end_col}{the column in the election data frame which identifies when the election ends.}
+
+\item{election_data}{the data frame containing the election data.}
+
+\item{return_col}{the column in the data frame containing the name of the election (to be returned by the function).}
 }
 \description{
 Finds the election relating to any specific date.
