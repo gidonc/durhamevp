@@ -478,7 +478,7 @@ set_user_mode <- function (user_id, new_mode){
   }
 }
 
-get_useractivitylogentry<-function (useractivitylogentry_id, action="all", user_id="all", allocation_id="all"){
+get_useractivitylogentry<-function (useractivitylogentry_id="all", action="all", user_id="all", allocation_id="all"){
   #' Get user logged activity
   #'
   #' Gets the log of user activity on the database relating to a user or an allocation or an action type.
