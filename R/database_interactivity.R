@@ -478,6 +478,37 @@ set_user_mode <- function (user_id, new_mode){
   }
 }
 
+get_useractivitylogentry<-function (useractivitylogentry_id, action="all", user_id="all", allocation_id="all"){
+  #' Get user logged activity
+  #'
+  #' Gets the log of user activity on the database relating to a user or an allocation or an action type.
+  #' @param useractivitylogentry_id primary key of user activity table of interest.
+  #' @param user_id Id of the user whose activity is of interest.
+  #' @param action action types of interest.
+  #' @param allocation_id allocation_ids of interest.
+  #' @export
+
+  con <- manage_dbcons()
+  #print(con)
+
+
+  this_sql<-"SELECT * FROM portal_useractivitylogentry" # base query
+
+  res<-build_where_condition("id", useractivitylogentry_id, this_sql, NULL)
+  res<-build_where_condition("action", action, this_sql, NULL)
+  res<-build_where_condition("user_id", user_id, res$condition, res$interpolate_list)
+  res<-build_where_condition("allocation_id", allocation_id, res$condition, res$interpolate_list)
+  res[["condition"]] <- paste(res[["condition"]], ";")
+  this_sql<-res[["condition"]]
+  interpolate_list <- res[["interpolate_list"]]
+  this_safe_sql<-DBI::sqlInterpolate(DBI::ANSI(), this_sql,
+                                     .dots = interpolate_list)
+  useractivity<-DBI::dbGetQuery(con, this_safe_sql)
+
+  useractivity
+  }
+
+
 killDbConnections <- function () {
   #' Kills all current database connections
   #'
