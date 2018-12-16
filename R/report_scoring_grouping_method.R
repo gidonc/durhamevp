@@ -11,15 +11,15 @@ coding_summary <- function(user_doc_id, allocation_type="all", restrict_double_c
   #' @export
   user_docs<-durhamevp::get_allocation(user_doc_id = user_doc_id, allocation_type=allocation_type)
 
-  user_docs<-filter(user_docs, status=="COMPLETED")
+  user_docs<-dplyr::filter(user_docs, status=="COMPLETED")
 
   if(restrict_double_coded){
     doublecoded_docs<-user_docs %>%
-      group_by(document_id) %>%
-      tally() %>%
-      filter(n>1)
+      dplyr::group_by(document_id) %>%
+      dplyr::tally() %>%
+      dplyr::filter(n>1)
 
-    user_docs<-filter(user_docs, document_id %in% doublecoded_docs$document_id)
+    user_docs<-dplyr::filter(user_docs, document_id %in% doublecoded_docs$document_id)
   }
 
   event_report <- durhamevp::get_event_report(user_doc_id=dplyr::pull(user_docs, "id"))
@@ -34,7 +34,7 @@ coding_summary <- function(user_doc_id, allocation_type="all", restrict_double_c
 
   user_doc_coding_counts<-user_docs %>%
     mutate(level="user_doc") %>%
-    tidyr::gather(variable, value, article_type, geo_relevant, time_relevant, electoral_nature, violent_nature, violent_focus, legibility, recommend_qualitative) %>%
+    tidyr::gather(variable, value, article_type, geo_relevant, time_relevant, electoral_nature, violence_nature, electoralviolence_nature, legibility, recommend_qualitative) %>%
     dplyr::rename(user_doc_id=id) %>%
     dplyr::group_by(user_doc_id, user_id, document_id, level, variable, value) %>%
     dplyr::tally()
