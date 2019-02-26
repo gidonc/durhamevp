@@ -94,15 +94,19 @@ classdocs<-classdocs %>%
 
 ##----dataprep----
 systematic_search_terms<-c("election",
+                           "candidate",
+                           "party",
+                           "husting",
+                           "magistrate",
                            "riot",
                            "disturbance",
                            "incident",
-                           "police",
-                           "husting",
-                           "magistrate",
-                           "party",
+                           "mob",
                            "rough",
-                           "stone")
+                           "adjourn",
+                           "prison",
+                           "police")
+
 all_searches<-get_archivesearches()
 systematic_searches<-all_searches%>%
   dplyr::select(id, search_text, archive_date_start, archive_date_end) %>%
@@ -134,7 +138,7 @@ ordered_classified<-summary_class[match(docvars(class_res_dfm, "std_url"), summa
 docvars(class_res_dfm, "EV_article")<-ordered_classified$EV_article
 
 
-the_sets<-split_dfm(class_res_dfm, n_train = 3000)
+the_sets<-split_dfm(class_res_dfm, n_train = 6000)
 testing_urls<-docvars(the_sets$testing_set, "std_url")
 training_urls<-docvars(the_sets$training_set, "std_url")
 
@@ -223,7 +227,7 @@ classdocs_training_set<-classdocs[classdocs$std_url %in% training_urls, ]
 
 select_ocr_xgb<-classifier_selection_ocr(classdocs_training_set, classdocs_testing_set, classifier_type="xgboost", return_logical = TRUE, logical_to_prob = TRUE, min_termfreq=20, min_docfreq=20, stem=FALSE)
 
-select_ocr_xgb<-classifier_selection_ocr(classdocs_training_set, classdocs_testing_set, classifier_type="xgboost.cv", return_logical = TRUE, logical_to_prob = TRUE, min_termfreq=20, min_docfreq=20, stem=FALSE)
+#select_ocr_xgb<-classifier_selection_ocr(classdocs_training_set, classdocs_testing_set, classifier_type="xgboost.cv", return_logical = TRUE, logical_to_prob = TRUE, min_termfreq=20, min_docfreq=20, stem=FALSE)
 
 ocr_test <- classdocs_testing_set %>%
   mutate(xgb_select=select_ocr_xgb) %>%
@@ -236,9 +240,18 @@ f2<-glm(EV_article~xgb_select, compare_docs, family="binomial")
 stargazer::stargazer(f1, f2, type="text")
 
 ggplot(compare_docs, aes(xgb_select, as.numeric(factor(electoralviolence_nature)=="true")))+
-  geom_point(position="jitter")+
+  geom_point(size=.1, position=position_jitter(height=.1))+
   stat_smooth(method="glm", method.args=list(family=binomial))+
   ggtitle("Performance of xgboost on ocr on Testing Set")
+
+compare_docs$EV_factor<-compare_docs$electoralviolence_nature=="true"
+ggplot(compare_docs, aes(xgb_select, as.numeric(factor(electoralviolence_nature)=="true")))+
+  geom_point(size=.1, position=position_jitter(height=.1))+
+  stat_smooth(method="glm", method.args=list(family=binomial))+
+  theme_bw()+
+  scale_y_continuous(breaks=c(0,1))+
+  ylab("Election Violence Article")+
+  xlab("Algorithm Probability of Election Violence Article")
 
 #xtable::xtable(table(compare_docs$xgb_class, compare_docs$EV_article))
 caret::confusionMatrix(factor(compare_docs$xgb_class), factor(compare_docs$electoralviolence_nature=="true"), mode="prec_recall")
@@ -260,15 +273,18 @@ ggplot(compare_docs, aes(xgb_select, as.numeric(factor(electoralviolence_nature)
 
 ##----firstgostage1----
 systematic_search_terms<-c("election",
+                           "candidate",
+                           "party",
+                           "husting",
+                           "magistrate",
                            "riot",
                            "disturbance",
                            "incident",
-                           "police",
-                           "husting",
-                           "magistrate",
-                           "party",
+                           "mob",
                            "rough",
-                           "stone")
+                           "adjourn",
+                           "prison",
+                           "police")
 all_searches<-get_archivesearches()
 systematic_searches<-all_searches%>%
   dplyr::select(id, search_text, archive_date_start, archive_date_end) %>%

@@ -228,10 +228,11 @@ get_status<-function(user_id){
 
 }
 
-get_document<-function(document_id){
+get_document<-function(document_id, url="all"){
   #' Returns the document table filtered by document id
   #'
   #' @param document_id Document id or ids to filter by.
+  #' @param url url to filter by.
   #' @export
 
   con <- manage_dbcons()
@@ -239,6 +240,7 @@ get_document<-function(document_id){
   this_sql<-"SELECT * FROM portal_document" # base query
 
   res<-build_where_condition("id", document_id, this_sql, NULL)
+  res<-build_where_condition("url", url, res$condition, res$interpolate_list)
   res[["condition"]] <- paste(res[["condition"]], ";")
   this_sql<-res[["condition"]]
   interpolate_list <- res[["interpolate_list"]]
