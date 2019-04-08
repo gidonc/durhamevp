@@ -117,20 +117,57 @@ build_where_condition <- function (col_name, vals, existing_condition, existing_
 expand_out_ors <- function(col_name, vals){
   res<-list()
   interpolate_list <- list()
+  safecol_name<-gsub(".", "", col_name)
   for (this_n in seq_along(vals)){
     if (this_n==1){
       this_condition = "("
     } else {
       this_condition <- paste0(this_condition, " OR ")
     }
-    this_condition <- paste0(this_condition, col_name, "=?", col_name, this_n)
-    interpolate_list[[paste0(col_name, this_n)]] <- vals[this_n]
+    this_condition <- paste0(this_condition, col_name, "=?", safecol_name, this_n)
+    interpolate_list[[paste0(safecol_name, this_n)]] <- vals[this_n]
   }
   this_condition <- paste0(this_condition, ")")
   res[["condition"]] <- this_condition
   res[["interpolate_list"]]<-interpolate_list
   res
 }
+
+get_allocation_connect_to_docs <- function(user_id = "all", allocation_type="all", document_id="all", user_doc_id="all", include_ocr = FALSE){
+  #' Get the allocation of articles to users (the unit of coding), with connected information from documents table and search tables
+  #' @param user_id The user_id to check in the database.
+  #' @param document_id The set of document_ids to include in the allocation
+  #' @param include_ocr Should the OCR of the document be included in the results.
+  #' @return dataframe of the document allocations to the user.
+  #' @export
+
+  con <- manage_dbcons()
+  this_sql <-"SELECT ud.id as user_doc_id, ud.allocation_date, ud.allocation_type, ud.coding_complete, ud.article_type, ud.geo_relevant, ud.time_relevant, ud.electoral_nature, ud.electoralviolence_nature, ud.violence_nature, ud.legibility, ud.comment_docinfo, ud.document_id, d.doc_title, d.pdf_location, d.pdf_page_location, d.candidate_document_id, c.publication_title, c.publication_location, c.type, c.status as cand_doc_status, c.page, c.publication_date, c.word_count, c.g_status, c.status_writer, c.url"
+
+  if(include_ocr){
+    this_sql <- paste0(this_sql, ", d.ocr")
+  }
+  this_sql <- paste(this_sql, "FROM `portal_userdocumentallocation` ud JOIN `portal_document` d ON ud.document_id = d.id
+                    JOIN `portal_candidatedocument` c ON d.candidate_document_id=c.id") # base query
+
+  res<-build_where_condition("user_id", user_id, this_sql, NULL)
+  res<-build_where_condition("allocation_type", allocation_type, res[[1]], res[[2]])
+  res<-build_where_condition("document_id", document_id, res[[1]], res[[2]])
+  res<-build_where_condition("ud.id", user_doc_id, res[[1]], res[[2]])
+
+  res[["condition"]] <- paste(res[["condition"]], ";")
+  this_sql<-res[["condition"]]
+  interpolate_list <- res[["interpolate_list"]]
+
+  this_safe_sql<-DBI::sqlInterpolate(DBI::ANSI(), this_sql,
+                                     .dots = interpolate_list)
+
+  allocation<-DBI::dbGetQuery(con, this_safe_sql)
+
+
+  allocation
+}
+
 
 get_allocation <- function(user_id = "all", allocation_type="all", document_id="all", user_doc_id="all"){
   #' Get the articles currently allocated to the user.
@@ -377,6 +414,45 @@ documents_to_actual<-function(document_id){
   actual_docs
 }
 
+get_coding <- function(include_ocr=FALSE){
+  #' Download all the coding on the database
+  #' @param include_ocr Should results include the full ocr of the documents (will slow the download).
+  #' @export
+  user_docs <- get_allocation_connect_to_docs(include_ocr=include_ocr)
+  event_reports <- get_event_report()
+  tags <- get_tag()
+  attributes <- get_attribute()
+
+  list(user_docs=user_docs,
+       event_reports = event_reports,
+       tags=tags,
+       attributes = attributes)
+}
+assign_coding_to_environment<- function(get_coding_result_list){
+  #' Assign the results of a get_coding download to the global environment
+  #' @param get_coding_result_list The result from executing the get_coding() command.
+  #' @export
+  #'
+
+  if(sum(names(get_coding_result_list)==c("user_docs", "event_reports", "tags", "attributes"))==4){
+    location<- get_coding_result_list[["tags"]]
+    location <- dplyr::filter(location, tag_table == "location")
+    location <- tibble::as.tibble(location)
+
+    actors<- get_coding_result_list[["tags"]]
+    actors <- dplyr::filter(actors, tag_table == "actors")
+    actors <- tibble::as.tibble(actors)
+    for (i in 1:length(get_coding_result_list))
+    for (i in 1:length(get_coding_result_list))
+
+
+    get_coding_result_list[["location"]] <- location
+
+      assign(names(get_coding_result_list)[i], get_coding_result_list[[i]], envir=globalenv())
+  } else {
+    stop("not a valid coding results list")
+  }
+}
 get_user_mode <- function(user_id="all"){
   #' Returns table of current user modes
   #'
