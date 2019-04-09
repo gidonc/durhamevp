@@ -117,7 +117,7 @@ build_where_condition <- function (col_name, vals, existing_condition, existing_
 expand_out_ors <- function(col_name, vals){
   res<-list()
   interpolate_list <- list()
-  safecol_name<-gsub(".", "", col_name)
+  safecol_name<-gsub("\\.", "", col_name)
   for (this_n in seq_along(vals)){
     if (this_n==1){
       this_condition = "("
