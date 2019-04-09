@@ -322,7 +322,26 @@ get_candidate_documents<-function(cand_document_id="all", url="all", status="all
 
   cand_documents
 }
+get_archivesearchsummaryonly<-function(archivesearchsummaryonly_id="all"){
+  #' Returns the archivesearchessummaryonly table filtered by id
+  #'
+  #' @param event_report_id Event report id or ids to filter by.
+  #' @export
 
+  con <- manage_dbcons()
+  this_sql<-"SELECT * FROM portal_archivesearchsummaryonly" # base query
+
+  res<-build_where_condition("id", archivesearchsummaryonly_id, this_sql, NULL)
+  res[["condition"]] <- paste(res[["condition"]], ";")
+  this_sql<-res[["condition"]]
+  interpolate_list <- res[["interpolate_list"]]
+  this_safe_sql<-DBI::sqlInterpolate(DBI::ANSI(), this_sql,
+                                     .dots = interpolate_list)
+  archivesearchessummaryonly<-DBI::dbGetQuery(con, this_safe_sql) %>%
+    tibble::as.tibble()
+
+  archivesearchessummaryonly
+}
 get_event_report<-function(event_report_id="all", user_doc_id="all"){
   #' Returns the event_report table filtered by event report id
   #'
