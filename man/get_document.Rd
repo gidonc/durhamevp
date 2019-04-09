@@ -4,10 +4,12 @@
 \alias{get_document}
 \title{Returns the document table filtered by document id}
 \usage{
-get_document(document_id)
+get_document(document_id, url = "all")
 }
 \arguments{
 \item{document_id}{Document id or ids to filter by.}
+
+\item{url}{url to filter by.}
 }
 \description{
 Returns the document table filtered by document id
