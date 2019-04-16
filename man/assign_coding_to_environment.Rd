@@ -4,10 +4,10 @@
 \alias{assign_coding_to_environment}
 \title{Assign the results of a get_coding download to the global environment}
 \usage{
-assign_coding_to_environment(get_coding_result_list)
+assign_coding_to_environment(evp_coding_download)
 }
 \arguments{
-\item{get_coding_result_list}{The result from executing the get_coding() command.}
+\item{evp_coding_download}{The result from executing the get_coding() command.}
 }
 \description{
 Assign the results of a get_coding download to the global environment
