@@ -371,7 +371,7 @@ get_tag<-function(tag_id="all", event_report_id="all"){
   #' @export
 
   con <- manage_dbcons()
-  this_sql<-"SELECT id as tag_id, tag_table, tag_variable, tag_value, event_report_id, comment, contested as tag_contested, proximity_relative FROM portal_tag" # base query
+  this_sql<-"SELECT id as tag_id, tag_table, tag_variable, tag_value, event_report_id, comment as comment_tags, contested as contested_tags, proximity_relative FROM portal_tag" # base query
 
   res<-build_where_condition("id", tag_id, this_sql, NULL)
   res<-build_where_condition("event_report_id", event_report_id, res$condition, res$interpolate_list)
@@ -393,7 +393,7 @@ get_attribute<-function(attribute_id="all", tag_id="all"){
   #' @export
 
   con <- manage_dbcons()
-  this_sql<-"SELECT id as attribute_id, attribute, attribute_value, tag_id, contested as attribute_contested FROM portal_attribute" # base query
+  this_sql<-"SELECT id as attribute_id, attribute, attribute_value, tag_id, contested as contested_attribute FROM portal_attribute" # base query
 
   res<-build_where_condition("id", attribute_id, this_sql, NULL)
   res<-build_where_condition("tag_id", tag_id, res$condition, res$interpolate_list)
