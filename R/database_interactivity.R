@@ -142,13 +142,13 @@ get_allocation_connect_to_docs <- function(user_id = "all", allocation_type="all
   #' @export
 
   con <- manage_dbcons()
-  this_sql <-"SELECT ud.id as user_doc_id, ud.allocation_date, ud.allocation_type, ud.coding_complete, ud.article_type, ud.geo_relevant, ud.time_relevant, ud.electoral_nature, ud.electoralviolence_nature, ud.violence_nature, ud.legibility, ud.comment_docinfo, ud.document_id, d.doc_title, d.pdf_location, d.pdf_page_location, d.candidate_document_id, c.publication_title, c.publication_location, c.type, c.status as cand_doc_status, c.page, c.publication_date, c.word_count, c.g_status, c.status_writer, c.url"
+  this_sql <-"SELECT ud.id as user_doc_id, ud.allocation_date, ud.allocation_type, ud.coding_complete, ud.article_type, ud.geo_relevant, ud.time_relevant, ud.electoral_nature, ud.electoralviolence_nature, ud.violence_nature, ud.legibility, ud.comment_docinfo, ud.document_id, ud.allocated_by, ud.user_id, ud.status, ud.recommend_qualitative, ud.difficulty_ranking, ud.ideal_coding_comments, ud.score, ud.last_updated, d.doc_title, d.pdf_location, d.pdf_page_location, d.candidate_document_id, c.publication_title, c.publication_location, c.type, c.status as cand_doc_status, c.page, c.publication_date, c.word_count, c.g_status, c.status_writer, c.url"
 
   if(include_ocr){
     this_sql <- paste0(this_sql, ", d.ocr")
   }
-  this_sql <- paste(this_sql, "FROM `portal_userdocumentallocation` ud JOIN `portal_document` d ON ud.document_id = d.id
-                    JOIN `portal_candidatedocument` c ON d.candidate_document_id=c.id") # base query
+  this_sql <- paste(this_sql, "FROM `portal_userdocumentallocation` ud LEFT JOIN `portal_document` d ON ud.document_id = d.id
+                    LEFT JOIN `portal_candidatedocument` c ON d.candidate_document_id=c.id") # base query
 
   res<-build_where_condition("user_id", user_id, this_sql, NULL)
   res<-build_where_condition("allocation_type", allocation_type, res[[1]], res[[2]])
@@ -349,7 +349,7 @@ get_event_report<-function(event_report_id="all", user_doc_id="all"){
   #' @export
 
   con <- manage_dbcons()
-  this_sql<-"SELECT * FROM portal_eventreport" # base query
+  this_sql<-"SELECT id as event_report_id, event_type, environment, event_start, event_end, comment_events, event_id, user_doc_id, summary, meeting, election_point, event_timeframe_quantifier FROM portal_eventreport" # base query
 
   res<-build_where_condition("id", event_report_id, this_sql, NULL)
   res<-build_where_condition("user_doc_id", user_doc_id, res$condition, res$interpolate_list)
@@ -371,7 +371,7 @@ get_tag<-function(tag_id="all", event_report_id="all"){
   #' @export
 
   con <- manage_dbcons()
-  this_sql<-"SELECT * FROM portal_tag" # base query
+  this_sql<-"SELECT id as tag_id, tag_table, tag_variable, tag_value, event_report_id, comment, contested as tag_contested, proximity_relative FROM portal_tag" # base query
 
   res<-build_where_condition("id", tag_id, this_sql, NULL)
   res<-build_where_condition("event_report_id", event_report_id, res$condition, res$interpolate_list)
@@ -393,7 +393,7 @@ get_attribute<-function(attribute_id="all", tag_id="all"){
   #' @export
 
   con <- manage_dbcons()
-  this_sql<-"SELECT * FROM portal_attribute" # base query
+  this_sql<-"SELECT id as attribute_id, attribute, attribute_value, tag_id, contested as attribute_contested FROM portal_attribute" # base query
 
   res<-build_where_condition("id", attribute_id, this_sql, NULL)
   res<-build_where_condition("tag_id", tag_id, res$condition, res$interpolate_list)
@@ -442,32 +442,155 @@ get_coding <- function(include_ocr=FALSE){
   tags <- get_tag()
   attributes <- get_attribute()
 
-  list(user_docs=user_docs,
+  res <- list(user_docs=user_docs,
        event_reports = event_reports,
        tags=tags,
        attributes = attributes)
+  class(res) <-"evp_coding_download"
+
+  res
 }
-assign_coding_to_environment<- function(get_coding_result_list){
+
+is_evp_coding_download <- function(coding_download){
+  #' Check if object is an evp coding download.
+  #' @param coding_download object to check
+  #' @return logical
+  #' @export
+  if(class(coding_download)=="evp_coding_download"){
+    res <- TRUE
+  } else {
+    res <- FALSE
+  }
+  res
+}
+
+download_to_superwide <- function (evp_coding_download, coding_mode_only=TRUE, coding_complete_only=TRUE){
+  #' Transforms the downloaded coding to 'superwide' format
+  #'
+  #' Superwide format creates one row for every event_report. It then creates a separate variable for every table, variable, value combination and counts the number of instances associated with event report. For example the event report has one Conservative perpetrator then the superwide record variable will be actors_perpetrator_cons_tor_union and the superwide value for that variable will be 1.
+  #' Currently the locations are processed with a hack - choosing the first location of each type associated with an event report.
+  #'
+  #' @param evp_coding_download The result of a \code{get_coding()}.
+  #' @param coding_mode_only Whether to include only results from coding undertaken in by users in 'coding mode'.
+  #' @param coding_complete_only Whether to include only results where coding is marked as complete.
+  #'
+  #' @export
+
+  if(!is_evp_coding_download(evp_coding_download)){
+    stop("not a valid coding results list")
+  }
+
+  user_docs <- evp_coding_download[["user_docs"]]
+  event_reports <- evp_coding_download[["event_reports"]]
+
+  tags <- evp_coding_download[["tags"]]
+
+  location_tags <- tags %>%
+    dplyr::filter(tag_table == "location")
+
+  processed_locations <- process_locations(location_tags)
+
+  non_location_tags <- tags %>%
+    dplyr::filter(tag_table != "location") %>%
+    tidyr::unite(var_complex, tag_table, tag_variable, tag_value)
+
+  non_location_tags_wide <- non_location_tags %>%
+    dplyr::group_by(event_report_id, var_complex) %>%
+    dplyr::summarise(value=n()) %>%
+    tidyr::spread(var_complex, value, fill = 0 )
+
+  attributes <- evp_coding_download[["attributes"]]
+
+  attributes_wide <- attributes %>%
+    dplyr::left_join(dplyr::select(tags, event_report_id, tag_id, tag_table, tag_variable, tag_value), by=c("tag_id"="tag_id")) %>%
+    tidyr::unite(attribute_complex, tag_table, tag_variable, tag_value, attribute, attribute_value) %>%
+    dplyr::group_by(event_report_id, attribute_complex) %>%
+    dplyr::summarize(value=n()) %>%
+    tidyr::spread(attribute_complex, value, fill=0)
+
+  superwide <- event_reports %>%
+    dplyr::inner_join(user_docs, by="user_doc_id") %>%
+    dplyr::left_join(non_location_tags_wide, by="event_report_id") %>%
+    dplyr::left_join(attributes_wide, by="event_report_id") %>%
+    dplyr::left_join(processed_locations, by="event_report_id") %>%
+    tibble::as.tibble()
+
+  if(coding_mode_only){
+    superwide <- dplyr::filter(superwide, allocation_type=="coding")
+  }
+
+  if(coding_complete_only){
+    superwide <- dplyr::filter(superwide, coding_complete==1)
+  }
+
+  superwide
+}
+
+is_location_tags <- function(location_tags){
+  #' Checks if an object is a location_tags table
+  #' @param location_tags object to check
+  #' @export
+
+  if(is.data.frame(location_tags)){
+    right_names <- sum(names(location_tags) %in% c("tag_id", "tag_table", "tag_variable", "tag_value", "event_report_id", "comment", "tag_contested", "proximity_relative"))==8
+
+    if("tag_table" %in% names(location_tags)){
+      all_locations <- sum(location_tags$tag_table=="location")==nrow(location_tags)
+    } else {
+      all_locations <- FALSE
+    }
+
+    res <- right_names & all_locations
+
+  } else {
+    res <- FALSE
+  }
+
+
+  res
+}
+process_locations <- function(location_tags){
+  #' Creates a wide version of the locations associated with event reports. Currently based on a hack.
+  #' @param location_tags a table of tags (filtered: table=="location) containing only locations.
+  #' @export
+
+  if(!is_location_tags(location_tags)){
+    stop("Not a location_tag")
+  }
+  processed_location <- location_tags %>%
+    dplyr::select(-comment, -tag_contested, -tag_id, -proximity_relative, -tag_table) %>%
+    dplyr::mutate(tag_variable=ifelse(tag_variable=="", "unspecified_location_level", tag_variable)) %>%
+    dplyr::group_by(event_report_id, tag_variable) %>%
+    dplyr::arrange(tag_value, .by_group=TRUE) %>%
+    slice(1) %>%
+    spread(tag_variable, tag_value)
+
+  processed_location
+}
+
+assign_coding_to_environment<- function(evp_coding_download){
   #' Assign the results of a get_coding download to the global environment
-  #' @param get_coding_result_list The result from executing the get_coding() command.
+  #' @param evp_coding_download The result from executing the get_coding() command.
   #' @export
   #'
 
-  if(sum(names(get_coding_result_list)==c("user_docs", "event_reports", "tags", "attributes"))==4){
-    location<- get_coding_result_list[["tags"]]
+  if(is_evp_coding_download(evp_coding_download)){
+    location<- evp_coding_download[["tags"]]
     location <- dplyr::filter(location, tag_table == "location")
     location <- tibble::as.tibble(location)
+    processed_locations <- process_locations(location)
 
-    actors<- get_coding_result_list[["tags"]]
+
+    actors<- evp_coding_download[["tags"]]
     actors <- dplyr::filter(actors, tag_table == "actors")
     actors <- tibble::as.tibble(actors)
-    for (i in 1:length(get_coding_result_list))
-    for (i in 1:length(get_coding_result_list))
 
+    evp_coding_download[["location"]] <- location
+    evp_coding_download[["processed_locations"]] <- processed_locations
 
-    get_coding_result_list[["location"]] <- location
-
-      assign(names(get_coding_result_list)[i], get_coding_result_list[[i]], envir=globalenv())
+    for (i in 1:length(evp_coding_download)) {
+      assign(names(evp_coding_download)[i], tibble::as.tibble(evp_coding_download[[i]]), envir=globalenv())
+    }
   } else {
     stop("not a valid coding results list")
   }
