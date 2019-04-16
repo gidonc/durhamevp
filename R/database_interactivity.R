@@ -532,7 +532,7 @@ is_location_tags <- function(location_tags){
   #' @export
 
   if(is.data.frame(location_tags)){
-    right_names <- sum(names(location_tags) %in% c("tag_id", "tag_table", "tag_variable", "tag_value", "event_report_id", "comment", "tag_contested", "proximity_relative"))==8
+    right_names <- sum(names(location_tags) %in% c("tag_id", "tag_table", "tag_variable", "tag_value", "event_report_id", "comment_tags", "contested_tags", "proximity_relative"))==8
 
     if("tag_table" %in% names(location_tags)){
       all_locations <- sum(location_tags$tag_table=="location")==nrow(location_tags)
@@ -559,7 +559,7 @@ process_locations <- function(location_tags){
     stop("Not a location_tag")
   }
   processed_location <- location_tags %>%
-    dplyr::select(-comment, -tag_contested, -tag_id, -proximity_relative, -tag_table) %>%
+    dplyr::select(-comment_tags, -contested_tags, -tag_id, -proximity_relative, -tag_table) %>%
     dplyr::mutate(tag_variable=ifelse(tag_variable=="", "unspecified_location_level", tag_variable)) %>%
     dplyr::group_by(event_report_id, tag_variable) %>%
     dplyr::arrange(tag_value, .by_group=TRUE) %>%
