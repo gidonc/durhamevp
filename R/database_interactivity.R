@@ -553,6 +553,7 @@ process_locations <- function(location_tags){
   #' Creates a wide version of the locations associated with event reports. Currently based on a hack.
   #' @param location_tags a table of tags (filtered: table=="location) containing only locations.
   #' @export
+  #' @importFrom magrittr %>%
 
   if(!is_location_tags(location_tags)){
     stop("Not a location_tag")
