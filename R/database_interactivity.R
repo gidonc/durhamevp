@@ -563,8 +563,8 @@ process_locations <- function(location_tags){
     dplyr::mutate(tag_variable=ifelse(tag_variable=="", "unspecified_location_level", tag_variable)) %>%
     dplyr::group_by(event_report_id, tag_variable) %>%
     dplyr::arrange(tag_value, .by_group=TRUE) %>%
-    slice(1) %>%
-    spread(tag_variable, tag_value)
+    dplyr::slice(1) %>%
+    tidyr::spread(tag_variable, tag_value)
 
   processed_location
 }
