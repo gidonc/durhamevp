@@ -142,13 +142,12 @@ get_allocation_connect_to_docs <- function(user_id = "all", allocation_type="all
   #' @export
 
   con <- manage_dbcons()
-  this_sql <-"SELECT ud.id as user_doc_id, ud.allocation_date, ud.allocation_type, ud.coding_complete, ud.article_type, ud.geo_relevant, ud.time_relevant, ud.electoral_nature, ud.electoralviolence_nature, ud.violence_nature, ud.legibility, ud.comment_docinfo, ud.document_id, ud.allocated_by, ud.user_id, ud.status, ud.recommend_qualitative, ud.difficulty_ranking, ud.ideal_coding_comments, ud.score, ud.last_updated, d.doc_title, d.pdf_location, d.pdf_page_location, d.candidate_document_id, d.publication_title, d.publication_location, c.type, c.status as cand_doc_status, c.page, d.publication_date, d.word_count, c.g_status, c.status_writer, c.url"
+  this_sql <-"SELECT ud.id as user_doc_id, ud.allocation_date, ud.allocation_type, ud.coding_complete, ud.article_type, ud.geo_relevant, ud.time_relevant, ud.electoral_nature, ud.electoralviolence_nature, ud.violence_nature, ud.legibility, ud.comment_docinfo, ud.document_id, ud.allocated_by, ud.user_id, ud.status, ud.recommend_qualitative, ud.difficulty_ranking, ud.ideal_coding_comments, ud.score, ud.last_updated, d.doc_title, d.pdf_location, d.pdf_page_location, d.candidate_document_id, d.publication_title, d.publication_location, c.type, c.status as cand_doc_status, c.page, d.publication_date, d.word_count, c.g_status, c.status_writer, c.url, u.first_name as coder_first_name, u.last_name as coder_last_name, u.username as coder_username"
 
   if(include_ocr){
     this_sql <- paste0(this_sql, ", d.ocr")
   }
-  this_sql <- paste(this_sql, "FROM `portal_userdocumentallocation` ud LEFT JOIN `portal_document` d ON ud.document_id = d.id
-                    LEFT JOIN `portal_candidatedocument` c ON d.candidate_document_id=c.id") # base query
+  this_sql <- paste(this_sql, "FROM `portal_userdocumentallocation` ud LEFT JOIN `portal_document` d ON ud.document_id = d.id LEFT JOIN `auth_user` u ON u.id=ud.user_id LEFT JOIN `portal_candidatedocument` c ON d.candidate_document_id=c.id") # base query
 
   res<-build_where_condition("user_id", user_id, this_sql, NULL)
   res<-build_where_condition("allocation_type", allocation_type, res[[1]], res[[2]])
