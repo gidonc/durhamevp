@@ -1,6 +1,6 @@
 
 
-compile_report <- function(event_report_id, data_location="database", output_format="html_document", output_file=NULL, date_report_format="%A, %d %B %Y"){
+compile_report <- function(event_report_id, data_location="database", output_format="html_document", output_file=NULL, date_report_format="%A, %d %B %Y", report_title="Event Reports from Election Violence Database"){
   #' Produces a readable summary of event reports from the election violence database.
   #'
   #' @param event_report_id the event report id or ids to produce the report for.
@@ -20,7 +20,7 @@ compile_report <- function(event_report_id, data_location="database", output_for
   #  filter(event_report_id %in% c(this_er_id))
 
   markhead <- c('---',
-                'title: "test"',
+                paste('title:', report_title),
                 'output: html_document',
                 '---',
                 '')
@@ -70,7 +70,7 @@ compile_event_report_markdown<- function (this_er, data_location="database", dat
 
   this_tags <- these_tags %>%
     dplyr::filter(tag_table!="location") %>%
-    dplry::arrange(tag_table, desc(tag_variable), tag_value) %>%
+    dplyr::arrange(tag_table, desc(tag_variable), tag_value) %>%
     dplyr::mutate(tag_variable = ifelse(tag_variable=="", "unspecified", tag_variable)) %>%
     dplyr::mutate(tag_value = ifelse(tag_value=="", "unspecified", tag_value))
 
