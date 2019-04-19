@@ -112,13 +112,13 @@ compile_event_report_markdown<- function (this_er, data_location="database", dat
 
   pub_date<- my_dateform(lubridate::ymd(this_user_doc$publication_date))
   if(is.na(pub_date)){
-    pub_date <- paste(this_user_doc$publication_date, ": date stamp not producing result")
+    pub_date <- paste(this_user_doc$publication_date, ": date format not producing result")
   }
 
   kmarkobj <- c(
                paste0('',
                       '## Event Report Id:', this_er$event_report_id),
-               paste0("[article pdf](http://coders.victorianelectionviolence.uk", this_user_doc$pdf_location, ")"),
+               paste0("[article pdf](http://coders.victorianelectionviolence.uk", this_user_doc$pdf_location, ") (coded by: ", this_user_doc$coder_first_name, " ", this_user_doc$coder_last_name), ")",
                '',
                '### Summary',
                this_er[,c("summary")],
