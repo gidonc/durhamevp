@@ -157,17 +157,19 @@ compile_event_report_markdown<- function (this_er, data_location="database", dat
     if(nrow(these_attributes)==0){
       attributes_output <- NULL
     } else {
-      attributes_output <- "("
+      attributes_output <- NULL
       last_attribute <- "nothing"
       for (i in 1:nrow(these_attributes)){
         this_attribute_row <- these_attributes[i, ]
         this_attribute <- this_attribute_row$attribute
         this_attribute_value <- this_attribute_row$attribute_value
 
-        if (this_attribute!=last_attribute){
-          attributes_output <- paste0(attributes_output, this_attribute, ": ")
+        if(is.null(attributes_output)){
+          attributes_output <- paste0("(", this_attribute, ": ")
+        } else if (this_attribute!=last_attribute){
+          attributes_output <- paste0(attributes_output, ", ", this_attribute, ": ")
         } else {
-          attributes_output <- paste0(attributes_output, ", ", this_attribute)
+          attributes_output <- paste0(attributes_output, ",")
         }
         attributes_output <- paste0(attributes_output, " ",
                                     this_attribute_value)
