@@ -142,7 +142,7 @@ get_allocation_connect_to_docs <- function(user_id = "all", allocation_type="all
   #' @export
 
   con <- manage_dbcons()
-  this_sql <-"SELECT ud.id as user_doc_id, ud.allocation_date, ud.allocation_type, ud.coding_complete, ud.article_type, ud.geo_relevant, ud.time_relevant, ud.electoral_nature, ud.electoralviolence_nature, ud.violence_nature, ud.legibility, ud.comment_docinfo, ud.document_id, ud.allocated_by, ud.user_id, ud.status, ud.recommend_qualitative, ud.difficulty_ranking, ud.ideal_coding_comments, ud.score, ud.last_updated, d.doc_title, d.pdf_location, d.pdf_page_location, d.candidate_document_id, c.publication_title, c.publication_location, c.type, c.status as cand_doc_status, c.page, c.publication_date, c.word_count, c.g_status, c.status_writer, c.url"
+  this_sql <-"SELECT ud.id as user_doc_id, ud.allocation_date, ud.allocation_type, ud.coding_complete, ud.article_type, ud.geo_relevant, ud.time_relevant, ud.electoral_nature, ud.electoralviolence_nature, ud.violence_nature, ud.legibility, ud.comment_docinfo, ud.document_id, ud.allocated_by, ud.user_id, ud.status, ud.recommend_qualitative, ud.difficulty_ranking, ud.ideal_coding_comments, ud.score, ud.last_updated, d.doc_title, d.pdf_location, d.pdf_page_location, d.candidate_document_id, d.publication_title, d.publication_location, c.type, c.status as cand_doc_status, c.page, d.publication_date, d.word_count, c.g_status, c.status_writer, c.url"
 
   if(include_ocr){
     this_sql <- paste0(this_sql, ", d.ocr")
