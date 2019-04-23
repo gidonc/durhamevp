@@ -173,8 +173,6 @@ compile_event_report_markdown<- function (this_er, data_location="database", dat
         }
         attributes_output <- paste0(attributes_output, " ",
                                     this_attribute_value)
-        last_tag_table <- this_tag_table
-        last_tag_variable <- this_tag_variable
       }
       attributes_output <- paste0(attributes_output, ")")
     }
