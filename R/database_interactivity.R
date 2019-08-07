@@ -745,14 +745,3 @@ killDbConnections <- function () {
   print(paste(length(all_cons), " connections killed."))
 
 }
-
-assign_autocluster_to_user <- function(autodetected_cluster_id, user_id, allocation_date=as.character(Sys.Date()), last_updated=as.character(Sys.Date()), completed=0){
-  this_sql <- "INSERT INTO  portal_userautodetectedclusterallocation (autodetected_cluster_id, user_id, allocation_date, last_updated, completed) VALUES (?autodetected_cluster_id, ?user_id, ?allocation_date, ?last_updated, ?completed) ;"
-  this_safe_sql <- DBI::sqlInterpolate(DBI::ANSI(),
-                                       this_sql,
-                                       autodetected_cluster_id = autodetected_cluster_id,
-                                       user_id = user_id,
-                                       allocation_date = allocation_date,
-                                       last_updated=last_updated,
-                                       completed = completed)
-}
