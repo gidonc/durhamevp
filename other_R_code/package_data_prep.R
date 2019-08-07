@@ -6,4 +6,8 @@ d.path<-path<-switch (Sys.info()["nodename"],
                       "GID-HOME-LENOVO"="C:/Users/Gidon/Dropbox/ESRC Grant EV 19th Century")
 
 election_dates<-readxl::read_excel(paste0(d.path, "/Data Collection/Crawler/election_dates.xlsx"))
-devtools::use_data(election_dates, overwrite = TRUE)
+election_dates <- dplyr::mutate(election_dates,
+                         duration_dissolution_commencement = lubridate::ymd(commencement) - lubridate::ymd(dissolution),
+                         polling_duration = lubridate::ymd(polling_end) - lubridate::ymd(polling_start),
+                         monthsearch_duration = lubridate::ymd(monthsearch_end) - lubridate::ymd(monthsearch_start))
+usethis::use_data(election_dates, overwrite = TRUE)
