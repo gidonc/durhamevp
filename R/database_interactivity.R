@@ -34,7 +34,8 @@ manage_dbcons <- function(host="coders.victorianelectionviolence.uk", username="
   if (password_method=="keyring"){
     password <- keyring::key_get(dbname, username)
   } else if (password_method=="config"){
-    password<-config::get()$datawarehouse$pwd
+    stop("config password method no longer supported")
+    # password<-config::get()$datawarehouse$pwd
   } else{
     password<- rstudioapi::askForPassword("Database password")
   }
@@ -73,7 +74,8 @@ evdb_connect <- function(host="coders.victorianelectionviolence.uk", user="data_
   if (password_method=="keyring"){
     password <- keyring::key_get(dbname, user)
   } else if (password_method=="config"){
-    password<-config::get()$datawarehouse$pwd
+    stop("config password method no longer supported")
+    # password<-config::get()$datawarehouse$pwd
   } else{
     password<- rstudioapi::askForPassword("Database password")
   }
@@ -742,4 +744,15 @@ killDbConnections <- function () {
 
   print(paste(length(all_cons), " connections killed."))
 
+}
+
+assign_autocluster_to_user <- function(autodetected_cluster_id, user_id, allocation_date=as.character(Sys.Date()), last_updated=as.character(Sys.Date()), completed=0){
+  this_sql <- "INSERT INTO  portal_userautodetectedclusterallocation (autodetected_cluster_id, user_id, allocation_date, last_updated, completed) VALUES (?autodetected_cluster_id, ?user_id, ?allocation_date, ?last_updated, ?completed) ;"
+  this_safe_sql <- DBI::sqlInterpolate(DBI::ANSI(),
+                                       this_sql,
+                                       autodetected_cluster_id = autodetected_cluster_id,
+                                       user_id = user_id,
+                                       allocation_date = allocation_date,
+                                       last_updated=last_updated,
+                                       completed = completed)
 }
