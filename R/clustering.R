@@ -64,7 +64,10 @@ assign_autocluster_to_user <- function(autodetected_cluster_id, user_id, allocat
 }
 
 assign_clusters_from_df<-function(df, cluster_col=geodatecluster, event_report_id_col=event_report_id){
-
+  #' Assigns event report to an autodetected cluster
+  #'@param df a data frame or tibble indicating clustering to upload to the database.
+  #'@param cluster_col the column of the data frame which indicates the clustering.
+  #'@param event_report_id_col the column of the data frame which identifies the event report
   #'@export
 
 
