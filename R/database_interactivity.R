@@ -350,7 +350,7 @@ get_event_report<-function(event_report_id="all", user_doc_id="all"){
   #' @export
 
   con <- manage_dbcons()
-  this_sql<-"SELECT id as event_report_id, event_type, environment, event_start, event_end, comment_events, event_id, user_doc_id, summary, meeting, election_point, event_timeframe_quantifier FROM portal_eventreport" # base query
+  this_sql<-"SELECT id as event_report_id, event_type, environment, event_start, event_end, comment_events, event_id, user_doc_id, summary, meeting, election_point, event_timeframe_quantifier,  autodetected_cluster_id FROM portal_eventreport" # base query
 
   res<-build_where_condition("id", event_report_id, this_sql, NULL)
   res<-build_where_condition("user_doc_id", user_doc_id, res$condition, res$interpolate_list)
@@ -744,4 +744,16 @@ killDbConnections <- function () {
 
   print(paste(length(all_cons), " connections killed."))
 
+}
+
+
+show_evp_tables <- function(){
+  #' Shows the tables in the database.
+  #' @export
+  con <- manage_dbcons()
+
+  this_sql<-"SHOW TABLES;" # base query
+  db_tables<-DBI::dbGetQuery(con, this_sql)
+
+  db_tables
 }

@@ -6,7 +6,7 @@
 \usage{
 assign_autocluster_to_user(autodetected_cluster_id, user_id,
   allocation_date = as.character(Sys.Date()),
-  last_updated = as.character(Sys.Date()), completed = 0)
+  last_updated = as.character(Sys.time()), completed = 0)
 }
 \arguments{
 \item{autodetected_cluster_id}{Id of the autodetected cluster (generally newly created).}
@@ -20,5 +20,5 @@ assign_autocluster_to_user(autodetected_cluster_id, user_id,
 \item{completed}{Is the cluster verification complete (usually 0 [i.e. not complete])}
 }
 \description{
-\code{assign_article_to_user} assigns an autodetected cluster to a user for verification.
+\code{assign_autocluster_to_user} assigns an autodetected cluster to a user for verification.
 }
