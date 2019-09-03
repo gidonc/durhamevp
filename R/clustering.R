@@ -65,7 +65,7 @@ assign_autocluster_to_user <- function(autodetected_cluster_id, user_id, allocat
 
 assign_clusters_from_df<-function(df, cluster_col=geodatecluster, event_report_id_col=event_report_id){
 
-  #'
+  #'@export
 
 
   con <- manage_dbcons()
