@@ -559,13 +559,23 @@ process_locations <- function(location_tags){
   if(!is_location_tags(location_tags)){
     stop("Not a location_tag")
   }
-  processed_location <- location_tags %>%
-    dplyr::select(-comment_tags, -contested_tags, -tag_id, -proximity_relative, -tag_table) %>%
+  processed_locationa <- location_tags %>%
+    dplyr::select(-comment_tags, -contested_tags, -tag_id, -tag_table) %>%
     dplyr::mutate(tag_variable=ifelse(tag_variable=="", "unspecified_location_level", tag_variable)) %>%
     dplyr::group_by(event_report_id, tag_variable) %>%
-    dplyr::arrange(tag_value, .by_group=TRUE) %>%
-    dplyr::slice(1) %>%
+    dplyr::arrange(tag_value, proximity_relative, .by_group=TRUE) %>%
+    dplyr::slice(1)
+
+  locs<-processed_locationa%>%
+    select(-proximity_relative) %>%
     tidyr::spread(tag_variable, tag_value)
+
+  pr<-processed_locationa%>%
+    ungroup() %>%
+    select(-tag_value) %>%
+    mutate(tag_variable=paste0(tag_variable, "_proximity_relative")) %>%
+    tidyr::spread(tag_variable, proximity_relative, fill=0)
+  processed_location <- left_join(locs, pr, by="event_report_id")
 
   processed_location
 }
