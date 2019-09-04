@@ -580,13 +580,28 @@ process_locations <- function(location_tags){
   processed_location
 }
 
-assign_coding_to_environment<- function(evp_coding_download){
+assign_coding_to_environment<- function(evp_coding_download, restrict_to_coding_complete = TRUE, restrict_to_coding_mode = TRUE){
   #' Assign the results of a get_coding download to the global environment
   #' @param evp_coding_download The result from executing the get_coding() command.
+  #' @param restrict_to_coding_complete Should the data including only records where coding is tagged as complete?
+  #' @param restrict_to_coding_mode Should the data include on the records where coders were in coding mode?
   #' @export
   #'
 
   if(is_evp_coding_download(evp_coding_download)){
+
+    if(restrict_to_coding_complete){
+      evp_data[["user_docs"]] <-  dplyr::filter(evp_data[["user_docs"]], coding_complete==1)
+    }
+    if(restrict_to_coding_mode){
+      evp_data[["user_docs"]] <-  dplyr::filter(evp_data[["user_docs"]], allocation_type=="coding")
+    }
+
+    evp_data[["event_reports"]] <-  dplyr::filter(evp_data[["event_reports"]], user_doc_id %in% evp_data[["user_docs"]]$user_doc_id)
+    evp_data[["tags"]] <-  dplyr::filter(evp_data[["tags"]], event_report_id %in% evp_data[["event_reports"]]$event_report_id)
+    evp_data[["attributes"]] <-  dplyr::filter(evp_data[["attributes"]], tag_id %in% evp_data[["tags"]]$tag_id)
+
+
     location<- evp_coding_download[["tags"]]
     location <- dplyr::filter(location, tag_table == "location")
     location <- tibble::as.tibble(location)
@@ -607,6 +622,7 @@ assign_coding_to_environment<- function(evp_coding_download){
     stop("not a valid coding results list")
   }
 }
+
 get_user_mode <- function(user_id="all"){
   #' Returns table of current user modes
   #'
