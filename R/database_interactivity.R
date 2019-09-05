@@ -567,15 +567,15 @@ process_locations <- function(location_tags){
     dplyr::slice(1)
 
   locs<-processed_locationa%>%
-    select(-proximity_relative) %>%
+    dplyr::select(-proximity_relative) %>%
     tidyr::spread(tag_variable, tag_value)
 
   pr<-processed_locationa%>%
-    ungroup() %>%
-    select(-tag_value) %>%
-    mutate(tag_variable=paste0(tag_variable, "_proximity_relative")) %>%
+    dplyr::ungroup() %>%
+    dplyr::select(-tag_value) %>%
+    dplyr::mutate(tag_variable=paste0(tag_variable, "_proximity_relative")) %>%
     tidyr::spread(tag_variable, proximity_relative, fill=0)
-  processed_location <- left_join(locs, pr, by="event_report_id")
+  processed_location <- dplyr::left_join(locs, pr, by="event_report_id")
 
   processed_location
 }

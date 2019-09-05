@@ -81,6 +81,12 @@ loccompdatespec<-locationcomp06 %>%
   mutate(specific_date=date(dmy(event_start))==date(dmy(event_end)) & event_timeframe_quantifier=="during", event_date=date(dmy(event_start))) %>%
   filter(specific_date)
 
+
+
+```
+
+Within geographical locations cluster on dates:
+```{r}
 tc<-loccompdatespec %>%
   st_drop_geometry() %>%
   group_by(geocluster) %>%
@@ -102,9 +108,11 @@ tc2<-tc %>%
   group_by(geocluster, withingeodatecluster) %>%
   mutate(geodatecluster=group_indices())
 
-
 ```
 
+
+
+Identify singleton 
 ```{r}
 singletons <- tc2 %>% 
   group_by(geodatecluster) %>% 
@@ -114,6 +122,7 @@ singletons <- tc2 %>%
 
 ```
 
+Autoclusters are non-singleton clusters 
 
 ```{r}
 autoclusters <- tc2 %>% 
@@ -123,6 +132,9 @@ autoclusters <- tc2 %>%
   inner_join(tc2, by="geodatecluster")
 ```
 
+
+Need to deal with non-specific places:
+Identify area where events took place in for non-specific locations (e.g. the county)
 ## Verification Step: Assign Auto Clusters to User
 
 Create autoclusters on database and store created autocluster_ids in a vector:
