@@ -1,0 +1,168 @@
+---
+title: "Event Clustering Process"
+author: "Gidon Cohen"
+date: "03/09/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Create Auto Clustering in R as Data Frame
+
+Download coding:
+```{r}
+
+evp_data<-get_coding()
+assign_coding_to_environment(evp_data)
+```
+
+
+```{r}
+er<-event_reports %>%
+  mutate(election_start_date=date_to_election(date(dmy(event_start)), election_start_col="dissolution", election_end_col="commencement"),
+         election_end_date=date_to_election(date(dmy(event_end)), election_start_col="dissolution", election_end_col="commencement"),
+         election = ifelse(election_start_date==election_end_date, election_start_date, "ambiguous"))
+
+er06<-er[er$election=="1906",]
+location06<-processed_locations %>% inner_join(er06, by="event_report_id")
+
+register_google(keyring::key_get("google_maps_api"))
+
+reg_tv <-function(x){
+  # if(!is.na(x)){
+  y <- x
+    x <- stringr::str_squish(x)
+    x <- stringr::str_to_title(x)
+    x <- paste0(x, ", UK")
+    
+    x[is.na(y)]<- NA
+  
+  x
+}
+
+locationstocode<-location06 %>%
+  group_by(towns_villages) %>%
+  mutate(towns_village_reg=reg_tv(towns_villages)) %>%
+  group_by(towns_village_reg) %>%
+  summarize() %>%
+  drop_na()
+
+```
+
+Geocode unique locations
+```{r}
+
+locationscoded <- cbind(locationstocode, ggmap::geocode(locationstocode$towns_village_reg))
+location06<-location06 %>%
+  mutate(towns_village_reg=reg_tv(towns_villages)) %>%
+  left_join(locationscoded)
+
+hasloc06 <- drop_na(location06, lat, lon)
+unspecificloc06<-filter(location06, is.na(lat)|is.na(lon))
+hasloc06_sf<-st_as_sf(hasloc06,  crs = 4326, coords = c("lon", "lat"))
+
+kilodist<- sf::st_distance(hasloc06_sf) %>%
+  units::set_units("kilometers") %>%
+  as.dist()
+geoclusters<-hclust(kilodist)
+threshold.in.kilometers <- 5
+locationcomp06$geocluster <- cutree(geoclusters, h=threshold.in.kilometers)
+
+```
+
+Subset to specifically identified locations  (has town village lat lon).
+Cluster on these 
+
+
+```{r}
+loccompdatespec<-locationcomp06 %>%
+  mutate(specific_date=date(dmy(event_start))==date(dmy(event_end)) & event_timeframe_quantifier=="during", event_date=date(dmy(event_start))) %>%
+  filter(specific_date)
+
+tc<-loccompdatespec %>%
+  st_drop_geometry() %>%
+  group_by(geocluster) %>%
+  nest()
+
+
+adddateclust <- function(x, h=8){
+  if(nrow(x)<2){
+    x$withingeodatecluster<-1
+    return(x)
+  }
+  these_dates<-pull(x, event_date)
+  x$withingeodatecluster =  cutree(hclust(dist(these_dates-min(these_dates))), h=h)
+  x
+}
+tc2<-tc %>%
+  mutate(data = purrr::map(data, adddateclust)) %>%
+  unnest() %>%
+  group_by(geocluster, withingeodatecluster) %>%
+  mutate(geodatecluster=group_indices())
+
+
+```
+
+```{r}
+singletons <- tc2 %>% 
+  group_by(geodatecluster) %>% 
+  tally() %>% 
+  filter(n==1) %>% 
+  inner_join(tc2, by="geodatecluster")
+
+```
+
+
+```{r}
+autoclusters <- tc2 %>% 
+  group_by(geodatecluster) %>% 
+  tally() %>% 
+  filter(n>1) %>% 
+  inner_join(tc2, by="geodatecluster")
+```
+
+## Verification Step: Assign Auto Clusters to User
+
+Create autoclusters on database and store created autocluster_ids in a vector:
+```{r cars}
+autocluster_ids<-assign_clusters_from_df(tc2)
+```
+
+Assign newly created autocluster_ids to a user (e.g. user 3) for verification:
+```{r}
+assign_autoclusters_to_user(autocluster_ids, 3)
+
+```
+
+
+## Reallocation Step: Assign Singletons to Clusters
+
+Find event reports of singletons (clusters of size 1 and events not in a cluster)
+```{r}
+singleton_event_report_ids <- c(1) # need to write code to do this
+```
+
+
+Assign singletons to users for reallocation
+```{r pressure}
+assign_reallocations_to_user(event_report_ids = singleton_event_report_ids, user_id = 3)
+```
+
+## Combination Step: Consider verified clusters for combination
+
+Find verified clusters
+```{r}
+verified_clusters<-get_verified_clusters()
+verified_cluster_ids<-unique(verified_clusters$verified_cluster_id)
+some_verified_cluster_ids <- verified_cluster_ids[10:20]
+```
+
+
+Assign verified (and combined) clusters to users for combination
+```{r}
+
+assign_verified_clusters_to_user(some_verified_cluster_ids, user_id = 3)
+```
+

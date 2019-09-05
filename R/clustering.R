@@ -115,10 +115,49 @@ assign_autoclusters_to_user <- function(autocluster_ids, user_id){
 
 }
 
+assign_reallocation_to_user <- function(event_report_id, user_id, allocation_date=as.character(Sys.Date()), last_updated=as.character(Sys.time()), completed=0){
+  #' Assign single events to user for reallocation to clusters.
+  #'
+  #' \code{assign_reallocation_to_user} assigns an autodetected cluster to a user for verification.
+  #' @param event_report_id event_report_id of the single events.
+  #' @param user_id Id of the user the the cluster is to be assigned to.
+  #' @param allocation_date Date allocation made (usually today).
+  #' @param last_updated Date record last updated (usually today).
+  #' @param completed Is the cluster verification complete (usually 0 [i.e. not complete])
+
+  #' @export
+
+  con <- manage_dbcons()
+
+  this_sql <- "INSERT INTO portal_userreallocationallocation (allocation_date, completed, last_updated, event_report_id, user_id) VALUES (?allocation_date, ?completed, ?last_updated, ?event_report_id, ?user_id) ;"
+  this_safe_sql <- DBI::sqlInterpolate(DBI::ANSI(),
+                                       this_sql,
+                                       event_report_id = event_report_id,
+                                       user_id = user_id,
+                                       allocation_date = allocation_date,
+                                       last_updated=last_updated,
+                                       completed = completed)
+
+  DBI::dbGetQuery(con, this_safe_sql)
+}
+
+assign_reallocations_to_user <- function(event_report_ids, user_id){
+  #' Assigns mutiple single events for reallocation to clusters to a single user.
+  #'
+  #'@param event_report_ids The autocluster_ids to allocate.
+  #'@param user_id The user id to allocate to.
+  #'@export
+
+  for(n in seq_along(event_report_ids)){
+    assign_reallocation_to_user(event_report_ids[n], user_id)
+  }
+
+}
+
 get_autodetected_cluster_allocations<-function(user_id="all", autodetected_cluster_id="all"){
   #' Get the autodetcted cluster allocations currently allocated to the user.
   #' @param user_id The user_id to check in the database.
-  #' @param autodetected_cluster_id The set of document_ids to include in the allocation
+  #' @param autodetected_cluster_id The set of autodetected cluster ids to check in the database
   #' @return dataframe of the autodetected cluster allocations to the user.
   #' @export
 
@@ -140,3 +179,53 @@ get_autodetected_cluster_allocations<-function(user_id="all", autodetected_clust
   allocation
 }
 
+assign_verified_cluster_to_user <- function(verified_cluster_id, user_id, allocation_date=as.character(Sys.Date()), last_updated=as.character(Sys.time()), completed=0){
+  #' Assign verified (and combined) clusters to user for reallocation to clusters.
+  #'
+  #' \code{assign_verfied_cluster_to_user} assigns a verfied cluster to a user for combination.
+  #' @param verified_cluster_id verified_cluster_id of the verified cluster to be assigned.
+  #' @param user_id Id of the user the the cluster is to be assigned to.
+  #' @param allocation_date Date allocation made (usually today).
+  #' @param last_updated Date record last updated (usually today).
+  #' @param completed Is the cluster verification complete (usually 0 [i.e. not complete])
+
+  #' @export
+
+  con <- manage_dbcons()
+
+  this_sql <- "INSERT INTO portal_usercombinationallocation (allocation_date, completed, last_updated, verified_cluster_id, user_id) VALUES (?allocation_date, ?completed, ?last_updated, ?verified_cluster_id, ?user_id) ;"
+  this_safe_sql <- DBI::sqlInterpolate(DBI::ANSI(),
+                                       this_sql,
+                                       verified_cluster_id = verified_cluster_id,
+                                       user_id = user_id,
+                                       allocation_date = allocation_date,
+                                       last_updated=last_updated,
+                                       completed = completed)
+
+  DBI::dbGetQuery(con, this_safe_sql)
+}
+
+assign_verified_clusters_to_user <- function(verified_cluster_ids, user_id){
+  #' Assigns multiple verified clusters to a single user for combination.
+  #'
+  #'@param verified_cluster_ids The verified_cluster_ids to allocate.
+  #'@param user_id The user id to allocate to.
+  #'@export
+
+  for(n in seq_along(verified_cluster_ids)){
+    assign_verified_cluster_to_user(verified_cluster_ids[n], user_id)
+  }
+
+}
+
+get_verified_clusters <- function(){
+  #' Finds verified clusters (and their existing size).
+  #'
+  #' \code{get_verified_clusters} reports the verified clusters and the event reports currently in that cluster.
+  #' @export
+
+  this_sql<-this_sql<-"Select vc.id as verified_cluster_id, user_alloc_id, latitude, longitude, event_report_id
+  FROM `portal_verifiedcluster` vc LEFT JOIN `portal_verifiedclusterentry` vce ON vc.id = vce.verified_cluster_id; " # base query
+
+  DBI::dbGetQuery(con, this_sql)
+}
