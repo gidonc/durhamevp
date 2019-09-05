@@ -4,10 +4,15 @@
 \alias{assign_coding_to_environment}
 \title{Assign the results of a get_coding download to the global environment}
 \usage{
-assign_coding_to_environment(evp_coding_download)
+assign_coding_to_environment(evp_coding_download,
+  restrict_to_coding_complete = TRUE, restrict_to_coding_mode = TRUE)
 }
 \arguments{
 \item{evp_coding_download}{The result from executing the get_coding() command.}
+
+\item{restrict_to_coding_complete}{Should the data including only records where coding is tagged as complete?}
+
+\item{restrict_to_coding_mode}{Should the data include on the records where coders were in coding mode?}
 }
 \description{
 Assign the results of a get_coding download to the global environment

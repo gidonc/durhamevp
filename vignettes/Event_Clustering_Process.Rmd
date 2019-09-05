@@ -175,6 +175,6 @@ some_verified_cluster_ids <- verified_cluster_ids[10:20]
 Assign verified (and combined) clusters to users for combination
 ```{r}
 
-assign_verified_clusters_to_user(some_verified_cluster_ids, user_id = 3)
+assign_verified_clusters_to_user(some_verified_cluster_ids, user_id = 6)
 ```
 

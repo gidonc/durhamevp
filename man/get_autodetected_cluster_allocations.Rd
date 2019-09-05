@@ -10,7 +10,7 @@ get_autodetected_cluster_allocations(user_id = "all",
 \arguments{
 \item{user_id}{The user_id to check in the database.}
 
-\item{autodetected_cluster_id}{The set of document_ids to include in the allocation}
+\item{autodetected_cluster_id}{The set of autodetected cluster ids to check in the database}
 }
 \value{
 dataframe of the autodetected cluster allocations to the user.
