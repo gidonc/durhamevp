@@ -212,6 +212,8 @@ assign_verified_clusters_to_user <- function(verified_cluster_ids, user_id){
   #'@param user_id The user id to allocate to.
   #'@export
 
+  con <- manage_dbcons()
+
   for(n in seq_along(verified_cluster_ids)){
     assign_verified_cluster_to_user(verified_cluster_ids[n], user_id)
   }
@@ -223,6 +225,8 @@ get_verified_clusters <- function(){
   #'
   #' \code{get_verified_clusters} reports the verified clusters and the event reports currently in that cluster.
   #' @export
+
+  con <- manage_dbcons()
 
   this_sql<-this_sql<-"Select vc.id as verified_cluster_id, user_alloc_id, latitude, longitude, event_report_id
   FROM `portal_verifiedcluster` vc LEFT JOIN `portal_verifiedclusterentry` vce ON vc.id = vce.verified_cluster_id; " # base query
