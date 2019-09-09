@@ -591,15 +591,15 @@ assign_coding_to_environment<- function(evp_coding_download, restrict_to_coding_
   if(is_evp_coding_download(evp_coding_download)){
 
     if(restrict_to_coding_complete){
-      evp_data[["user_docs"]] <-  dplyr::filter(evp_data[["user_docs"]], coding_complete==1)
+      evp_coding_download[["user_docs"]] <-  dplyr::filter(evp_coding_download[["user_docs"]], coding_complete==1)
     }
     if(restrict_to_coding_mode){
-      evp_data[["user_docs"]] <-  dplyr::filter(evp_data[["user_docs"]], allocation_type=="coding")
+      evp_coding_download[["user_docs"]] <-  dplyr::filter(evp_coding_download[["user_docs"]], allocation_type=="coding")
     }
 
-    evp_data[["event_reports"]] <-  dplyr::filter(evp_data[["event_reports"]], user_doc_id %in% evp_data[["user_docs"]]$user_doc_id)
-    evp_data[["tags"]] <-  dplyr::filter(evp_data[["tags"]], event_report_id %in% evp_data[["event_reports"]]$event_report_id)
-    evp_data[["attributes"]] <-  dplyr::filter(evp_data[["attributes"]], tag_id %in% evp_data[["tags"]]$tag_id)
+    evp_coding_download[["event_reports"]] <-  dplyr::filter(evp_coding_download[["event_reports"]], user_doc_id %in% evp_coding_download[["user_docs"]]$user_doc_id)
+    evp_coding_download[["tags"]] <-  dplyr::filter(evp_coding_download[["tags"]], event_report_id %in% evp_coding_download[["event_reports"]]$event_report_id)
+    evp_coding_download[["attributes"]] <-  dplyr::filter(evp_coding_download[["attributes"]], tag_id %in% evp_coding_download[["tags"]]$tag_id)
 
 
     location<- evp_coding_download[["tags"]]
