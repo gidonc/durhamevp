@@ -6,7 +6,7 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, eval=FALSE)
 ```
 
 ## Create Auto Clustering in R as Data Frame
@@ -28,7 +28,7 @@ er<-event_reports %>%
 er06<-er[er$election=="1906",]
 location06<-processed_locations %>% inner_join(er06, by="event_report_id")
 
-register_google(keyring::key_get("google_maps_api"))
+_
 
 reg_tv <-function(x){
   # if(!is.na(x)){
@@ -135,6 +135,7 @@ autoclusters <- tc2 %>%
 
 Need to deal with non-specific places:
 Identify area where events took place in for non-specific locations (e.g. the county)
+
 ## Verification Step: Assign Auto Clusters to User
 
 Create autoclusters on database and store created autocluster_ids in a vector:
