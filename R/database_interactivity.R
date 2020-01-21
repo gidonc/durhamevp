@@ -350,7 +350,7 @@ get_event_report<-function(event_report_id="all", user_doc_id="all"){
   #' @export
 
   con <- manage_dbcons()
-  this_sql<-"SELECT id as event_report_id, event_type, environment, event_start, event_end, comment_events, event_id, user_doc_id, summary, meeting, election_point, event_timeframe_quantifier,  autodetected_cluster_id FROM portal_eventreport" # base query
+  this_sql<-"SELECT id as event_report_id, event_type, environment, event_start, event_end, comment_events, event_id, user_doc_id, summary, meeting, election_point, event_timeframe_quantifier,  autodetected_cluster_id, is_exact, latitude, longitude, election_id, boundary_year, byelection, constituency_g_name, county_g_name, duration, election_name, election_point_clean, end_weekday, geocluster, geometry_type, ignore_geounspecific, located_from, start_weekday FROM portal_eventreport" # base query
 
   res<-build_where_condition("id", event_report_id, this_sql, NULL)
   res<-build_where_condition("user_doc_id", user_doc_id, res$condition, res$interpolate_list)
