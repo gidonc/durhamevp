@@ -37,12 +37,13 @@ assign_eventreport_to_autocluster <- function(autodetected_cluster_id, event_rep
 }
 
 
-assign_autocluster_to_user <- function(autodetected_cluster_id, user_id, allocation_date=as.character(Sys.Date()), last_updated=as.character(Sys.time()), completed=0, needs_additional_checks=0){
+assign_autocluster_to_user <- function(autodetected_cluster_id, user_id, clusterattempt_id, allocation_date=as.character(Sys.Date()), last_updated=as.character(Sys.time()), completed=0, needs_additional_checks=0){
   #' Assign autodetected cluster to a user.
   #'
   #' \code{assign_autocluster_to_user} assigns an autodetected cluster to a user for verification.
   #' @param autodetected_cluster_id Id of the autodetected cluster (generally newly created).
   #' @param user_id Id of the user the the cluster is to be assigned to.
+  #' @param clusterattempt_id Id of the attempt at clustering (allows multiple clusterings)
   #' @param allocation_date Date allocation made (usually today).
   #' @param last_updated Date record last updated (usually today).
   #' @param completed Is the cluster verification complete (usually 0 [i.e. not complete])
@@ -52,11 +53,12 @@ assign_autocluster_to_user <- function(autodetected_cluster_id, user_id, allocat
 
   con <- manage_dbcons()
 
-  this_sql <- "INSERT INTO  portal_userautodetectedclusterallocation (autodetected_cluster_id, user_id, allocation_date, last_updated, completed, needs_additional_checks) VALUES (?autodetected_cluster_id, ?user_id, ?allocation_date, ?last_updated, ?completed, ?needs_additional_checks) ;"
+  this_sql <- "INSERT INTO  portal_userautodetectedclusterallocation (autodetected_cluster_id, user_id, clusterattempt_id, allocation_date, last_updated, completed, needs_additional_checks) VALUES (?autodetected_cluster_id, ?user_id, ?clusterattempt_id, ?allocation_date, ?last_updated, ?completed, ?needs_additional_checks) ;"
   this_safe_sql <- DBI::sqlInterpolate(DBI::ANSI(),
                                        this_sql,
                                        autodetected_cluster_id = autodetected_cluster_id,
                                        user_id = user_id,
+                                       clusterattempt_id = clusterattempt_id,
                                        allocation_date = allocation_date,
                                        last_updated=last_updated,
                                        completed = completed,
@@ -104,7 +106,7 @@ assign_clusters_from_df<-function(df, cluster_col=geodatecluster, event_report_i
   autodetected_cluster_ids
 }
 
-assign_autoclusters_to_user <- function(autocluster_ids, user_id){
+assign_autoclusters_to_user <- function(autocluster_ids, user_id, clusterattempt_id){
   #' Assigns mutiple auto detected clusters to a single user.
   #'
   #' @param autocluster_ids The autocluster_ids to allocate.
@@ -112,7 +114,7 @@ assign_autoclusters_to_user <- function(autocluster_ids, user_id){
   #' @export
 
   for(n in seq_along(autocluster_ids)){
-    assign_autocluster_to_user(autocluster_ids[n], user_id)
+    assign_autocluster_to_user(autocluster_ids[n], user_id, clusterattempt_id = clusterattempt_id)
   }
 
 }
