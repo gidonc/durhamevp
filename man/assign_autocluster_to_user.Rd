@@ -5,13 +5,16 @@
 \title{Assign autodetected cluster to a user.}
 \usage{
 assign_autocluster_to_user(autodetected_cluster_id, user_id,
-  allocation_date = as.character(Sys.Date()),
-  last_updated = as.character(Sys.time()), completed = 0)
+  clusterattempt_id, allocation_date = as.character(Sys.Date()),
+  last_updated = as.character(Sys.time()), completed = 0,
+  needs_additional_checks = 0)
 }
 \arguments{
 \item{autodetected_cluster_id}{Id of the autodetected cluster (generally newly created).}
 
 \item{user_id}{Id of the user the the cluster is to be assigned to.}
+
+\item{clusterattempt_id}{Id of the attempt at clustering (allows multiple clusterings)}
 
 \item{allocation_date}{Date allocation made (usually today).}
 

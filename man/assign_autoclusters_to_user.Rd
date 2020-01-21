@@ -4,7 +4,7 @@
 \alias{assign_autoclusters_to_user}
 \title{Assigns mutiple auto detected clusters to a single user.}
 \usage{
-assign_autoclusters_to_user(autocluster_ids, user_id)
+assign_autoclusters_to_user(autocluster_ids, user_id, clusterattempt_id)
 }
 \arguments{
 \item{autocluster_ids}{The autocluster_ids to allocate.}
