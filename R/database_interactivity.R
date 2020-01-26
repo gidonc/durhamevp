@@ -442,11 +442,13 @@ get_coding <- function(include_ocr=FALSE){
   event_reports <- get_event_report()
   tags <- get_tag()
   attributes <- get_attribute()
+  clustering <- get_clustering()
 
   res <- list(user_docs=user_docs,
        event_reports = event_reports,
        tags=tags,
-       attributes = attributes)
+       attributes = attributes,
+       clustering = clustering)
   class(res) <-"evp_coding_download"
 
   res

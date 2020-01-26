@@ -235,8 +235,21 @@ get_verified_clusters <- function(){
 
   con <- manage_dbcons()
 
-  this_sql<-this_sql<-"Select vc.id as verified_cluster_id, user_alloc_id, latitude, longitude, event_report_id
-  FROM `portal_verifiedcluster` vc LEFT JOIN `portal_verifiedclusterentry` vce ON vc.id = vce.verified_cluster_id; " # base query
+  this_sql<-this_sql<-"Select vc.id as verified_cluster_id, combined, user_alloc_id, reallocation_alloc_id, clusterattempt_id, latitude, longitude, event_report_id, best_description FROM `portal_verifiedcluster` vc LEFT JOIN `portal_verifiedclusterentry` vce ON vc.id = vce.verified_cluster_id; " # base query
 
   DBI::dbGetQuery(con, this_sql)
 }
+
+get_clustering <- function(){
+  #' Download clustering process - all stages.
+  #'
+  #' \code{get_combined_clusters} reports the clusters after the combination stage and the event reports currently in that cluster.
+  #' @export
+
+  con <- manage_dbcons()
+
+  this_sql<-this_sql<-"Select uca.id as user_combination_alloc_id, vce.event_report_id, combined_cluster_id as final_cluster_id, uca.clusterattempt_id, uca.completed as combination_completed, uca.user_id as combination_user_id, uca.verified_cluster_id, ura.id as reallocation_alloc_id, ura.completed as reallocation_completed FROM `portal_usercombinationallocation` uca LEFT JOIN `portal_combinedclusterentry` cce ON uca.verified_cluster_id = cce.verified_cluster_id LEFT JOIN portal_verifiedclusterentry vce ON uca.verified_cluster_id=vce.verified_cluster_id LEFT JOIN portal_verifiedcluster vc ON vce.verified_cluster_id=vc.id LEFT JOIN portal_userreallocationallocation ura ON vc.reallocation_alloc_id=ura.id; " # base query
+
+  DBI::dbGetQuery(con, this_sql)
+}
+
