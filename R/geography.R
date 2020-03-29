@@ -67,9 +67,9 @@ find_county <- function(lat, lon, county_shapes = durhamevp::county_shapes, col_
 
   the_place <- make_st(data.frame(lon=lon, lat=lat))
 
-  the_place <- st_transform(the_place, crs=sf::st_crs(these_counties))
+  the_place <- sf::st_transform(the_place, crs=sf::st_crs(these_counties))
 
-  res <- st_join(the_place, these_counties)
+  res <- sf::st_join(the_place, these_counties)
 
 
   if(nrow(res)>1) {
