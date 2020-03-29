@@ -37,7 +37,7 @@ find_const <- function(lat, lon, boundary_label, constituencies_shapes_list = du
 
   the_place <- make_st(data.frame(lon=lon, lat=lat))
 
-  the_place <- sf::st_transform(the_place, crs=st_crs(these_constituencies))
+  the_place <- sf::st_transform(the_place, crs=sf::st_crs(these_constituencies))
 
   res <- sf::st_join(the_place, these_constituencies)
 
@@ -67,7 +67,7 @@ find_county <- function(lat, lon, county_shapes = durhamevp::county_shapes, col_
 
   the_place <- make_st(data.frame(lon=lon, lat=lat))
 
-  the_place <- st_transform(the_place, crs=st_crs(these_counties))
+  the_place <- st_transform(the_place, crs=sf::st_crs(these_counties))
 
   res <- st_join(the_place, these_counties)
 
