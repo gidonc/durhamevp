@@ -2,7 +2,7 @@
 % Please edit documentation in R/geography.R
 \name{find_county}
 \alias{find_county}
-\title{Finds the county (Vison of Britian G_NAME) of a latitude and longitude.}
+\title{Finds county of a latitude and longitude.}
 \usage{
 find_county(lat, lon, county_shapes = durhamevp::county_shapes,
   col_to_return = "G_NAME")
@@ -15,5 +15,5 @@ find_county(lat, lon, county_shapes = durhamevp::county_shapes,
 \item{county_shapes}{A Simple Feature dataframe of the counties}
 }
 \description{
-Finds the county (Vison of Britian G_NAME) of a latitude and longitude.
+Finds the county (Vision of Britian G_NAME) of a location given by latitude and longitude.
 }

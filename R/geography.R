@@ -17,16 +17,21 @@ date_to_boundary_year <- function(x){
 }
 
 find_const <- function(lat, lon, boundary_label, constituencies_shapes_list = durhamevp::const_shape_list, col_to_return="G_NAME") {
+  #' Find constituency from latitude and longitude.
   #'
-  #' Finds the constituency (Vison of Britian G_NAME) of a latitude and longitude.
+  #' Finds the constituency (Vision of Britian G_NAME) of a latitude and longitude location.
   #' @param lat the latitude to check.
   #' @param lon the longitude to check.
   #' @param constituencies_shapes_list The constituencies. A named list of Simple Features dataframes. The names identify which Simple Features Dataframe to use.
-  #' @param boundary_label The name in the list of the Simple Feature dataframe to use.
+  #' @param boundary_label The name in the list of the Simple Feature dataframe to use.In the default list the options are: 1832, 1862, 1868, 1870, 1885 (also the values returned by the \code{date_to_boundary_year} function).
   #' @export
   #'
 
-  if(is.na(boundary_label)|is.na(lat)|is.na(lon)) return(NA)
+  # if(is.na(boundary_label)|is.na(lat)|is.na(lon)) return(NA)
+  if (!((boundary_label) %in% names(constituencies_shapes_list))) {
+    warning("boundary_label not in constituency_shapes_list")
+    return (NA)
+  }
 
   these_constituencies <- constituencies_shapes_list[[boundary_label]]
 
@@ -42,21 +47,24 @@ find_const <- function(lat, lon, boundary_label, constituencies_shapes_list = du
   res <- sf::st_join(the_place, these_constituencies)
 
 
-  if(nrow(res)>1) {
-    warning("returned multiple places: only returning first result")
-  }
+  # if(nrow(res)>1) {
+  #   warning("returned multiple places: only returning first result")
+  # }
 
-  as.character(dplyr::pull(res  %>% dplyr::slice(1), col_to_return))
+  as.character(dplyr::pull(res, col_to_return))
 }
 
 find_county <- function(lat, lon, county_shapes = durhamevp::county_shapes, col_to_return="G_NAME"){
-  #' Finds the county (Vison of Britian G_NAME) of a latitude and longitude.
+  #' Finds county of a latitude and longitude.
+  #'
+  #' Finds the county (Vision of Britian G_NAME) of a location given by latitude and longitude.
+  #'
+  #'
   #' @param lat the latitude to check.
   #' @param lon the longitude to check.
   #' @param county_shapes A Simple Feature dataframe of the counties
   #' @export
 
-  if(is.na(lat)|is.na(lon)) return(NA)
 
   these_counties <- county_shapes
 
@@ -72,11 +80,7 @@ find_county <- function(lat, lon, county_shapes = durhamevp::county_shapes, col_
   res <- sf::st_join(the_place, these_counties)
 
 
-  if(nrow(res)>1) {
-    warning("returned multiple comparisions: only using first comparison")
-  }
-
-  as.character(dplyr::pull(res  %>% dplyr::slice(1), col_to_return))
+  as.character(dplyr::pull(res, col_to_return))
 }
 
 

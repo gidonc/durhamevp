@@ -2,7 +2,7 @@
 % Please edit documentation in R/geography.R
 \name{find_const}
 \alias{find_const}
-\title{Finds the constituency (Vison of Britian G_NAME) of a latitude and longitude.}
+\title{Find constituency from latitude and longitude.}
 \usage{
 find_const(lat, lon, boundary_label,
   constituencies_shapes_list = durhamevp::const_shape_list,
@@ -13,10 +13,10 @@ find_const(lat, lon, boundary_label,
 
 \item{lon}{the longitude to check.}
 
-\item{boundary_label}{The name in the list of the Simple Feature dataframe to use.}
+\item{boundary_label}{The name in the list of the Simple Feature dataframe to use.In the default list the options are: 1832, 1862, 1868, 1870, 1885 (also the values returned by the \code{date_to_boundary_year} function).}
 
 \item{constituencies_shapes_list}{The constituencies. A named list of Simple Features dataframes. The names identify which Simple Features Dataframe to use.}
 }
 \description{
-Finds the constituency (Vison of Britian G_NAME) of a latitude and longitude.
+Finds the constituency (Vision of Britian G_NAME) of a latitude and longitude location.
 }
