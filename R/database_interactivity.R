@@ -57,11 +57,11 @@ manage_dbcons <- function(host="coders.victorianelectionviolence.uk", username="
 }
 
 remove_evp_db_pool <- function(){
-
   #'  Remove database pool
   #'
   #'  Removes hidden election violence database pool from R Global Environment by assinging it a NULL value. Use this function if the db pool is returning errors and a new pool will be created next time the database is queried.
   #'  @export
+
   assign(".evp_db_pool", NULL, env=globalenv())
 }
 
@@ -154,7 +154,7 @@ get_allocation_connect_to_docs <- function(user_id = "all", allocation_type="all
   #' @export
 
   con <- manage_dbcons()
-  this_sql <-"SELECT ud.id as user_doc_id, ud.allocation_date, ud.allocation_type, ud.coding_complete, ud.article_type, ud.geo_relevant, ud.time_relevant, ud.electoral_nature, ud.electoralviolence_nature, ud.violence_nature, ud.legibility, ud.comment_docinfo, ud.document_id, ud.allocated_by, ud.user_id, ud.status, ud.recommend_qualitative, ud.difficulty_ranking, ud.ideal_coding_comments, ud.score, ud.last_updated, d.doc_title, d.pdf_location, d.pdf_page_location, d.candidate_document_id, d.publication_title, d.publication_location, c.type, c.status as cand_doc_status, c.page, d.publication_date, d.word_count, c.g_status, c.status_writer, c.url, u.first_name as coder_first_name, u.last_name as coder_last_name, u.username as coder_username"
+  this_sql <-"SELECT ud.id as user_doc_id, ud.allocation_date, ud.allocation_type, ud.coding_complete, ud.article_type, ud.geo_relevant, ud.time_relevant, ud.electoral_nature, ud.violence_nature, ud.electoralviolence_nature, ud.relevant, ud.legibility, ud.comment_docinfo, ud.document_id, ud.allocated_by, ud.user_id, ud.status, ud.recommend_qualitative, ud.difficulty_ranking, ud.ideal_coding_comments, ud.score, ud.last_updated, d.doc_title, d.pdf_location, d.pdf_page_location, d.candidate_document_id, d.publication_title, d.publication_location, c.type, c.status as cand_doc_status, c.page, d.publication_date, d.word_count, c.g_status, c.status_writer, c.url, u.first_name as coder_first_name, u.last_name as coder_last_name, u.username as coder_username"
 
   if(include_ocr){
     this_sql <- paste0(this_sql, ", d.ocr")
@@ -592,11 +592,12 @@ process_locations <- function(location_tags){
   processed_location
 }
 
-assign_coding_to_environment<- function(evp_coding_download, restrict_to_coding_complete = TRUE, restrict_to_coding_mode = TRUE){
+assign_coding_to_environment<- function(evp_coding_download, restrict_to_coding_complete = TRUE, restrict_to_coding_mode = TRUE, restrict_er_to_relevant = TRUE){
   #' Assign the results of a get_coding download to the global environment
   #' @param evp_coding_download The result from executing the get_coding() command.
   #' @param restrict_to_coding_complete Should the data including only records where coding is tagged as complete?
   #' @param restrict_to_coding_mode Should the data include on the records where coders were in coding mode?
+  #' @param restrict_er_to_relevant Remove event report to those associated with irrelevant documents? These are cases where events reports have been added, and then later it has been decided that the events are irrelevant (e.g. excitement but no violence). If TRUE the user_docs will remain in the data but the event reports will be removed.
   #' @export
   #'
 
@@ -608,10 +609,16 @@ assign_coding_to_environment<- function(evp_coding_download, restrict_to_coding_
     if(restrict_to_coding_mode){
       evp_coding_download[["user_docs"]] <-  dplyr::filter(evp_coding_download[["user_docs"]], allocation_type=="coding")
     }
+    user_docs_filtered <- evp_coding_download[["user_docs"]]
+    if (restrict_er_to_relevant){
+      #
+      user_docs_filtered <-  dplyr::filter(evp_coding_download[["user_docs"]], relevant==1)
+    }
 
-    evp_coding_download[["event_reports"]] <-  dplyr::filter(evp_coding_download[["event_reports"]], user_doc_id %in% evp_coding_download[["user_docs"]]$user_doc_id)
+    evp_coding_download[["event_reports"]] <-  dplyr::filter(evp_coding_download[["event_reports"]], user_doc_id %in% user_docs_filtered$user_doc_id)
     evp_coding_download[["tags"]] <-  dplyr::filter(evp_coding_download[["tags"]], event_report_id %in% evp_coding_download[["event_reports"]]$event_report_id)
     evp_coding_download[["attributes"]] <-  dplyr::filter(evp_coding_download[["attributes"]], tag_id %in% evp_coding_download[["tags"]]$tag_id)
+
 
 
     location<- evp_coding_download[["tags"]]
