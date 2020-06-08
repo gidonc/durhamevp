@@ -444,9 +444,35 @@ documents_to_actual<-function(document_id){
   actual_docs
 }
 
-get_coding <- function(include_ocr=FALSE){
+get_coding <- function(include_ocr=FALSE, restrict_to_coding_complete = TRUE, restrict_to_coding_mode = TRUE, restrict_er_to_relevant = TRUE, restrict_to_general_election = TRUE, event_id_from_clusterattempts = c(401:420)){
   #' Download all the coding on the database
+  #'
+  #'@description
+  #' \code{get_coding} downloads the coding from the election violence database. Here 'coding' means the main sets of data on the database. This main part of the database contains all the coding of reports of election violence in nineteenth century newspapers. It also includes the information on the clustering of these event reports into events. It inlcudes information on the newspaper articles from which the reports were extracted (including if desired the full OCR text of those articles). The data downloaded here excludes information on searches of the British Newspaper Archive which were used to generate the databse. The full online database does contain this information.
+  #'
+  #' By default the download includes only data which meets the following conditions:
+  #'
+  #' 1.  Coding complete. The coding is labeled as complete by the coder. In user_docs \code{coding_complete == 1}.`
+  #' 1.  Document relevant. The document is relevant (identified as containing election violence by the coder). In user_docs \code{relevant == 1}.
+  #' 1.  General election event. The event relates to a general election (not by-election or local election). In event_report \code{byelection == 0}.
+  #' 1.  Coding mode. The coding was undertaken in coding mode. In user_docs \code{allocation_type == 'coding'}
+  #'
+  #'  There are arguments to the function to change these defaults.
+  #'
+  #' The function also uses a clustering set to make a meaningful event_id, such that every event report with the same event_id is considered to be a report of the same event. In the online version of the database event_id is not implemented (in fact it always takes the value of 1). When the coding is downloaded this will be replaced with a meaningful event_id, by default the second full set of clustering is used to generate this event_id.
   #' @param include_ocr Should results include the full ocr of the documents (will slow the download).
+  #' @param restrict_to_coding_complete Should the data including only records where coding is tagged as complete?
+  #' @param restrict_to_coding_mode Should the data include on the records where coders were in coding mode?
+  #' @param restrict_er_to_relevant Remove event report to those associated with irrelevant documents? These are cases where events reports have been added, and then later it has been decided that the events are irrelevant (e.g. excitement but no violence). If TRUE the user_docs will remain in the data but the event reports will be removed.
+  #' @param restrict_to_general_election Should the data include only general election events (and hence exclude by-election and local election event reports)? If TRUE events where byelection == 1 will be removed from the data.
+  #' @param event_id_from_clusterattempts Which cluster attempt ids should be used to generate the event_id? Default is 401 to 420 (the second clustering)
+  #' @return The function returns a list of type evp_download. The list contains  of five data frame: user_docs, event_reports, tags, attributes, clustering. Generally, users do not need to understand the structure of the evp_download list, but create more familiar R objects from it in the global environment using helper functions like \code{assign_coding_to_environment}.
+  #' @seealso \code{\link{assign_coding_to_environment}}, \code{\link{download_to_superwide}}
+  #' @examples
+  #' # download the data
+  #' my_evp_download <- get_clustering()
+  #' # unpack the download to a useable format (tibbles) in the global environment
+  #' assign_coding_to_environment(my_evp_download)
   #' @export
   user_docs <- get_allocation_connect_to_docs(include_ocr=include_ocr)
   event_reports <- get_event_report()
@@ -454,12 +480,35 @@ get_coding <- function(include_ocr=FALSE){
   attributes <- get_attribute()
   clustering <- get_clustering()
 
+
+  if(restrict_to_coding_complete){
+    user_docs <-  dplyr::filter(user_docs, coding_complete==1)
+  }
+  if(restrict_to_coding_mode){
+    user_docs <-  dplyr::filter(user_docs, allocation_type=="coding")
+  }
+  user_docs_filtered <- user_docs
+  if (restrict_er_to_relevant){
+    #
+    user_docs <-  dplyr::filter(user_docs, relevant==1)
+  }
+  if(restrict_to_general_election){
+    event_reports <-  dplyr::filter(event_reports, byelection=="0")
+
+  }
+
+  event_reports <-  dplyr::filter(event_reports, user_doc_id %in% user_docs$user_doc_id)
+  tags <-  dplyr::filter(tags, event_report_id %in% event_reports$event_report_id)
+  attributes <-  dplyr::filter(attributes, tag_id %in% tags$tag_id)
+
   res <- list(user_docs=user_docs,
        event_reports = event_reports,
        tags=tags,
        attributes = attributes,
        clustering = clustering)
   class(res) <-"evp_coding_download"
+
+  res <- add_event_id_from_clustering(res)
 
   res
 }
@@ -475,6 +524,47 @@ is_evp_coding_download <- function(coding_download){
     res <- FALSE
   }
   res
+}
+
+add_event_id_from_clustering <- function(evp_coding_download, event_id_from_clusterattempts = c(401:420)) {
+  #' Adds the event_id which uniquely identifies events (grouping together different event reports) from the clustering table.
+  #' @param evp_coding_download The result of a \code{get_coding()}.
+  #' @param event_id_from_clusterattempts Which cluster attempt ids should be used to generate the event_id? Default is 401 to 420 (the second clustering)
+  #' @export
+  #'
+
+  clustering <- evp_coding_download[["clustering"]]
+  event_reports <- dplyr::select(evp_coding_download[["event_reports"]], -event_id)
+  use_clustering <- dplyr::filter(clustering, clusterattempt_id %in% event_id_from_clusterattempts)
+  use_clustering <- dplyr::select(use_clustering, event_report_id, event_id = final_cluster_id)
+  use_clustering <- group_by(use_clustering, event_report_id, event_id)
+  use_clustering <- summarize(use_clustering)
+
+  # check if every event_report is clustered
+  unclustered_event_reports <- dplyr::pull(
+    dplyr::anti_join(event_reports, use_clustering, by="event_report_id"),
+    event_report_id
+    )
+  n_unclustered <- length(unclustered_event_reports)
+  if (n_unclustered>0) {
+    warning(paste(n_unclustered, "event reports do not belong to a cluster, event_id will be NA."))
+  }
+
+  # check if any event_report is in two clusters
+
+  n_doubleclustered <- sum(duplicated(use_clustering$event_report_id))
+  if (n_doubleclustered>0) {
+    warning(paste(n_doubleclustered, "event reports belong to more than one cluster, event_id will based on first clustering."))
+  }
+  use_clustering <- use_clustering[!duplicated(use_clustering$event_report_id),]
+
+
+  event_reports <- dplyr::left_join(event_reports, use_clustering, by="event_report_id")
+
+  evp_coding_download[["event_reports"]] <- event_reports
+
+
+  evp_coding_download
 }
 
 download_to_superwide <- function (evp_coding_download, coding_mode_only=TRUE, coding_complete_only=TRUE){
@@ -563,7 +653,7 @@ is_location_tags <- function(location_tags){
   res
 }
 process_locations <- function(location_tags){
-  #' Creates a wide version of the locations associated with event reports. Currently based on a hack.
+  #' Creates a wide version of the locations associated with event reports.
   #' @param location_tags a table of tags (filtered: table=="location) containing only locations.
   #' @export
   #' @importFrom magrittr %>%
@@ -576,6 +666,9 @@ process_locations <- function(location_tags){
     dplyr::mutate(tag_variable=ifelse(tag_variable=="", "unspecified_location_level", tag_variable)) %>%
     dplyr::group_by(event_report_id, tag_variable) %>%
     dplyr::arrange(tag_value, proximity_relative, .by_group=TRUE) %>%
+    dplyr::group_by(event_report_id, tag_variable, proximity_relative) %>%
+    dplyr::summarise(tag_value=paste(tag_value, collapse="; ")) %>%
+    dplyr::mutate(tag_value=ifelse(proximity_relative ==1, paste(tag_value, "(all relative)"), tag_value)) %>%
     dplyr::slice(1)
 
   locs<-processed_locationa%>%
@@ -592,44 +685,25 @@ process_locations <- function(location_tags){
   processed_location
 }
 
-assign_coding_to_environment<- function(evp_coding_download, restrict_to_coding_complete = TRUE, restrict_to_coding_mode = TRUE, restrict_er_to_relevant = TRUE){
+assign_coding_to_environment<- function(evp_coding_download){
   #' Assign the results of a get_coding download to the global environment
   #' @param evp_coding_download The result from executing the get_coding() command.
-  #' @param restrict_to_coding_complete Should the data including only records where coding is tagged as complete?
-  #' @param restrict_to_coding_mode Should the data include on the records where coders were in coding mode?
-  #' @param restrict_er_to_relevant Remove event report to those associated with irrelevant documents? These are cases where events reports have been added, and then later it has been decided that the events are irrelevant (e.g. excitement but no violence). If TRUE the user_docs will remain in the data but the event reports will be removed.
   #' @export
   #'
 
   if(is_evp_coding_download(evp_coding_download)){
-
-    if(restrict_to_coding_complete){
-      evp_coding_download[["user_docs"]] <-  dplyr::filter(evp_coding_download[["user_docs"]], coding_complete==1)
-    }
-    if(restrict_to_coding_mode){
-      evp_coding_download[["user_docs"]] <-  dplyr::filter(evp_coding_download[["user_docs"]], allocation_type=="coding")
-    }
-    user_docs_filtered <- evp_coding_download[["user_docs"]]
-    if (restrict_er_to_relevant){
-      #
-      user_docs_filtered <-  dplyr::filter(evp_coding_download[["user_docs"]], relevant==1)
-    }
-
-    evp_coding_download[["event_reports"]] <-  dplyr::filter(evp_coding_download[["event_reports"]], user_doc_id %in% user_docs_filtered$user_doc_id)
-    evp_coding_download[["tags"]] <-  dplyr::filter(evp_coding_download[["tags"]], event_report_id %in% evp_coding_download[["event_reports"]]$event_report_id)
-    evp_coding_download[["attributes"]] <-  dplyr::filter(evp_coding_download[["attributes"]], tag_id %in% evp_coding_download[["tags"]]$tag_id)
-
-
-
+    # locations are extracted from tags table
     location<- evp_coding_download[["tags"]]
     location <- dplyr::filter(location, tag_table == "location")
     location <- tibble::as.tibble(location)
     processed_locations <- process_locations(location)
 
+    # # actors are extracted from the tags table
+    # actors<- evp_coding_download[["tags"]]
+    # actors <- dplyr::filter(actors, tag_table == "actors")
+    # actors <- tibble::as.tibble(actors)
 
-    actors<- evp_coding_download[["tags"]]
-    actors <- dplyr::filter(actors, tag_table == "actors")
-    actors <- tibble::as.tibble(actors)
+    # to assign to environment put tables in the download
 
     evp_coding_download[["location"]] <- location
     evp_coding_download[["processed_locations"]] <- processed_locations
