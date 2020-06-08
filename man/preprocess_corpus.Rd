@@ -4,10 +4,20 @@
 \alias{preprocess_corpus}
 \title{Preprocess a text corpus and return a document feature matrix (wrapper round quanteda functions).}
 \usage{
-preprocess_corpus(the_corpus, stem = TRUE, min_termfreq = 20,
-  min_docfreq = 20, max_termfreq = NULL, max_docfreq = NULL,
-  remove_punct = TRUE, remove_numbers = TRUE, remove_hyphens = TRUE,
-  termfreq_type = "count", docfreq_type = "count", dfm_tfidf = FALSE)
+preprocess_corpus(
+  the_corpus,
+  stem = TRUE,
+  min_termfreq = 20,
+  min_docfreq = 20,
+  max_termfreq = NULL,
+  max_docfreq = NULL,
+  remove_punct = TRUE,
+  remove_numbers = TRUE,
+  remove_hyphens = TRUE,
+  termfreq_type = "count",
+  docfreq_type = "count",
+  dfm_tfidf = FALSE
+)
 }
 \arguments{
 \item{the_corpus}{The text corpus to be pre-processed.}

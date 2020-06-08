@@ -4,9 +4,14 @@
 \alias{split_allocation_randomly}
 \title{Divide a set of N*P articles amongst P users, giving N articles each user for coding.}
 \usage{
-split_allocation_randomly(user_ids, set, allocation_type = "coding",
-  allocated_by = "split_random_assignment", restrict_to_actual = TRUE,
-  make_assignments = FALSE)
+split_allocation_randomly(
+  user_ids,
+  set,
+  allocation_type = "coding",
+  allocated_by = "split_random_assignment",
+  restrict_to_actual = TRUE,
+  make_assignments = FALSE
+)
 }
 \arguments{
 \item{user_ids}{The users to allocate the articles amongst (vector with single or multiple user_ids).}

@@ -4,8 +4,11 @@
 \alias{coding_summary}
 \title{Summary of coding of document allocation.}
 \usage{
-coding_summary(user_doc_id, allocation_type = "all",
-  restrict_double_coded = TRUE)
+coding_summary(
+  user_doc_id,
+  allocation_type = "all",
+  restrict_double_coded = TRUE
+)
 }
 \arguments{
 \item{user_doc_id}{The user_doc_id(s) to summarize.}

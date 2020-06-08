@@ -4,8 +4,12 @@
 \alias{contains_words}
 \title{Function to tally cases with and without a particular words}
 \usage{
-contains_words(the_dataframe, contains_words, text_col = "ocr",
-  results_col = "EV_article")
+contains_words(
+  the_dataframe,
+  contains_words,
+  text_col = "ocr",
+  results_col = "EV_article"
+)
 }
 \arguments{
 \item{the_dataframe}{the dataframe with a text column and a results column}

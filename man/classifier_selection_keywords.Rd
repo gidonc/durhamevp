@@ -4,13 +4,19 @@
 \alias{classifier_selection_keywords}
 \title{Classify documents based on keywords.}
 \usage{
-classifier_selection_keywords(train, archivesearchresults,
-  class_to_keep = 1, training_classify_var = "EV_article",
-  prior = "docfreq", text_field = "ocr", classifier_type = "xgboost",
-  mode = "select", eval_options = list(keywords = c("candidate",
-  "poll", "election", "stone", "riot", "mob", "husting", "disturbance",
-  "rough", "incident"), text_field = "ocr", eval_classify_var =
-  "EV_article", eval_dfm_classifications = "foo"))
+classifier_selection_keywords(
+  train,
+  archivesearchresults,
+  class_to_keep = 1,
+  training_classify_var = "EV_article",
+  prior = "docfreq",
+  text_field = "ocr",
+  classifier_type = "xgboost",
+  mode = "select",
+  eval_options = list(keywords = c("candidate", "poll", "election", "stone", "riot",
+    "mob", "husting", "disturbance", "rough", "incident"), text_field = "ocr",
+    eval_classify_var = "EV_article", eval_dfm_classifications = "foo")
+)
 }
 \arguments{
 \item{train}{the training set of documents}

@@ -4,9 +4,14 @@
 \alias{assign_reallocation_to_user}
 \title{Assign single events to user for reallocation to clusters.}
 \usage{
-assign_reallocation_to_user(event_report_id, user_id, clusterattempt_id,
+assign_reallocation_to_user(
+  event_report_id,
+  user_id,
+  clusterattempt_id,
   allocation_date = as.character(Sys.Date()),
-  last_updated = as.character(Sys.time()), completed = 0)
+  last_updated = as.character(Sys.time()),
+  completed = 0
+)
 }
 \arguments{
 \item{event_report_id}{event_report_id of the single events.}
@@ -17,7 +22,7 @@ assign_reallocation_to_user(event_report_id, user_id, clusterattempt_id,
 
 \item{last_updated}{Date record last updated (usually today).}
 
-\item{completed}{Is the cluster verification complete (usually 0 [i.e. not complete])}
+\item{completed}{Is the cluster verification complete (usually 0 \link{i.e. not complete})}
 
 \item{clusterattemp_id}{Id of the clustering attempt (must match clusteratttempt_id of the allocations).}
 }

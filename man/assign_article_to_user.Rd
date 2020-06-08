@@ -8,18 +8,35 @@
 \alias{assign_initalsets_to_users}
 \title{Assign article to a user.}
 \usage{
-assign_article_to_user(document_id, user_id, allocation_type, allocated_by,
-  allocation_date = as.character(Sys.Date()), status = "NEW",
-  coding_complete = 0)
+assign_article_to_user(
+  document_id,
+  user_id,
+  allocation_type,
+  allocated_by,
+  allocation_date = as.character(Sys.Date()),
+  status = "NEW",
+  coding_complete = 0
+)
 
-assign_set(user_id, set, allocation_type, allocated_by = "assign_set",
-  status = "NEW")
+assign_set(
+  user_id,
+  set,
+  allocation_type,
+  allocated_by = "assign_set",
+  status = "NEW"
+)
 
-assign_testset_to_user(user_id, allocation_type = "testing",
-  allocated_by = "assign_testset_to_user")
+assign_testset_to_user(
+  user_id,
+  allocation_type = "testing",
+  allocated_by = "assign_testset_to_user"
+)
 
-assign_trainingset_to_user(user_id, allocation_type = "training",
-  allocated_by = "assign_trainingset_to_user")
+assign_trainingset_to_user(
+  user_id,
+  allocation_type = "training",
+  allocated_by = "assign_trainingset_to_user"
+)
 
 assign_initalsets_to_users(user_ids)
 }

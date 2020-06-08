@@ -4,8 +4,13 @@
 \alias{get_candidate_documents}
 \title{Returns the candidate document table filtered by candidate document id}
 \usage{
-get_candidate_documents(cand_document_id = "all", url = "all",
-  status = "all", g_status = "all", include_ocr = TRUE)
+get_candidate_documents(
+  cand_document_id = "all",
+  url = "all",
+  status = "all",
+  g_status = "all",
+  include_ocr = TRUE
+)
 }
 \arguments{
 \item{cand_document_id}{Candidate document id or ids to filter by.}

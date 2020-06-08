@@ -4,8 +4,12 @@
 \alias{get_allocation}
 \title{Get the articles currently allocated to the user.}
 \usage{
-get_allocation(user_id = "all", allocation_type = "all",
-  document_id = "all", user_doc_id = "all")
+get_allocation(
+  user_id = "all",
+  allocation_type = "all",
+  document_id = "all",
+  user_doc_id = "all"
+)
 }
 \arguments{
 \item{user_id}{The user_id to check in the database.}

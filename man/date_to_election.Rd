@@ -4,10 +4,13 @@
 \alias{date_to_election}
 \title{Finds the election relating to any specific date.}
 \usage{
-date_to_election(the_date, election_start_col = "monthsearch_start",
+date_to_election(
+  the_date,
+  election_start_col = "monthsearch_start",
   election_end_col = "monthsearch_end",
   election_data = durhamevp::election_dates,
-  return_col = "election_name")
+  return_col = "election_name"
+)
 }
 \arguments{
 \item{the_date}{the date to classifiy}

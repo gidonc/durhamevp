@@ -4,11 +4,17 @@
 \alias{allocate_randomly_with_some_double_assignment}
 \title{Assigns articles to users with some double coding and some another coding rate. Some users have a specified number of articles also assigned to another user (double coding). Remaining assignments are randomly allocated across all users.}
 \usage{
-allocate_randomly_with_some_double_assignment(double_coding_user_ids,
-  other_user_ids, set, n_double_coding, coder_rate = 1.1,
+allocate_randomly_with_some_double_assignment(
+  double_coding_user_ids,
+  other_user_ids,
+  set,
+  n_double_coding,
+  coder_rate = 1.1,
   allocation_type = "coding",
   allocated_by = "irregular_random_assignment",
-  restrict_to_actual = TRUE, make_assignments = TRUE)
+  restrict_to_actual = TRUE,
+  make_assignments = TRUE
+)
 }
 \arguments{
 \item{double_coding_user_ids}{The users who will have a specified number of their articles double coded. to allocate the articles amongst (vector with single or multiple user_ids).}

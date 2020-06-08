@@ -4,10 +4,15 @@
 \alias{allocate_randomly}
 \title{Randomly assign a set of articles amongst a set of users for coding}
 \usage{
-allocate_randomly(user_ids, set, coder_rate = 1.1,
+allocate_randomly(
+  user_ids,
+  set,
+  coder_rate = 1.1,
   allocation_type = "coding",
   allocated_by = "regular_random_assignment",
-  restrict_to_actual = TRUE, make_assignments = TRUE)
+  restrict_to_actual = TRUE,
+  make_assignments = TRUE
+)
 }
 \arguments{
 \item{user_ids}{The users to allocate the articles amongst (vector with single or multiple user_ids).}

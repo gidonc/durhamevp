@@ -4,11 +4,52 @@
 \alias{get_coding}
 \title{Download all the coding on the database}
 \usage{
-get_coding(include_ocr = FALSE)
+get_coding(
+  include_ocr = FALSE,
+  restrict_to_coding_complete = TRUE,
+  restrict_to_coding_mode = TRUE,
+  restrict_er_to_relevant = TRUE,
+  restrict_to_general_election = TRUE,
+  event_id_from_clusterattempts = c(401:420)
+)
 }
 \arguments{
 \item{include_ocr}{Should results include the full ocr of the documents (will slow the download).}
+
+\item{restrict_to_coding_complete}{Should the data including only records where coding is tagged as complete?}
+
+\item{restrict_to_coding_mode}{Should the data include on the records where coders were in coding mode?}
+
+\item{restrict_er_to_relevant}{Remove event report to those associated with irrelevant documents? These are cases where events reports have been added, and then later it has been decided that the events are irrelevant (e.g. excitement but no violence). If TRUE the user_docs will remain in the data but the event reports will be removed.}
+
+\item{restrict_to_general_election}{Should the data include only general election events (and hence exclude by-election and local election event reports)? If TRUE events where byelection == 1 will be removed from the data.}
+
+\item{event_id_from_clusterattempts}{Which cluster attempt ids should be used to generate the event_id? Default is 401 to 420 (the second clustering)}
+}
+\value{
+The function returns a list of type evp_download. The list contains  of five data frame: user_docs, event_reports, tags, attributes, clustering. Generally, users do not need to understand the structure of the evp_download list, but create more familiar R objects from it in the global environment using helper functions like \code{assign_coding_to_environment}.
 }
 \description{
-Download all the coding on the database
+\code{get_coding} downloads the coding from the election violence database. Here 'coding' means the main sets of data on the database. This main part of the database contains all the coding of reports of election violence in nineteenth century newspapers. It also includes the information on the clustering of these event reports into events. It inlcudes information on the newspaper articles from which the reports were extracted (including if desired the full OCR text of those articles). The data downloaded here excludes information on searches of the British Newspaper Archive which were used to generate the databse. The full online database does contain this information.
+
+By default the download includes only data which meets the following conditions:
+\enumerate{
+\item Coding is complete. The coding is labeled as complete by the coder. In user_docs \code{coding_complete == 1}.`
+\item the document is relevant (identified as containing election violence by the coder)
+\item the event relates to a general election (not by-election or local election)
+\item the coding was undertaken in coding mode.
+}
+
+There are arguments to the function to change these defaults.
+
+The function also uses a clustering set to make a meaningful event_id, such that every event report with the same event_id is considered to be a report of the same event. In the online version of the database event_id is not implemented (in fact it always takes the value of 1). When the coding is downloaded this will be replaced with a meaningful event_id, by default the second full set of clustering is used to generate this event_id.
+}
+\examples{
+# download the data
+my_evp_download <- get_clustering()
+# unpack the download to a useable format (tibbles) in the global environment
+assign_coding_to_environment(my_evp_download)
+}
+\seealso{
+\code{\link{assign_coding_to_environment}}, \code{\link{download_to_superwide}}
 }

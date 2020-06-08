@@ -4,10 +4,18 @@
 \alias{classifier_selection_ocr}
 \title{Classifies new documents on a labeled training set (description)}
 \usage{
-classifier_selection_ocr(train, new_docs, text_field = "ocr",
-  class_to_keep = 1, training_classify_var = "EV_article",
-  prior = "uniform", return_logical = FALSE, logical_to_prob = FALSE,
-  classifier_type = "xgboost", ...)
+classifier_selection_ocr(
+  train,
+  new_docs,
+  text_field = "ocr",
+  class_to_keep = 1,
+  training_classify_var = "EV_article",
+  prior = "uniform",
+  return_logical = FALSE,
+  logical_to_prob = FALSE,
+  classifier_type = "xgboost",
+  ...
+)
 }
 \description{
 Classifies new documents on a labeled training set (description)

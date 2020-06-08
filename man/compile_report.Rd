@@ -4,10 +4,14 @@
 \alias{compile_report}
 \title{Produces a readable summary of event reports from the election violence database.}
 \usage{
-compile_report(event_report_id, data_location = "database",
-  output_format = "html_document", output_file = NULL,
+compile_report(
+  event_report_id,
+  data_location = "database",
+  output_format = "html_document",
+  output_file = NULL,
   date_report_format = "\%A, \%d \%B \%Y",
-  report_title = "Event Reports from Election Violence Database")
+  report_title = "Event Reports from Election Violence Database"
+)
 }
 \arguments{
 \item{event_report_id}{the event report id or ids to produce the report for.}

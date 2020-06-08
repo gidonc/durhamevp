@@ -4,8 +4,10 @@
 \alias{get_archivesearchresults}
 \title{Returns the crawler search table}
 \usage{
-get_archivesearchresults(archivesearchresults_id = "all",
-  archive_search_id = "all")
+get_archivesearchresults(
+  archivesearchresults_id = "all",
+  archive_search_id = "all"
+)
 }
 \arguments{
 \item{archivesearch_id}{archive_search id or ids to filter by.}

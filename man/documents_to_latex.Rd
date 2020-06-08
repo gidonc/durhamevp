@@ -4,8 +4,12 @@
 \alias{documents_to_latex}
 \title{Convert dataframe of documents to form suitable for asis printing in knitr or Rmarkdown documents.}
 \usage{
-documents_to_latex(out_docs, include_description = TRUE,
-  include_ocr = TRUE, pandoc_output = FALSE)
+documents_to_latex(
+  out_docs,
+  include_description = TRUE,
+  include_ocr = TRUE,
+  pandoc_output = FALSE
+)
 }
 \arguments{
 \item{out_docs}{data frame containing the following fields: id, title, description (optional), ocr (optional)}

@@ -4,11 +4,19 @@
 \alias{classifier_selection_description}
 \title{Classifies new documents on a labeled training set (description).}
 \usage{
-classifier_selection_description(train, new_docs,
-  text_field = "description", class_to_keep = 1,
-  training_classify_var = "EV_article", prior = "uniform",
-  classifier_type = "xgboost", stem_dfm = FALSE,
-  return_logical = FALSE, logical_to_prob = FALSE, ...)
+classifier_selection_description(
+  train,
+  new_docs,
+  text_field = "description",
+  class_to_keep = 1,
+  training_classify_var = "EV_article",
+  prior = "uniform",
+  classifier_type = "xgboost",
+  stem_dfm = FALSE,
+  return_logical = FALSE,
+  logical_to_prob = FALSE,
+  ...
+)
 }
 \arguments{
 \item{train}{a data frame with the training documents.}

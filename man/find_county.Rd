@@ -4,8 +4,12 @@
 \alias{find_county}
 \title{Finds county of a latitude and longitude.}
 \usage{
-find_county(lat, lon, county_shapes = durhamevp::county_shapes,
-  col_to_return = "G_NAME")
+find_county(
+  lat,
+  lon,
+  county_shapes = durhamevp::county_shapes,
+  col_to_return = "G_NAME"
+)
 }
 \arguments{
 \item{lat}{the latitude to check.}

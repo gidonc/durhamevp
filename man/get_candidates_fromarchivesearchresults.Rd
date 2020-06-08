@@ -4,9 +4,12 @@
 \alias{get_candidates_fromarchivesearchresults}
 \title{Gets candidate documents from archivesearchresults.}
 \usage{
-get_candidates_fromarchivesearchresults(archivesearchresults,
-  include_ocr = FALSE, restrict_EW = TRUE,
-  restrict_classified = TRUE)
+get_candidates_fromarchivesearchresults(
+  archivesearchresults,
+  include_ocr = FALSE,
+  restrict_EW = TRUE,
+  restrict_classified = TRUE
+)
 }
 \arguments{
 \item{archivesearchresults}{The archive search results (including a url column)}

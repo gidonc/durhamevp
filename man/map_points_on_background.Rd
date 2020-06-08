@@ -4,8 +4,7 @@
 \alias{map_points_on_background}
 \title{plots sf points against background of a polygons (the_shapes)}
 \usage{
-map_points_on_background(z, the_shapes, title = "my map",
-  labels = TRUE)
+map_points_on_background(z, the_shapes, title = "my map", labels = TRUE)
 }
 \arguments{
 \item{z}{the points (sf format).}

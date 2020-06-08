@@ -8,5 +8,5 @@ remove_evp_db_pool()
 }
 \description{
 Removes hidden election violence database pool from R Global Environment by assinging it a NULL value. Use this function if the db pool is returning errors and a new pool will be created next time the database is queried.
- @export
+@export
 }

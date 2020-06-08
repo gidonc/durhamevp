@@ -4,9 +4,15 @@
 \alias{reassign_article_to_user}
 \title{Reassign article allocation to a new user.}
 \usage{
-reassign_article_to_user(user_doc_id, user_id, allocation_type,
-  allocated_by, allocation_date = as.character(Sys.Date()),
-  status = "NEW", coding_complete = 0)
+reassign_article_to_user(
+  user_doc_id,
+  user_id,
+  allocation_type,
+  allocated_by,
+  allocation_date = as.character(Sys.Date()),
+  status = "NEW",
+  coding_complete = 0
+)
 }
 \arguments{
 \item{user_doc_id}{Id of the document to be assigned or a vector of document ids.}

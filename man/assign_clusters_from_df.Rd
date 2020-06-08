@@ -4,8 +4,11 @@
 \alias{assign_clusters_from_df}
 \title{Assigns event report to an autodetected cluster}
 \usage{
-assign_clusters_from_df(df, cluster_col = geodatecluster,
-  event_report_id_col = event_report_id)
+assign_clusters_from_df(
+  df,
+  cluster_col = geodatecluster,
+  event_report_id_col = event_report_id
+)
 }
 \arguments{
 \item{df}{a data frame or tibble indicating clustering to upload to the database.}

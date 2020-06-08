@@ -4,8 +4,12 @@
 \alias{build_where_condition}
 \title{Constructs where conditions for querying database.}
 \usage{
-build_where_condition(col_name, vals, existing_condition,
-  existing_interpolate_list)
+build_where_condition(
+  col_name,
+  vals,
+  existing_condition,
+  existing_interpolate_list
+)
 }
 \arguments{
 \item{col_name}{The column name for there where condition.}

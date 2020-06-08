@@ -4,9 +4,13 @@
 \alias{find_const}
 \title{Find constituency from latitude and longitude.}
 \usage{
-find_const(lat, lon, boundary_label,
+find_const(
+  lat,
+  lon,
+  boundary_label,
   constituencies_shapes_list = durhamevp::const_shape_list,
-  col_to_return = "G_NAME")
+  col_to_return = "G_NAME"
+)
 }
 \arguments{
 \item{lat}{the latitude to check.}

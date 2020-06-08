@@ -4,9 +4,13 @@
 \alias{evdb_connect}
 \title{Set connection to election violence database}
 \usage{
-evdb_connect(host = "coders.victorianelectionviolence.uk",
-  user = "data_writer", dbname = "evp", port = 3306,
-  password_method = "ask")
+evdb_connect(
+  host = "coders.victorianelectionviolence.uk",
+  user = "data_writer",
+  dbname = "evp",
+  port = 3306,
+  password_method = "ask"
+)
 }
 \arguments{
 \item{host}{Location of database host.}

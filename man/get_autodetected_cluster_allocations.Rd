@@ -4,8 +4,10 @@
 \alias{get_autodetected_cluster_allocations}
 \title{Get the autodetcted cluster allocations currently allocated to the user.}
 \usage{
-get_autodetected_cluster_allocations(user_id = "all",
-  autodetected_cluster_id = "all")
+get_autodetected_cluster_allocations(
+  user_id = "all",
+  autodetected_cluster_id = "all"
+)
 }
 \arguments{
 \item{user_id}{The user_id to check in the database.}

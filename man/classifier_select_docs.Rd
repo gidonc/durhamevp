@@ -4,9 +4,18 @@
 \alias{classifier_select_docs}
 \title{Subsets a dataframe of documents based on a classifier.}
 \usage{
-classifier_select_docs(classifier, new_docs, text_field = "description",
-  return_logical = FALSE, logical_to_prob = FALSE, class_to_keep = 1,
-  boolean = FALSE, xgb.cutpoint = 0.5, stem = FALSE, ...)
+classifier_select_docs(
+  classifier,
+  new_docs,
+  text_field = "description",
+  return_logical = FALSE,
+  logical_to_prob = FALSE,
+  class_to_keep = 1,
+  boolean = FALSE,
+  xgb.cutpoint = 0.5,
+  stem = FALSE,
+  ...
+)
 }
 \arguments{
 \item{classifier}{A classifier to perform the classification: either a naive bayes (quanteda) or xgboost (xgboost)}

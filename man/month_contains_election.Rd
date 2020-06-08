@@ -4,11 +4,13 @@
 \alias{month_contains_election}
 \title{Finds the election relating to a month (where an election took place on any day that month).}
 \usage{
-month_contains_election(the_date,
+month_contains_election(
+  the_date,
   election_start_col = "monthsearch_start",
   election_end_col = "monthsearch_end",
   election_data = durhamevp::election_dates,
-  return_col = "election_name")
+  return_col = "election_name"
+)
 }
 \arguments{
 \item{the_date}{the month to classifiy as yyyy-mm-dd where dd must be 01.}

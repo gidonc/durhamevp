@@ -4,9 +4,13 @@
 \alias{get_allocation_connect_to_docs}
 \title{Get the allocation of articles to users (the unit of coding), with connected information from documents table and search tables}
 \usage{
-get_allocation_connect_to_docs(user_id = "all",
-  allocation_type = "all", document_id = "all", user_doc_id = "all",
-  include_ocr = FALSE)
+get_allocation_connect_to_docs(
+  user_id = "all",
+  allocation_type = "all",
+  document_id = "all",
+  user_doc_id = "all",
+  include_ocr = FALSE
+)
 }
 \arguments{
 \item{user_id}{The user_id to check in the database.}

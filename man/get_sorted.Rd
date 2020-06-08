@@ -6,8 +6,12 @@
 every user (user answer) component
 throughout the function, 'lowest' scores are the ones that represent a near-perfect match}
 \usage{
-get_sorted(model_vars, user_vars, get_var_score = get_distance,
-  blank_var_gen = NULL)
+get_sorted(
+  model_vars,
+  user_vars,
+  get_var_score = get_distance,
+  blank_var_gen = NULL
+)
 }
 \arguments{
 \item{model_vars}{dataframe containing the first set of codings to be matched}

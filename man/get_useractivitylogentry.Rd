@@ -4,8 +4,12 @@
 \alias{get_useractivitylogentry}
 \title{Get user logged activity}
 \usage{
-get_useractivitylogentry(useractivitylogentry_id = "all",
-  action = "all", user_id = "all", allocation_id = "all")
+get_useractivitylogentry(
+  useractivitylogentry_id = "all",
+  action = "all",
+  user_id = "all",
+  allocation_id = "all"
+)
 }
 \arguments{
 \item{useractivitylogentry_id}{primary key of user activity table of interest.}

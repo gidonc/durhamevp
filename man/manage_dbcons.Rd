@@ -4,8 +4,12 @@
 \alias{manage_dbcons}
 \title{Returns a connection to the election violence database}
 \usage{
-manage_dbcons(host = "coders.victorianelectionviolence.uk",
-  username = "data_writer", dbname = "evp", port = 3306)
+manage_dbcons(
+  host = "coders.victorianelectionviolence.uk",
+  username = "data_writer",
+  dbname = "evp",
+  port = 3306
+)
 }
 \description{
 This function is primarily for use within other functions.

@@ -4,8 +4,11 @@
 \alias{download_to_superwide}
 \title{Transforms the downloaded coding to 'superwide' format}
 \usage{
-download_to_superwide(evp_coding_download, coding_mode_only = TRUE,
-  coding_complete_only = TRUE)
+download_to_superwide(
+  evp_coding_download,
+  coding_mode_only = TRUE,
+  coding_complete_only = TRUE
+)
 }
 \arguments{
 \item{evp_coding_download}{The result of a \code{get_coding()}.}
