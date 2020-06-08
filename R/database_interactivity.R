@@ -349,7 +349,7 @@ get_archivesearchsummaryonly<-function(archivesearchsummaryonly_id="all"){
   this_safe_sql<-DBI::sqlInterpolate(DBI::ANSI(), this_sql,
                                      .dots = interpolate_list)
   archivesearchessummaryonly<-DBI::dbGetQuery(con, this_safe_sql) %>%
-    tibble::as.tibble()
+    tibble::as_tibble()
 
   archivesearchessummaryonly
 }
@@ -616,7 +616,7 @@ download_to_superwide <- function (evp_coding_download, coding_mode_only=TRUE, c
     dplyr::left_join(non_location_tags_wide, by="event_report_id") %>%
     dplyr::left_join(attributes_wide, by="event_report_id") %>%
     dplyr::left_join(processed_locations, by="event_report_id") %>%
-    tibble::as.tibble()
+    tibble::as_tibble()
 
   if(coding_mode_only){
     superwide <- dplyr::filter(superwide, allocation_type=="coding")
@@ -695,13 +695,13 @@ assign_coding_to_environment<- function(evp_coding_download){
     # locations are extracted from tags table
     location<- evp_coding_download[["tags"]]
     location <- dplyr::filter(location, tag_table == "location")
-    location <- tibble::as.tibble(location)
+    location <- tibble::as_tibble(location)
     processed_locations <- process_locations(location)
 
     # # actors are extracted from the tags table
     # actors<- evp_coding_download[["tags"]]
     # actors <- dplyr::filter(actors, tag_table == "actors")
-    # actors <- tibble::as.tibble(actors)
+    # actors <- tibble::as_tibble(actors)
 
     # to assign to environment put tables in the download
 
@@ -709,7 +709,7 @@ assign_coding_to_environment<- function(evp_coding_download){
     evp_coding_download[["processed_locations"]] <- processed_locations
 
     for (i in 1:length(evp_coding_download)) {
-      assign(names(evp_coding_download)[i], tibble::as.tibble(evp_coding_download[[i]]), envir=globalenv())
+      assign(names(evp_coding_download)[i], tibble::as_tibble(evp_coding_download[[i]]), envir=globalenv())
     }
   } else {
     stop("not a valid coding results list")
