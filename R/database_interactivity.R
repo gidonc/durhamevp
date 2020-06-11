@@ -460,6 +460,9 @@ get_coding <- function(include_ocr=FALSE, restrict_to_coding_complete = TRUE, re
   #'  There are arguments to the function to change these defaults.
   #'
   #' The function also uses a clustering set to make a meaningful event_id, such that every event report with the same event_id is considered to be a report of the same event. In the online version of the database event_id is not implemented (in fact it always takes the value of 1). When the coding is downloaded this will be replaced with a meaningful event_id, by default the second full set of clustering is used to generate this event_id.
+  #'
+  #' For more details see the EV_Database vignette:
+  #' \code{vignette("Database", package = "durhamevp")}
   #' @param include_ocr Should results include the full ocr of the documents (will slow the download).
   #' @param restrict_to_coding_complete Should the data including only records where coding is tagged as complete?
   #' @param restrict_to_coding_mode Should the data include on the records where coders were in coding mode?
@@ -537,8 +540,8 @@ add_event_id_from_clustering <- function(evp_coding_download, event_id_from_clus
   event_reports <- dplyr::select(evp_coding_download[["event_reports"]], -event_id)
   use_clustering <- dplyr::filter(clustering, clusterattempt_id %in% event_id_from_clusterattempts)
   use_clustering <- dplyr::select(use_clustering, event_report_id, event_id = final_cluster_id)
-  use_clustering <- group_by(use_clustering, event_report_id, event_id)
-  use_clustering <- summarize(use_clustering)
+  use_clustering <- dplyr::group_by(use_clustering, event_report_id, event_id)
+  use_clustering <- dplyr::summarize(use_clustering)
 
   # check if every event_report is clustered
   unclustered_event_reports <- dplyr::pull(

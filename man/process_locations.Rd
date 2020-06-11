@@ -2,7 +2,7 @@
 % Please edit documentation in R/database_interactivity.R
 \name{process_locations}
 \alias{process_locations}
-\title{Creates a wide version of the locations associated with event reports. Currently based on a hack.}
+\title{Creates a wide version of the locations associated with event reports.}
 \usage{
 process_locations(location_tags)
 }
@@ -10,5 +10,5 @@ process_locations(location_tags)
 \item{location_tags}{a table of tags (filtered: table=="location) containing only locations.}
 }
 \description{
-Creates a wide version of the locations associated with event reports. Currently based on a hack.
+Creates a wide version of the locations associated with event reports.
 }

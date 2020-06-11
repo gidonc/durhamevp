@@ -7,5 +7,5 @@
 get_clustering()
 }
 \description{
-\code{get_combined_clusters} reports the clusters after the combination stage and the event reports currently in that cluster.
+\code{get_clustering} reports the full clustering process after the combination stage and the event reports currently in that cluster.
 }
