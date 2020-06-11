@@ -1,0 +1,256 @@
+# data model segments
+
+- segment: &main Event Report Coding
+- segment: &src Source Material
+- segment: &sup Users
+- segment: &clust Clustering
+
+
+# Tables and columns
+
+- table: user
+  segment: *sup
+  columns:
+    user_id: {key: yes}
+    password:
+    last_login:
+    is_superuser:
+    username:
+    first_name:
+    last_name:
+    email:
+    is_staff:
+    is_active:
+    date_joined:
+
+- table: userdocumentallocation
+  segment: *main
+  columns:
+    user_doc_id: {key: yes}
+    user_id: {ref: user}
+    document_id: {ref: documents}
+    allocation_date:
+    allocation_type:
+    allocated_by:
+    coding_complete:
+    article_type:
+    geo_relevant:
+    time_relevant:
+    electoral_nature:
+    violence_nature:
+    electoralviolence_nature:
+    legibility:
+    comment_docinfo:
+    status:
+    recommend_qualitative:
+    difficulty_ranking:
+    ideal_coding_comments:
+    score:
+    last_updated:
+    relevant:
+
+- table: event_reports
+  segment: *main
+  display: accent1
+  columns:
+    event_report_id: {key: yes}
+    user_doc_id: {ref: userdocumentallocation}
+    event_type:
+    environment:
+    event_start:
+    event_end:
+    comment_events:
+    summary:
+    meeting:
+    election_point:
+    event_timeframe_quantifier:
+    autodetected_cluster_id:
+    is_exact:
+    latitude:
+    longitude:
+    election_id:
+    boundary_year:
+    byelection:
+    constituency_g_name:
+    county_g_name:
+    duration:
+    election_name:
+    election_point_clean:
+    end_weekday:
+    geocluster:
+    geometry_type:
+    ignore_geounspecific:
+    located_from:
+    start_weekday:
+    event_id:
+
+- table: tag
+  segment: *main
+  columns:
+    tag_id: {key: yes}
+    event_report_id: {ref: event_reports}
+    tag_table:
+    tag_variable:
+    tag_value:
+    comment:
+    contested:
+    proximity_relative:
+
+- table: attribute
+  segment: *main
+  columns:
+    attribute_id: {key: yes}
+    tag_id: {ref: tag}
+    attribute:
+    attribute_value:
+    contested:
+
+- table: combinedclusterentry
+  segment: *clust
+  columns:
+    combinedclusterentry_id: {key: yes}
+    verifiedcluster_id: {ref: verifiedcluster}
+    combinedcluster_id:
+
+- table: usercombinationallocation
+  segment: *clust
+  columns:
+    usercombinationallocation_id: {key: yes}
+    verifiedcluster_id: {ref: verifiedcluster}
+    user_id: {ref: user}
+
+- table: verifiedcluster
+  segment: *clust
+  columns:
+    verified_cluster_id: {key: yes}
+    user_alloc_id: {ref: userautodetectedclusterallocation}
+    reallocation_alloc_id: {ref: userreallocationallocation}
+    clusterattempt_id:
+    latitude:
+    longitude:
+    needs_additional_checks:
+    election_id:
+
+- table: verifiedclusterentry
+  segment: *clust
+  columns:
+    verifiedclusterentry_id: {key: yes}
+    verified_cluster_id: {ref: verifiedcluster}
+    event_report_id: {ref: event_reports}
+    best_description:
+    uncertain:
+
+- table: userreallocationallocation
+  segment: *clust
+  columns:
+    reallocation_alloc_id: {key: yes}
+    verfied_cluster_id: {ref: verifiedcluster}
+    user_id: {ref: user}
+    best_description:
+    uncertain:
+
+
+- table: userautodetectedclusterallocation
+  segment: *clust
+  columns:
+    user_alloc_id: {key: yes}
+    user_id: {ref: user}
+
+- table: documents
+  segment: *src
+  columns:
+    document_id: {key: yes}
+    candidate_document_id: {ref: candidatedocument}
+    source_id:
+    doc_title:
+    pdf_location:
+    pdf_page_location:
+    ocr:
+    pdf_thumbnail_location:
+    description:
+    publication_date:
+    publication_location:
+    publication_title:
+    type:
+    url:
+    word_count:
+
+
+- table: archivesearch
+  segment: *src
+  columns:
+    archivesearch_id: {key: yes}
+    archive:
+    search_text:
+    archive_date_start:
+    archive_date_end:
+    search_batch_id:
+    added_date_start:
+    added_date_end:
+    article_type:
+    exact_phrase:
+    exact_search:
+    exclude_words:
+    front_page:
+    newspaper_title:
+    publication_place:
+    search_all_words:
+    sort_by:
+    tags:
+    timestamp:
+
+
+
+- table: archivesearchresult
+  segment: *src
+  columns:
+    archivesearchresult_id: {key: yes}
+    archivesearch_id: {ref: archivesearch}
+    title:
+    url:
+    description:
+    publication_title:
+    publication_location:
+    publication_date:
+    word_count:
+    type:
+
+- table: candidatedocument
+  segment: *src
+  columns:
+    candidate_document_id: {key: yes}
+    url: {ref: archivesearchresult}
+    description:
+    publication_title:
+    publication_location:
+    type:
+    status:
+    page:
+    publication_date:
+    ocr:
+    word_count:
+    g_status:
+    status_writer:
+
+- table: archivesearchsummaryonly
+  segment: *src
+  columns:
+    archivesearchsummaryonly_id: {key: yes}
+    archive:
+    search_text:
+    archive_date_start:
+    archive_date_end:
+    search_batch_id:
+    search_all_words:
+    exact_phrase:
+    exclude_words:
+    exact_search:
+    publication_place:
+    newspaper_title:
+    added_date_start:
+    added_date_end:
+    article_type:
+    front_page:
+    tags:
+    sort_by:
+    timestamp:

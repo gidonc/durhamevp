@@ -34,15 +34,18 @@ The function returns a list of type evp_download. The list contains  of five dat
 
 By default the download includes only data which meets the following conditions:
 \enumerate{
-\item Coding is complete. The coding is labeled as complete by the coder. In user_docs \code{coding_complete == 1}.`
-\item the document is relevant (identified as containing election violence by the coder)
-\item the event relates to a general election (not by-election or local election)
-\item the coding was undertaken in coding mode.
+\item Coding complete. The coding is labeled as complete by the coder. In user_docs \code{coding_complete == 1}.`
+\item Document relevant. The document is relevant (identified as containing election violence by the coder). In user_docs \code{relevant == 1}.
+\item General election event. The event relates to a general election (not by-election or local election). In event_report \code{byelection == 0}.
+\item Coding mode. The coding was undertaken in coding mode. In user_docs \code{allocation_type == 'coding'}
 }
 
 There are arguments to the function to change these defaults.
 
 The function also uses a clustering set to make a meaningful event_id, such that every event report with the same event_id is considered to be a report of the same event. In the online version of the database event_id is not implemented (in fact it always takes the value of 1). When the coding is downloaded this will be replaced with a meaningful event_id, by default the second full set of clustering is used to generate this event_id.
+
+For more details see the EV_Database vignette:
+\code{vignette("Database", package = "durhamevp")}
 }
 \examples{
 # download the data
