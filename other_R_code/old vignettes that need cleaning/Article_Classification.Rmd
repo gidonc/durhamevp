@@ -1,10 +1,10 @@
 ---
-title: "Article Classification Process Incorporating Machine Learning"
+title: "Article Classification with Machine Learning 1"
 author: "Gidon Cohen"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Article Classification with Machine Learning}
+  %\VignetteIndexEntry{Article Classification with Machine Learning 1}
   %\VignetteEncoding{UTF-8}
   %\VignetteEngine{knitr::rmarkdown}
 editor_options: 

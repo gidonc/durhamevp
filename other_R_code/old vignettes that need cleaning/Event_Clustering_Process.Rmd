@@ -3,6 +3,10 @@ title: "Event Clustering Process"
 author: "Gidon Cohen"
 date: "03/09/2019"
 output: html_document
+vignette: >
+  %\VignetteIndexEntry{Election Violence Database Structure}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
 ---
 
 ```{r setup, include=FALSE}
