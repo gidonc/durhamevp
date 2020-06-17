@@ -119,7 +119,7 @@ assign_autoclusters_to_user <- function(autocluster_ids, user_id, clusterattempt
 
 }
 
-assign_reallocation_to_user <- function(event_report_id, user_id, clusterattempt_id, allocation_date=as.character(Sys.Date()), last_updated=as.character(Sys.time()), completed=0){
+assign_reallocation_to_user <- function(event_report_id, user_id, clusterattempt_id, allocation_date=as.character(Sys.Date()), last_updated=as.character(Sys.time()), completed=0, is_corrective = 0){
   #' Assign single events to user for reallocation to clusters.
   #'
   #' \code{assign_reallocation_to_user} assigns an autodetected cluster to a user for verification.
@@ -129,12 +129,13 @@ assign_reallocation_to_user <- function(event_report_id, user_id, clusterattempt
   #' @param allocation_date Date allocation made (usually today).
   #' @param last_updated Date record last updated (usually today).
   #' @param completed Is the cluster verification complete (usually 0 [i.e. not complete])
+  #' @param is_corrective Is the cluster reallocation in corrective mode (usually 0 [i.e. not in corrective mode]). Corrective mode is implemented when reallocation stage takes place after the combination stage has taken place.
 
   #' @export
 
   con <- manage_dbcons()
 
-  this_sql <- "INSERT INTO portal_userreallocationallocation (allocation_date, completed, last_updated, event_report_id, user_id, clusterattempt_id) VALUES (?allocation_date, ?completed, ?last_updated, ?event_report_id, ?user_id, ?clusterattempt_id) ;"
+  this_sql <- "INSERT INTO portal_userreallocationallocation (allocation_date, completed, last_updated, event_report_id, user_id, clusterattempt_id, is_corrective) VALUES (?allocation_date, ?completed, ?last_updated, ?event_report_id, ?user_id, ?clusterattempt_id, ?is_corrective) ;"
   this_safe_sql <- DBI::sqlInterpolate(DBI::ANSI(),
                                        this_sql,
                                        event_report_id = event_report_id,
@@ -142,21 +143,23 @@ assign_reallocation_to_user <- function(event_report_id, user_id, clusterattempt
                                        clusterattempt_id = clusterattempt_id,
                                        allocation_date = allocation_date,
                                        last_updated=last_updated,
-                                       completed = completed)
+                                       completed = completed,
+                                       is_corrective = is_corrective)
 
   DBI::dbGetQuery(con, this_safe_sql)
 }
 
-assign_reallocations_to_user <- function(event_report_ids, user_id, clusterattempt_id){
+assign_reallocations_to_user <- function(event_report_ids, user_id, clusterattempt_id, is_corrective){
   #' Assigns mutiple single events for reallocation to clusters to a single user.
   #'
   #'@param event_report_ids The autocluster_ids to allocate.
   #'@param user_id The user id to allocate to.
   #'@param clusterattempt_id Id of the clustering attempt (must match clusteratttempt_id of the allocations).
+  #'@param is_corrective Is the cluster reallocation in corrective mode (usually 0 [i.e. not in corrective mode]). Corrective mode is implemented when reallocation stage takes place after the combination stage has taken place.
   #'@export
 
   for(n in seq_along(event_report_ids)){
-    assign_reallocation_to_user(event_report_ids[n], user_id, clusterattempt_id)
+    assign_reallocation_to_user(event_report_ids[n], user_id, clusterattempt_id, is_corrective = is_corrective)
   }
 
 }
