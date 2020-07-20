@@ -238,7 +238,7 @@ get_verified_clusters <- function(){
 
   con <- manage_dbcons()
 
-  this_sql<-this_sql<-"Select vc.id as verified_cluster_id, combined, user_alloc_id, reallocation_alloc_id, clusterattempt_id, latitude, longitude, event_report_id, best_description FROM `portal_verifiedcluster` vc LEFT JOIN `portal_verifiedclusterentry` vce ON vc.id = vce.verified_cluster_id; " # base query
+  this_sql<-this_sql<-"Select vc.id as verified_cluster_id, vce.id as verified_cluster_entry_id, combined, user_alloc_id, reallocation_alloc_id, clusterattempt_id, latitude, longitude, event_report_id, best_description FROM `portal_verifiedcluster` vc LEFT JOIN `portal_verifiedclusterentry` vce ON vc.id = vce.verified_cluster_id; " # base query
 
   DBI::dbGetQuery(con, this_sql)
 }

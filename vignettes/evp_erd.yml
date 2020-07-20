@@ -144,10 +144,11 @@
   segment: *clust
   columns:
     reallocation_alloc_id: {key: yes}
-    verfied_cluster_id: {ref: verifiedcluster}
+    event_report_id: {ref: event_reports}
     user_id: {ref: user}
-    best_description:
-    uncertain:
+    clusterattempt_id:
+    completed:
+    last_updated:
 
 
 - table: userautodetectedclusterallocation
