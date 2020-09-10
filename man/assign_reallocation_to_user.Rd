@@ -10,7 +10,8 @@ assign_reallocation_to_user(
   clusterattempt_id,
   allocation_date = as.character(Sys.Date()),
   last_updated = as.character(Sys.time()),
-  completed = 0
+  completed = 0,
+  is_corrective = 0
 )
 }
 \arguments{
@@ -23,6 +24,8 @@ assign_reallocation_to_user(
 \item{last_updated}{Date record last updated (usually today).}
 
 \item{completed}{Is the cluster verification complete (usually 0 \link{i.e. not complete})}
+
+\item{is_corrective}{Is the cluster reallocation in corrective mode (usually 0 \link{i.e. not in corrective mode}). Corrective mode is implemented when reallocation stage takes place after the combination stage has taken place.}
 
 \item{clusterattemp_id}{Id of the clustering attempt (must match clusteratttempt_id of the allocations).}
 }

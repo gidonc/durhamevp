@@ -16,7 +16,7 @@ assign_article_to_user <- function (document_id, user_id, allocation_type, alloc
   allocated_at <- as.character(Sys.time())
   for (this_user_id in user_id){
     for (this_document_id in document_id){
-      this_sql<-"INSERT INTO portal_userdocumentallocation (document_id, user_id, allocation_date, allocation_type, allocated_by, status, coding_complete, article_type, geo_relevant, time_relevant, electoral_nature, electoralviolence_nature, violence_nature, legibility, comment_docinfo, recommend_qualitative, difficulty_ranking, ideal_coding_comments, score,last_updated) VALUES (?this_document_id, ?this_user_id, ?allocation_date, ?allocation_type, ?allocated_by, ?status, ?coding_complete, '' , '', '', '', '', '', '', '', '', -1, '', -1, ?allocated_at) ;"
+      this_sql<-"INSERT INTO portal_userdocumentallocation (document_id, user_id, allocation_date, allocation_type, allocated_by, status, coding_complete, article_type, geo_relevant, time_relevant, electoral_nature, electoralviolence_nature, violence_nature, legibility, comment_docinfo, recommend_qualitative, difficulty_ranking, ideal_coding_comments, score,last_updated, relevant) VALUES (?this_document_id, ?this_user_id, ?allocation_date, ?allocation_type, ?allocated_by, ?status, ?coding_complete, '' , '', '', '', '', '', '', '', '', -1, '', -1, ?allocated_at, -1) ;"
 
       this_safe_sql<-DBI::sqlInterpolate(DBI::ANSI(), this_sql,
                                          this_document_id=this_document_id,

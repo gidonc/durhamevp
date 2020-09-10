@@ -4,7 +4,12 @@
 \alias{assign_reallocations_to_user}
 \title{Assigns mutiple single events for reallocation to clusters to a single user.}
 \usage{
-assign_reallocations_to_user(event_report_ids, user_id, clusterattempt_id)
+assign_reallocations_to_user(
+  event_report_ids,
+  user_id,
+  clusterattempt_id,
+  is_corrective
+)
 }
 \arguments{
 \item{event_report_ids}{The autocluster_ids to allocate.}
@@ -12,6 +17,8 @@ assign_reallocations_to_user(event_report_ids, user_id, clusterattempt_id)
 \item{user_id}{The user id to allocate to.}
 
 \item{clusterattempt_id}{Id of the clustering attempt (must match clusteratttempt_id of the allocations).}
+
+\item{is_corrective}{Is the cluster reallocation in corrective mode (usually 0 \link{i.e. not in corrective mode}). Corrective mode is implemented when reallocation stage takes place after the combination stage has taken place.}
 }
 \description{
 Assigns mutiple single events for reallocation to clusters to a single user.
