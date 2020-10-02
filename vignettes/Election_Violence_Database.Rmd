@@ -290,7 +290,8 @@ The idea of the clustering process is that every in scope^[Event reports are in 
 
 The database allows for this clustering process to be undertaken multiple times (different cluster attempts). Different cluster attempts are recorded in the clusterattempt_id column of the verified cluster table. The final cluster of an event report should therefore be unique *within* a particular cluster attempt.
 
-The database contains stores information on multiple partial, and two major cluster attempts. **Gary should we add information here about the clusterattempts with ids?**. 
+The database contains stores information on multiple partial, and two major cluster attempts. **Gary should we add information here about the clusterattempts with ids?**. *I think so* The two main cluster attempts are 301:320, and 401:420 (covering 20 General Elections; 1832=301, 1835=302 etc.). All our our analysis of clustered data is based on attempts 401:420, which in addition to clustering on the platform, have undergone several manula post-clustering cleaning stages. 
+
 
 These clusters were created a sequential grouping and comparison process:
 
