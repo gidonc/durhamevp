@@ -85,13 +85,13 @@ The nature and method of allocations - usually regular_random_assignment, in whi
 Whether a coder finished categorising and article and submitted it.  1 or 0.
 
 *article_type*  
-What type of article the document? Coders could choose from the following:
+What type of article the document? Coders could choose from the following:  
  - Report of Trial or Court Proceedings. Usually summaries, with excerpts of evidence and speeches from lawyers and judges.
- - Report of Parliamentary Proceedings. Speeches made by MPs and Lords in the Houses of Parliament.
- - Letter(s) to Editor.Article takes the form of letters e.g. start with dear Sir, and end with the name of the writer.
- - Commentary, Editorial, Opinion-Piece. Generally marked by a more personal, opinionated tone, rather than a 'dispassionate' summary of events. Often make explicit moral judgements on events, with a clear political slant.
- - Printed Statement by Candidate or Party. Usually start with the preamble ‘To the Electors of…’, end with the name of the candidate, and take the form similar to that of a letter to the Editor.
- - Other.  Any type of article that does not correspond to those listed above. NOTE: The majority of articles coded fell into this category.
+ - Report of Parliamentary Proceedings. Speeches made by MPs and Lords in the Houses of Parliament.  
+ - Letter(s) to Editor.Article takes the form of letters e.g. start with dear Sir, and end with the name of the writer.  
+ - Commentary, Editorial, Opinion-Piece. Generally marked by a more personal, opinionated tone, rather than a 'dispassionate' summary of events. Often make explicit moral judgements on events, with a clear political slant.  
+ - Printed Statement by Candidate or Party. Usually start with the preamble ‘To the Electors of…’, end with the name of the candidate, and take the form similar to that of a letter to the Editor.  
+ - Other.  Any type of article that does not correspond to those listed above. NOTE: The majority of articles coded fell into this category.  
 
 *geo_relevant*  
 Does the article refer to event(s) in England and Wales? True or False.
@@ -169,12 +169,12 @@ Open-text qualitative summary of the election violence event. (e.g. 'riots after
 Whether the event took place at a political meeting, including at the nomination/hustings, private political meetings indoors, public and outdoor meetings held by candidates or parties etc. - True or False or Unclear.
 
 *election_point*  
-At what point(s) in the election process did the event occur. Coders were able to select multiple options for events spanning multiple stages of the process.
- - Before Polling. This is during the canvass, or any other period explicitly stated to be before the commencement of the actual election. 
- - Nomination or Hustings. This will be explicitly referred to as nomination or hustings. It is likely to be mentioned alongside the existence of crowds, a platform, long speeches by candidates, and questions from the audience. 
-  - During Polling. This is when voters were actually able to cast their votes for candidates. May only be alluded to (such as ‘during the election’), or such as when polling is suspended due to violence – this indicates that violence and the polling were simultaneous.
- - Declaration or Chairing. The point, often held in public and open-air settings, at which the winners and losers are announced. Occasionally, this is followed by the winning candidate being paraded through the town on a chair held aloft by supporters.
- - After Declaration or Chairing. Any point after the end of the formal election process.
+At what point(s) in the election process did the event occur. Coders were able to select multiple options for events spanning multiple stages of the process.  
+ - Before Polling. This is during the canvass, or any other period explicitly stated to be before the commencement of the actual election.  
+ - Nomination or Hustings. This will be explicitly referred to as nomination or hustings. It is likely to be mentioned alongside the existence of crowds, a platform, long speeches by candidates, and questions from the audience.  
+  - During Polling. This is when voters were actually able to cast their votes for candidates. May only be alluded to (such as ‘during the election’), or such as when polling is suspended due to violence – this indicates that violence and the polling were simultaneous.  
+ - Declaration or Chairing. The point, often held in public and open-air settings, at which the winners and losers are announced. Occasionally, this is followed by the winning candidate being paraded through the town on a chair held aloft by supporters.  
+ - After Declaration or Chairing. Any point after the end of the formal election process.  
 
 *event_timeframe_quantifier*  
 Related to start and end-dates.  Coders could select 'during' for a verified date range, or 'before' if they were unsure about the date of occurrence (e.g. an unspecified day before the default date of newspaper puublication).
@@ -236,12 +236,37 @@ The day of the week corresponding to event_start.
 *event_id*  
 Not in use **is this right?**
 
-### tag 
-*Gary/Patrick we need a description of the table and the fields in the table here *
-test
+### tag  
 
-### attribute
-*Gary/Patrick we need a description of the table and the fields in the table here *
+*tag_id*  
+
+*event_report_id*  
+
+*tag_table*  
+
+*tag_variable*  
+
+*tag_value*  
+
+*comment*  
+
+*contested*  
+
+*proximity_relative*  
+
+
+### attribute  
+
+*attribute_id*  
+
+*tag_id*  
+
+*attribute*  
+
+*attribute_value*  
+
+*contested*  
+
 
 
 ## Sources Tables
@@ -260,6 +285,175 @@ The sources section of the database stores information about these documents, an
 
 There is one additional table in the sources section of the database: *archivesearchsummaryonly*. This contains aggregate information (the number of results returned) about some searches. This information  does not connect to the event reports. Similar aggregate information, like the number of results returned, about searches which do connect to the event reports can be calculated from the archivesearchresults table.
 
+###archivesearch
+
+*archivesearch_id*  
+
+*archive*  
+
+*search_text*  
+
+*archive_date_start*  
+
+*archive_date_end*  
+
+*search_batch_id*  
+
+*added_date_start*  
+
+*added_date_end*  
+
+*article_type*  
+
+*exact_phrase*  
+
+*exact_search*  
+
+*exclude_words*  
+
+*front_page*  
+
+*newspaper_title*  
+
+*publication_place*  
+
+*search_all_words*  
+
+*sort_by*  
+
+*tags*  
+
+
+
+###archivesearchresult
+
+*archivesearchresult_id*  
+
+*archivesearch_id*  
+
+*title*  
+
+*url*  
+
+*description*  
+
+*publication_title*  
+
+*publication_location*  
+
+*publication_date*  
+
+*word_count*  
+
+*type*  
+
+
+###candidatedocument  
+
+*candidate_document_id*  
+
+*url*  
+
+*description*  
+
+*publication_title*  
+
+*publication_location*  
+
+*type*  
+
+*status*  
+
+*page*  
+
+*publication_date*  
+
+*ocr*  
+
+*word_count*  
+
+*g_status*  
+
+*status_writer*  
+
+
+
+###documents  
+
+*document_id*  
+
+*candidate_document_id*  
+
+*source_id*  
+
+*doc_title*  
+
+*pdf_location*  
+
+*pdf_page_location*  
+
+*ocr*  
+
+*pdf_thumbnail_location*  
+
+*description*  
+
+*publication_date*  
+
+*publication_location*  
+
+*publication_title*  
+
+*type*  
+
+*url*  
+
+*word_count*  
+
+
+
+###archivesearchsummaryonly
+*archivesearchsummaryonly_id*  
+
+*archive*  
+
+*search_text*  
+
+*archive_date_start*  
+
+*archive_date_end*  
+
+*search_batch_id*  
+
+*search_all_words*  
+
+*exact_phrase*  
+
+*exclude_words*  
+
+*exact_search*  
+
+*publication_place*  
+
+*newspaper_title*  
+
+*added_date_start*  
+
+*added_date_end*  
+
+*article_type*  
+
+*front_page*  
+
+*tags*  
+
+*sort_by*  
+
+*timestamp*  
+
+
+
+
 ```{r, echo=FALSE, fig.height=7, fig.width=7}
 
 
@@ -272,6 +466,31 @@ dm_render_graph(graph)
 
 ## Users Tables
 The users section of the database contains just one table which store information about database users. 
+
+*user_id*  
+
+*password*  
+
+*last_login*  
+
+*is_superuser*  
+
+*username*  
+
+*first_name*  
+
+*last_name*  
+
+*email*  
+
+*is_staff*  
+
+*is_active*  
+
+*date_joined*  
+
+
+
 ```{r, echo=FALSE}
 
 
@@ -311,4 +530,73 @@ graph <- dm_create_graph(dm, focus=list(tables = c("userreallocationallocation",
 dm_render_graph(graph)
 ```
 
-**Gary/Patrick we need a table/field level description of each of these tables here**
+###verifiedcluster  
+*verified_cluster_id*  
+
+*user_alloc_id*  
+
+*reallocation_alloc_id*  
+
+*clusterattempt_id*  
+
+*latitude*  
+
+*longitude*  
+
+*needs_additional_checks*  
+
+*election_id*  
+
+
+###userautodetectedclusterallocation  
+
+*user_alloc_id*  
+
+*user_id*  
+
+
+###verifiedclusterentry  
+
+*verifiedclusterentry_id*  
+
+*verified_cluster_id*  
+
+*event_report_id*  
+
+*best_description*  
+
+*uncertain*  
+
+
+###userreallocationallocation  
+
+*reallocation_alloc_id*  
+
+*event_report_id*  
+
+*user_id*  
+
+*clusterattempt_id*  
+
+*completed*  
+
+*last_updated*  
+
+
+###usercombinationallocation  
+
+*usercombinationallocation_id*  
+
+*verifiedcluster_id*  
+
+*user_id*  
+
+
+###combinedclusterentry  
+
+*combinedclusterentry_id*  
+
+*verifiedcluster_id*  
+
+*combinedcluster_id*  
+
