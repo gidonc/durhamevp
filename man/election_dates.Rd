@@ -5,7 +5,7 @@
 \alias{election_dates}
 \title{Election Dates and Basic Information.}
 \format{
-A data frame with 20 rows and 11 variables:
+A data frame with 20 rows and 11 variables, which are:
 \describe{
 \item{election_name}{The standardized name of the election,used to link to other data sets in the election violence project.}
 \item{keywords_13_complete}{Indicates whether the projects the BNA search using the standard 13 keywords to detect election violnece has been completed.}
