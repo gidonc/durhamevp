@@ -131,3 +131,25 @@ c91<- paste0(cb.path, "/EW1891_regcounties")
 c91 <- st_read(c91)
 county_shapes <- c91
 usethis::use_data(county_shapes, overwrite = TRUE)
+
+
+##----eventclassification----
+d.path<-path<-switch (Sys.info()["nodename"],
+                      "Vanessas-MacBook-Air.local" = "/Users/vchengm/Dropbox",
+                      "DM-GIA-055"="D:/Dropbox/ESRC Grant EV 19th Century",
+                      "DM-GIA-051"="D:/Dropbox/ESRC Grant EV 19th Century",
+                      "GID-HOME-LENOVO"="C:/Users/Gidon/Dropbox/ESRC Grant EV 19th Century")
+
+ev_events<-readr::read_csv(paste0(d.path, "/Impact/Interactive Map/events.csv"))
+ev_events <- dplyr::select(ev_events,
+                        event_id=final_cluster_id,
+                        election_name = election_name,
+                        event_level,
+                        imap_constituency_g_name= constituency_g_name,
+                        imap_county_g_name = county_g_name,
+                        imap_townvillage = townvillage,
+                        imap_latitude = latitude,
+                        imap_longitude = longitude,
+                        imap_event_summary=summary)
+usethis::use_data(ev_events, overwrite = TRUE)
+
