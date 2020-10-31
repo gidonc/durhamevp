@@ -8,7 +8,16 @@
 A data frame with 20 rows and 11 variables, which are:
 \describe{
 \item{election_name}{The standardized name of the election,used to link to other data sets in the election violence project.}
-\item{keywords_13_complete}{Indicates whether the projects the BNA search using the standard 13 keywords to detect election violnece has been completed.}
+\item{dissolution}{Date Parliament dissolved prior to the election.}
+\item{commencement}{Date Parliament commences after the election.}
+\item{duration_dissolution_commencement}{Number of days between dissolution and commencement.}
+\item{polling_start}{Date General Election polling started.}
+\item{polling_end}{Date General Election polling ended.}
+\item{polling_duration}{Number of days between the start and end of General Election polling.}
+\item{monthsearch_start}{First date in project's systematic search of one month of newspaper articles around the election.}
+\item{monthsearch_end}{Last date in project's systematic search of one month of newspaper articles around the election.}
+\item{monthsearch_duration}{Number of days in projects systematic search of newspaper articles.}
+\item{keywords_13_complete}{Indicates whether the projects has completed the systematic search of the British Newspaper Archive using its set of 13 keywords to detect election violence has been completed.}
 }
 }
 \source{
