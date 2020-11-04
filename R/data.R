@@ -24,7 +24,7 @@
 #'
 #' An event level dataset containing violent events in British General Elections between 1832 and 1910.Note that information on the detail of events is not in this dataset, but instead is stored in event reports relating to these events. This data can be linked to the event report data using the event_id column.
 #'
-#' @format A data frame with 2925 rows and 9 variables, which are:
+#' @format A data frame with 2915 rows and 9 variables, which are:
 #' \describe{
 #'   \item{event_id}{The unique identifier of the event (which corresponds to the event_id in the processed event_reports table and to the final_cluster_id in the clustering table (in cluster attempt 401 to 420).}
 #'   \item{election_name}{Standardised name of election.}

@@ -151,5 +151,9 @@ ev_events <- dplyr::select(ev_events,
                         imap_latitude = latitude,
                         imap_longitude = longitude,
                         imap_event_summary=summary)
+## remove deleted events
+evp_download <- durhamevp::get_coding()
+assign_coding_to_environment(evp_download)
+ev_events <- dplyr::filter(ev_events, event_id %in% event_reports$event_id)
 usethis::use_data(ev_events, overwrite = TRUE)
 
