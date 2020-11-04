@@ -539,6 +539,7 @@ add_event_id_from_clustering <- function(evp_coding_download, event_id_from_clus
   clustering <- evp_coding_download[["clustering"]]
   event_reports <- dplyr::select(evp_coding_download[["event_reports"]], -event_id)
   use_clustering <- dplyr::filter(clustering, clusterattempt_id %in% event_id_from_clusterattempts)
+  use_clustering <- dplyr::filter(use_clustering, !is.na(event_report_id))
   use_clustering <- dplyr::select(use_clustering, event_report_id, event_id = final_cluster_id)
   use_clustering <- dplyr::group_by(use_clustering, event_report_id, event_id)
   use_clustering <- dplyr::summarize(use_clustering)
@@ -689,7 +690,12 @@ process_locations <- function(location_tags){
 }
 
 assign_coding_to_environment<- function(evp_coding_download){
-  #' Assign the results of a get_coding download to the global environment
+  #' Assign election violence database objects to the global environment.
+  #'
+  #' Assigns election violence database objects to the global environment, where those database objects are the results of executing the \code{get_coding} function.
+  #' The method for creating the code{processed_locations} table is described in the help file for the \code{process_locations} function.
+  #'
+  #' The function also adds the ev_events data and the election_dates tables to the environment (which are part of the durhamevp package rather than from the database). There are package help files describing these two data sets.
   #' @param evp_coding_download The result from executing the get_coding() command.
   #' @export
   #'
@@ -710,6 +716,8 @@ assign_coding_to_environment<- function(evp_coding_download){
 
     evp_coding_download[["location"]] <- location
     evp_coding_download[["processed_locations"]] <- processed_locations
+    evp_coding_download[["ev_events"]]<- durhamevp::ev_events
+    evp_coding_download[["election_dates"]]<- durhamevp::election_dates
 
     for (i in 1:length(evp_coding_download)) {
       assign(names(evp_coding_download)[i], tibble::as_tibble(evp_coding_download[[i]]), envir=globalenv())
