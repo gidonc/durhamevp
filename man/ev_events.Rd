@@ -5,7 +5,7 @@
 \alias{ev_events}
 \title{Election Violence Event Level Data.}
 \format{
-A data frame with 2925 rows and 9 variables, which are:
+A data frame with 2915 rows and 9 variables, which are:
 \describe{
 \item{event_id}{The unique identifier of the event (which corresponds to the event_id in the processed event_reports table and to the final_cluster_id in the clustering table (in cluster attempt 401 to 420).}
 \item{election_name}{Standardised name of election.}
