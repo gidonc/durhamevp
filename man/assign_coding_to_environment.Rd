@@ -2,7 +2,7 @@
 % Please edit documentation in R/database_interactivity.R
 \name{assign_coding_to_environment}
 \alias{assign_coding_to_environment}
-\title{Assign the results of a get_coding download to the global environment}
+\title{Assign election violence database objects to the global environment.}
 \usage{
 assign_coding_to_environment(evp_coding_download)
 }
@@ -10,5 +10,9 @@ assign_coding_to_environment(evp_coding_download)
 \item{evp_coding_download}{The result from executing the get_coding() command.}
 }
 \description{
-Assign the results of a get_coding download to the global environment
+Assigns election violence database objects to the global environment, where those database objects are the results of executing the \code{get_coding} function.
+The method for creating the code{processed_locations} table is described in the help file for the \code{process_locations} function.
+}
+\details{
+The function also adds the ev_events data and the election_dates tables to the environment (which are part of the durhamevp package rather than from the database). There are package help files describing these two data sets.
 }
