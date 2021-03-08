@@ -140,8 +140,8 @@ d.path<-path<-switch (Sys.info()["nodename"],
                       "DM-GIA-051"="D:/Dropbox/ESRC Grant EV 19th Century",
                       "GID-HOME-LENOVO"="C:/Users/Gidon/Dropbox/ESRC Grant EV 19th Century")
 
-ev_events<-readr::read_csv(paste0(d.path, "/Impact/Interactive Map/events.csv"))
-ev_events <- dplyr::select(ev_events,
+map_events<-readr::read_csv(paste0(d.path, "/Impact/Interactive Map/events.csv"))
+map_events <- dplyr::select(map_events,
                         event_id=final_cluster_id,
                         election_name = election_name,
                         event_level,
@@ -154,6 +154,11 @@ ev_events <- dplyr::select(ev_events,
 ## remove deleted events
 evp_download <- durhamevp::get_coding()
 assign_coding_to_environment(evp_download)
-ev_events <- dplyr::filter(ev_events, event_id %in% event_reports$event_id)
+ev_events <- event_reports %>%
+  group_by(event_id, election_name, constituency_g_name) %>%
+  summarize() %>%
+  rename(event_constituency_g_name = constituency_g_name) %>%
+  ungroup()
+ev_events <- dplyr::left_join(ev_events, map_events, by=c("event_id", "election_name"))
 usethis::use_data(ev_events, overwrite = TRUE)
 

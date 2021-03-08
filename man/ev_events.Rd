@@ -5,10 +5,11 @@
 \alias{ev_events}
 \title{Election Violence Event Level Data.}
 \format{
-A data frame with 2915 rows and 9 variables, which are:
+A data frame with 2971 rows and 10 variables, which are:
 \describe{
 \item{event_id}{The unique identifier of the event (which corresponds to the event_id in the processed event_reports table and to the final_cluster_id in the clustering table (in cluster attempt 401 to 420).}
 \item{election_name}{Standardised name of election.}
+\item{event_constituency_g_name} The most commonly associated constituency (Vision of Britain g_name) associated with this event in the election violence database.
 \item{event_level}{Manual classification the event intensity into four categories: Riot, Disturbance, Incident, Individual. These categories are based on Wasserman and Jaggard (2006) 'Electoral violence in mid ninteenth-century England and Wales', \emph{Historical Research}, 207:80, but with some additions (and an extra 'individual' category.).
 \cr \strong{Riot} A serious and sustained outbreak of collective violence, involving the implicit or explicit use of force, intimidation or coercion, and which resulted in physical damage to persons or property - or the immediate fear that such would occur. Riots commonly evoked a magisterial response, such as the reading of the Riot Act proclamation and/or the forcible restoration of the peace by police officers or the military.
 \cr \strong{Disturbance} A less serious breach of the peace than a riot, and involved episodic outbursts of crowd violence rather than the type of sustained disorder characteristic of a riot. A disturbance generated a degree of public alarm and usually elicited some measure of official response.
