@@ -12,6 +12,9 @@ compile_report <- function(event_report_id, data_location="database", output_for
 
   if(data_location=="database"){
     this_er <- durhamevp::get_event_report(event_report_id = event_report_id)
+    this_clustering <- durhamevp::get_clustering()
+    this_er<-add_event_id_from_clustering(list(event_reports = this_er, clustering=this_clustering))[["event_reports"]]
+    this_er <- arrange(this_er, event_id)
   }
 
 
@@ -117,7 +120,7 @@ compile_event_report_markdown<- function (this_er, data_location="database", dat
 
   kmarkobj <- c(
                paste0('',
-                      '## Event Report Id:', this_er$event_report_id),
+                      '## Event Report Id:', this_er$event_report_id, ' (Event Id: ', this_er$event_id, ')'),
                paste0("[article pdf](http://coders.victorianelectionviolence.uk", this_user_doc$pdf_location, ") (coded by: ", this_user_doc$coder_first_name, " ", this_user_doc$coder_last_name), ")",
                '',
                '### Summary',

@@ -160,5 +160,10 @@ ev_events <- event_reports %>%
   rename(event_constituency_g_name = constituency_g_name) %>%
   ungroup()
 ev_events <- dplyr::left_join(ev_events, map_events, by=c("event_id", "election_name"))
+needs_updating <- ev_events %>% filter(event_constituency_g_name!=imap_constituency_g_name|is.na(imap_constituency_g_name)|is.na(imap_event_summary)) %>% arrange(event_id)
+event_reports_relating_to_ev_events_needs_info<-event_reports %>% filter(event_id %in% needs_updating$event_id) %>% arrange(event_id)
+#write_csv(needs_updating, paste0(d.path, "/Data Sources/ARCHIVE/cleaning data/ev_events_needs_info.csv"))
+#write_csv(event_reports_relating_to_ev_events_needs_info, paste0(d.path, "/Data Sources/ARCHIVE/cleaning data/event_reports_relating_to_ev_needs_info.csv"))
+#compile_report(event_reports_relating_to_ev_events_needs_info$event_report_id, paste0(d.path, "/Data Sources/ARCHIVE/cleaning data/event_reports_relating_to_ev_needs_info.html"))
 usethis::use_data(ev_events, overwrite = TRUE)
 
