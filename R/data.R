@@ -22,7 +22,7 @@
 
 #' Election Violence Event Level Data.
 #'
-#' An event level dataset containing violent events in British General Elections between 1832 and 1910.Note that information on the detail of events is not in this dataset, but instead is stored in event reports relating to these events. This data can be linked to the event report data using the event_id column.
+#' An event level dataset containing violent events in British General Elections between 1832 and 1910. Note that information on the detail of events is not in this dataset, but instead is stored in event reports relating to these events. This data can be linked to the event report data using the event_id column.
 #'
 #' @format A data frame with 2971 rows and 10 variables, which are:
 #' \describe{
@@ -37,9 +37,9 @@
 #'   \item{imap_constituency_g_name}{Vision of Britain g_name of the main constituency related to the event as found on the interactive map.}
 #'   \item{imap_county_g_name}{Vision of Britain g_name of county of the event as found on the interactive map.}
 #'   \item{imap_townvillage}{The name of the town or village where the event took place, as found on the interactive map.}
-#'   \item{imap_longitude}{Event longitude on the interactive map.}
-#'   \item{imap_latitude}{Event latitude on the interactive map.}
-#'   \item{imap_event_summary}{An edited brief description of the event from the interactive map (taking all the cluster best descriptions into account).}
+#'   \item{event_longitude}{Event longitude taken initially from the interactive map and supplemented by further cleaning.}
+#'   \item{event_latitude}{Event latitude taken initially from the interactive map and supplemented by further cleaning.}
+#'   \item{summary_event}{An edited brief description of the event from the database.}
 #'   }
-#' @source Processed Data from Durham Election Violence Dataset created by Gary Hutchison for the interactive map. The interactive map can be found at <https://coders.victorianelectionviolence.uk/interactive_map>.
+#' @source Processed Data from Durham Election Violence Dataset created by Gary Hutchison for the interactive map and supplemented by further cleaning. The interactive map can be found at <https://coders.victorianelectionviolence.uk/interactive_map>.
 "ev_events"

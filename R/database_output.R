@@ -13,8 +13,8 @@ compile_report <- function(event_report_id, data_location="database", output_for
   if(data_location=="database"){
     this_er <- durhamevp::get_event_report(event_report_id = event_report_id)
     this_clustering <- durhamevp::get_clustering()
-    this_er<-add_event_id_from_clustering(list(event_reports = this_er, clustering=this_clustering))[["event_reports"]]
-    this_er <- arrange(this_er, event_id)
+    this_er<-durhamevp::add_event_id_from_clustering(list(event_reports = this_er, clustering=this_clustering))[["event_reports"]]
+    this_er <- dplyr::arrange(this_er, event_id)
   }
 
 
@@ -88,13 +88,13 @@ compile_event_report_markdown<- function (this_er, data_location="database", dat
     this_tag_comment<- ifelse(this_tag$comment_tags=="", "", paste0("(comment: ", this_tag$comment_tags, ")"))
     this_tag_id <- this_tag$tag_id
 
-    if (this_tag_table!=last_tag_table){
+    if (!identical(this_tag_table, last_tag_table)){
       tags_output <- c(tags_output,
                        '',
                        paste("###", this_tag_table),
                        '')
     }
-    if (this_tag_variable!=last_tag_variable){
+    if (!identical(this_tag_variable, last_tag_variable)){
       tags_output <- c(tags_output,
                        '',
                        paste("####", this_tag_variable),
@@ -114,7 +114,7 @@ compile_event_report_markdown<- function (this_er, data_location="database", dat
   }
 
   pub_date<- my_dateform(lubridate::ymd(this_user_doc$publication_date))
-  if(is.na(pub_date)){
+  if(length(is.na(pub_date)==0|is.na(pub_date))){
     pub_date <- paste(this_user_doc$publication_date, ": date format not producing result")
   }
 

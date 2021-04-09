@@ -151,19 +151,43 @@ map_events <- dplyr::select(map_events,
                         imap_latitude = latitude,
                         imap_longitude = longitude,
                         imap_event_summary=summary)
+cleaned_events <- readr::read_csv(paste0(d.path, "/Data Analysis/Cleaning and Completion of Events/ev_events_needs_info_clean.csv"))
+
 ## remove deleted events
 evp_download <- durhamevp::get_coding()
-assign_coding_to_environment(evp_download)
+durhamevp::assign_coding_to_environment(evp_download)
 ev_events <- event_reports %>%
   group_by(event_id, election_name, constituency_g_name) %>%
   summarize() %>%
   rename(event_constituency_g_name = constituency_g_name) %>%
   ungroup()
-ev_events <- dplyr::left_join(ev_events, map_events, by=c("event_id", "election_name"))
-needs_updating <- ev_events %>% filter(event_constituency_g_name!=imap_constituency_g_name|is.na(imap_constituency_g_name)|is.na(imap_event_summary)) %>% arrange(event_id)
-event_reports_relating_to_ev_events_needs_info<-event_reports %>% filter(event_id %in% needs_updating$event_id) %>% arrange(event_id)
+map_events_use <- map_events %>% anti_join(cleaned_events, by="event_id") %>%
+  filter(event_id %in% ev_events$event_id)
+
+event_descriptions <- bind_rows(cleaned_events, map_events_use)
+
+ev_events <- dplyr::left_join(ev_events, event_descriptions, by=c("event_id", "election_name"), suffix=c("", ".y")) %>%
+  mutate(event_constituency_g_name = ifelse(!is.na(event_constituency_g_name.y) & event_constituency_g_name
+                                            !=event_constituency_g_name.y, event_constituency_g_name.y, event_constituency_g_name))%>%
+  select(-event_constituency_g_name.y)
+
+ev_events <- rename(ev_events, summary_event=imap_event_summary,
+                     event_latitude=imap_latitude,
+                     event_longitude=imap_longitude
+                     )
+ev_events <- dplyr::select(ev_events, -comments)
+# needs_updating <- ev_events %>% filter(event_constituency_g_name!=imap_constituency_g_name|is.na(imap_constituency_g_name)|is.na(imap_event_summary)) %>% arrange(event_id)
+# event_reports_relating_to_ev_events_needs_info<-event_reports %>% filter(event_id %in% needs_updating$event_id) %>% arrange(event_id)
 #write_csv(needs_updating, paste0(d.path, "/Data Sources/ARCHIVE/cleaning data/ev_events_needs_info.csv"))
 #write_csv(event_reports_relating_to_ev_events_needs_info, paste0(d.path, "/Data Sources/ARCHIVE/cleaning data/event_reports_relating_to_ev_needs_info.csv"))
-#compile_report(event_reports_relating_to_ev_events_needs_info$event_report_id, paste0(d.path, "/Data Sources/ARCHIVE/cleaning data/event_reports_relating_to_ev_needs_info.html"))
+# event_ids <- unique(event_reports_relating_to_ev_events_needs_info$event_id)
+# event_ids
+# for(this_event_id in event_ids){
+#   these_event_reports <- event_reports_relating_to_ev_events_needs_info %>% filter(event_id %in% this_event_id) %>% pull(event_report_id)
+#   print(this_event_id)
+#   durhamevp::compile_report(these_event_reports,
+#                             output_file = paste0(d.path, "/Data Sources/ARCHIVE/cleaning data/event_reports_relating_to_ev_needs_info_event_id", this_event_id, ".pdf"), output_format = "pdf_document")
+# }
+# durhamevp::compile_report(event_reports_relating_to_ev_events_needs_info$event_report_id, output_file = paste0(d.path, "/Data Sources/ARCHIVE/cleaning data/event_reports_relating_to_ev_needs_info.pdf"), output_format = "pdf_document")
 usethis::use_data(ev_events, overwrite = TRUE)
 
