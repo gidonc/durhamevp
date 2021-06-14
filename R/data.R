@@ -46,9 +46,7 @@
 
 
 #' Mitchell Newspaper Partisan Affiliation for Each user_doc.
-#'
 #' The partisan information comes from the Mitchell Advertiser handbooks for 1847, 1856 (linked to the 1857 election), 1868, 1885, and 1910. The partisan leaning coding is described by the newspapers themselves in the Mitchell and was translated by Dr Gary Hutchison into two variables, partisan and leaning. Sources from our dataset were matched to the Mitchell data based on (1) publication title, (2) publication location, and (3) publication weekday/frequency. This ensures that newspapers with the same name are matched correctly and allows weekday and weekend editions to have different partisan leanings. This process was done by hand by a trained and supervised RA. The quality of the match is recorded in match_quality, where 3 means perfect match on all three criteria, 2 means there is good match on two criteria, and 1 means there is a match, but only on one criteria (generally title). Where match_quality==NA, no match could be found. The Mitchell data is added to the document_level data and missing years have been inter- and extrapolated using forward and backward panel completion. There are purely interpolated variables (only partisan and leaning_simple), where “lof” and “bw” indicates whether the last observation is brought forward or backward, and fully inter- and extrapolated variables. Those partisan and leaning_simple variables are named accordingly in the data.
-#'
 #' @format A data frame with 11667 rows and 14 variables, which are:
 #' \describe{
 #'   \item{user_doc_id}{The user_doc_id the record relates to (links to user_doc table in the database).}
@@ -66,6 +64,5 @@
 #'   \item{leaning_simple_full_f}{Interpolated and extrapolated leaning_simple variable using last observation forwards if possible, and last observation backwards if necessary}
 #'   \item{leaning_simple_full_b}{Interpolated and extrapolated leaning_simple variable using last observation backwards if possible, and last observation forwards if necessary}
 #'   }
-#' @source .
 "user_docs_partisanmerger"
 
