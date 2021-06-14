@@ -499,6 +499,7 @@ get_coding <- function(include_ocr=FALSE, restrict_to_coding_complete = TRUE, re
     event_reports <-  dplyr::filter(event_reports, byelection=="0")
 
   }
+  user_docs <- left_join(user_docs, durhamevp::user_docs_partisanmerger, by="user_doc_id")
 
   event_reports <-  dplyr::filter(event_reports, user_doc_id %in% user_docs$user_doc_id)
   tags <-  dplyr::filter(tags, event_report_id %in% event_reports$event_report_id)
