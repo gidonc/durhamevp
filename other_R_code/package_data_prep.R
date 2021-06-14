@@ -176,6 +176,10 @@ ev_events <- rename(ev_events, summary_event=imap_event_summary,
                      event_longitude=imap_longitude
                      )
 ev_events <- dplyr::select(ev_events, -comments)
+
+usethis::use_data(ev_events, overwrite = TRUE)
+
+## The code below was used to create information about cases that needed cleaning - and which were cleaned by Roseanna - and then checked by Patrick and Gidon in April 2021
 # needs_updating <- ev_events %>% filter(event_constituency_g_name!=imap_constituency_g_name|is.na(imap_constituency_g_name)|is.na(imap_event_summary)) %>% arrange(event_id)
 # event_reports_relating_to_ev_events_needs_info<-event_reports %>% filter(event_id %in% needs_updating$event_id) %>% arrange(event_id)
 #write_csv(needs_updating, paste0(d.path, "/Data Sources/ARCHIVE/cleaning data/ev_events_needs_info.csv"))
@@ -189,5 +193,6 @@ ev_events <- dplyr::select(ev_events, -comments)
 #                             output_file = paste0(d.path, "/Data Sources/ARCHIVE/cleaning data/event_reports_relating_to_ev_needs_info_event_id", this_event_id, ".pdf"), output_format = "pdf_document")
 # }
 # durhamevp::compile_report(event_reports_relating_to_ev_events_needs_info$event_report_id, output_file = paste0(d.path, "/Data Sources/ARCHIVE/cleaning data/event_reports_relating_to_ev_needs_info.pdf"), output_format = "pdf_document")
-usethis::use_data(ev_events, overwrite = TRUE)
 
+user_docs_partisanmerger <- read_csv(paste0(evp.path, "/Data Sources/Newspaper Partisan Affiliation/user_docs_partisanmerger.csv"))
+usethis::use_data(user_docs_partisanmerger, overwrite = TRUE)
