@@ -3,7 +3,7 @@ create_new_autocluster <- function(){
   #' \code{create_new_autocluster} Creates a new autodetected cluster on the data.
   #' @return the id on the database of the newly created autodetected cluster.
   #'
-  #' @ export
+  #' @export
 
   con <- manage_dbcons()
 
@@ -47,7 +47,7 @@ assign_autocluster_to_user <- function(autodetected_cluster_id, user_id, cluster
   #' @param allocation_date Date allocation made (usually today).
   #' @param last_updated Date record last updated (usually today).
   #' @param completed Is the cluster verification complete (usually 0 [i.e. not complete])
-  #' @para needs_additional_checks Does the cluster need additional checks (for a new cluster allocation should be zero - may be changed later on the platform as part of the process)
+  #' @param needs_additional_checks Does the cluster need additional checks (for a new cluster allocation should be zero - may be changed later on the platform as part of the process)
 
   #' @export
 

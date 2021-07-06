@@ -132,6 +132,22 @@ c91 <- st_read(c91)
 county_shapes <- c91
 usethis::use_data(county_shapes, overwrite = TRUE)
 
+##----EV Deaths data----
+ev_deaths <- readr::read_csv(paste0(d.path, "/Data Sources/EV Deaths/ev_deaths.csv")) #load cleaned events data and use
+ev_deaths <- dplyr::rename(ev_deaths, location=Location)
+ev_deaths <- dplyr::select(ev_deaths, -X21, -X22, -X23, -X24, -X25, -X26)
+usethis::use_data(ev_deaths, overwrite = TRUE)
+
+#Aggregating EV Deaths data and to prepare for adding it to the cleaned EV Events data
+ev_deaths_agg<-ev_deaths%>% #aggregrate cleaned death data at the event_id level
+  select(event_id,grouped_circumstance,election_point_death)%>%
+  rename(deaths_circumstance=grouped_circumstance, deaths_electionpoint=election_point_death)%>%
+  group_by(event_id)%>%
+  add_count()%>%
+  rename(n_deaths=n)%>%
+  unique()%>%
+  select(event_id,n_deaths,deaths_circumstance,deaths_electionpoint)
+
 
 ##----eventclassification----
 d.path<-path<-switch (Sys.info()["nodename"],
@@ -177,6 +193,13 @@ ev_events <- rename(ev_events, summary_event=imap_event_summary,
                      )
 ev_events <- dplyr::select(ev_events, -comments)
 
+## add the event level death information
+ev_events <- left_join(ev_events, ev_deaths_agg, by="event_id")
+ev_events <- mutate(ev_events,
+                    n_deaths = ifelse(is.na(n_deaths), 0, n_deaths),
+                    has_death = ifelse(n_deaths==0, 0, 1))
+
+
 usethis::use_data(ev_events, overwrite = TRUE)
 
 ## The code below was used to create information about cases that needed cleaning - and which were cleaned by Roseanna - and then checked by Patrick and Gidon in April 2021
@@ -196,3 +219,4 @@ usethis::use_data(ev_events, overwrite = TRUE)
 
 user_docs_partisanmerger <- read_csv(paste0(evp.path, "/Data Sources/Newspaper Partisan Affiliation/user_docs_partisanmerger.csv"))
 usethis::use_data(user_docs_partisanmerger, overwrite = TRUE)
+

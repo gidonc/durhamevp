@@ -24,7 +24,7 @@
 #'
 #' An event level dataset containing violent events in British General Elections between 1832 and 1910. Note that information on the detail of events is not in this dataset, but instead is stored in event reports relating to these events. This data can be linked to the event report data using the event_id column.
 #'
-#' @format A data frame with 2971 rows and 10 variables, which are:
+#' @format A data frame with 2971 rows and 14 variables, which are:
 #' \describe{
 #'   \item{event_id}{The unique identifier of the event (which corresponds to the event_id in the processed event_reports table and to the final_cluster_id in the clustering table (in cluster attempt 401 to 420).}
 #'   \item{election_name}{Standardised name of election.}
@@ -40,8 +40,12 @@
 #'   \item{event_longitude}{Event longitude taken initially from the interactive map and supplemented by further cleaning.}
 #'   \item{event_latitude}{Event latitude taken initially from the interactive map and supplemented by further cleaning.}
 #'   \item{summary_event}{An edited brief description of the event from the database.}
+#'   \item{n_deaths}{Number of confirmed deaths. Values: 0-5}
+#'   \item{deaths_circumstance}{Circumstance of deaths. Values: Riot, Roughs, Political quarrel, Candidate meeting, Other.}
+#'   \item{deaths_electionpoint}{Time in the election cycle in which death(s) occurred. Values: during campaigning, during polling, after polling.}
+#'   \item{has_death}{Was there a death associated with the event. Values 1 = yes, there was a death associated with the event, 0 = no, no death associated with the event.}
 #'   }
-#' @source Processed Data from Durham Election Violence Dataset created by Gary Hutchison for the interactive map and supplemented by further cleaning. The interactive map can be found at <https://coders.victorianelectionviolence.uk/interactive_map>.
+#' @source Processed Data from Durham Election Violence Dataset created by Gary Hutchison for the interactive map and supplemented by further cleaning. The event_level deaths variable were added after cleaning of all killings by Lydia Buckroyde in Michaelmas/Easter 2020/21. The interactive map can be found at <https://coders.victorianelectionviolence.uk/interactive_map>.
 "ev_events"
 
 
@@ -68,3 +72,31 @@
 #'   }
 "user_docs_partisanmerger"
 
+#' Election Violence Deaths data.
+#'
+#' The death data was created from the original coding. All events with at least one report involving a killing were individually checked to verify whether a death had actually occurred. If so, additional variables (listed below) have been extracted from the original coding sources. In total we found 96 individual deaths occurring during the 20 General Elections, 1832-1914. Data on deaths is added to the package in two ways: (1) some aggregate descriptives at the event level (see ev_events description) and (2) as stand-alone ev_deaths data frame, which is described below.
+#'
+#' @format A data frame with 96 rows and 26 variables, which are:
+#' \describe{
+#'   \item{event_id}{The event_id the record relates to in the ev_events and event_reports dataframes.}
+#'   \item{election_name}{Identifies the election the record relates to.}
+#'   \item{case_id}{Death record within event: counter of the number of deaths within an event.}
+#'   \item{location}{String recording the location at which the death occurred.}
+#'   \item{victim_name}{Name of the victim if provided in the source material; otherwise NA.}
+#'   \item{victim_gender}{Gender of the victim if provided. Values: male, female, NA}
+#'   \item{victim_age}{Age in number of years if provided in the surce material; otherwise NA.}
+#'   \item{victim_age_text}{String providing the in-text description of the victim's age given; otherwise NA.}
+#'   \item{victim_profession}{String variable indicating the profession of the vitim if provided; otherwise NA.}
+#'   \item{vicim_election_role}{String indicating the role of the victim during the election if provided; otherwise NA.}
+#'   \item{victim_affiliation}{String recording the victim's party affiliation if provided; otherwise NA.}
+#'   \item{specific_circumstance}{String describing the specific circumstances of the death; otherwise NA.}
+#'   \item{grouped_circumstance}{String variable grouping circumstance of deaths into five categories. Values: Riot, Roughs, Candidate Meeting, Political Quarrel, and Other.}
+#'   \item{weapon}{String listing weapons used in the incident. If not provided in the source material NA is coded.}
+#'   \item{cause_death}{String recording the denoted cause of death if provided; otherwise NA.}
+#'   \item{election_point_death}{String indicating the timing of the death during the election proceedings. Values: during campaigning, during polling, after polling.}
+#'   \item{perpetrator}{String describing the perpetrator if provided in source material; otherwise NA.}
+#'   \item{perpetrator_affiliation}{String recording the perpetrator's party affiliation if provided; otherwise NA.}
+#'   \item{consequences}{String recording any electoral consequences of the death as noted n the source material; otherwise NA.}
+#'   \item{best_bna_link}{Link to the newspaper source inthe British Newspaper Archive with the most detailed account of the death. Links the other source material can be obtained by linking ev_deaths to event_reports and user_docs.}
+#'   }
+"ev_deaths"

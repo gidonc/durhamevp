@@ -26,6 +26,8 @@ assign_autocluster_to_user(
 \item{last_updated}{Date record last updated (usually today).}
 
 \item{completed}{Is the cluster verification complete (usually 0 \link{i.e. not complete})}
+
+\item{needs_additional_checks}{Does the cluster need additional checks (for a new cluster allocation should be zero - may be changed later on the platform as part of the process)}
 }
 \description{
 \code{assign_autocluster_to_user} assigns an autodetected cluster to a user for verification.

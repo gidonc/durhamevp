@@ -5,7 +5,7 @@
 \alias{ev_events}
 \title{Election Violence Event Level Data.}
 \format{
-A data frame with 2971 rows and 10 variables, which are:
+A data frame with 2971 rows and 14 variables, which are:
 \describe{
 \item{event_id}{The unique identifier of the event (which corresponds to the event_id in the processed event_reports table and to the final_cluster_id in the clustering table (in cluster attempt 401 to 420).}
 \item{election_name}{Standardised name of election.}
@@ -21,10 +21,14 @@ A data frame with 2971 rows and 10 variables, which are:
 \item{event_longitude}{Event longitude taken initially from the interactive map and supplemented by further cleaning.}
 \item{event_latitude}{Event latitude taken initially from the interactive map and supplemented by further cleaning.}
 \item{summary_event}{An edited brief description of the event from the database.}
+\item{n_deaths}{Number of confirmed deaths. Values: 0-5}
+\item{deaths_circumstance}{Circumstance of deaths. Values: Riot, Roughs, Political quarrel, Candidate meeting, Other.}
+\item{deaths_electionpoint}{Time in the election cycle in which death(s) occurred. Values: during campaigning, during polling, after polling.}
+\item{has_death}{Was there a death associated with the event. Values 1 = yes, there was a death associated with the event, 0 = no, no death associated with the event.}
 }
 }
 \source{
-Processed Data from Durham Election Violence Dataset created by Gary Hutchison for the interactive map and supplemented by further cleaning. The interactive map can be found at \url{https://coders.victorianelectionviolence.uk/interactive_map}.
+Processed Data from Durham Election Violence Dataset created by Gary Hutchison for the interactive map and supplemented by further cleaning. The event_level deaths variable were added after cleaning of all killings by Lydia Buckroyde in Michaelmas/Easter 2020/21. The interactive map can be found at \url{https://coders.victorianelectionviolence.uk/interactive_map}.
 }
 \usage{
 ev_events
