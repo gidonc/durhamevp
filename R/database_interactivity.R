@@ -718,6 +718,7 @@ assign_coding_to_environment<- function(evp_coding_download){
     evp_coding_download[["location"]] <- location
     evp_coding_download[["processed_locations"]] <- processed_locations
     evp_coding_download[["ev_events"]]<- durhamevp::ev_events
+    evp_coding_download[["ev_deaths"]]<- durhamevp::ev_deaths
     evp_coding_download[["election_dates"]]<- durhamevp::election_dates
 
     for (i in 1:length(evp_coding_download)) {
