@@ -84,7 +84,7 @@
 #'   \item{location}{String recording the location at which the death occurred.}
 #'   \item{victim_name}{Name of the victim if provided in the source material; otherwise NA.}
 #'   \item{victim_gender}{Gender of the victim if provided. Values: male, female, NA}
-#'   \item{victim_age}{Age in number of years if provided in the surce material; otherwise NA.}
+#'   \item{victim_age}{Age in number of years if provided in the source material; otherwise NA.}
 #'   \item{victim_age_text}{String providing the in-text description of the victim's age given; otherwise NA.}
 #'   \item{victim_profession}{String variable indicating the profession of the vitim if provided; otherwise NA.}
 #'   \item{vicim_election_role}{String indicating the role of the victim during the election if provided; otherwise NA.}
