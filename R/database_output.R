@@ -138,6 +138,14 @@ compile_event_report_markdown<- function (this_er, data_location="database", dat
                '### Environment and Election Point',
                knitr::kable(this_er[,c("environment", "election_point")]),
                tags_output)
+  # Function fails to print if there is some non-UTF8 enconded characters, so check for this and fix
+  needs_cleaning <- which(!stringi::stri_enc_isascii(kmarkobj))
+  if(length(needs_cleaning)>0){
+    for(this_clean in needs_cleaning){
+      kmarkobj[[this_clean]] <- stringi::stri_enc_toutf8(kmarkobj[[this_clean]])
+      kmarkobj[[this_clean]] <- iconv(kmarkobj[[this_clean]], "UTF-8", "ASCII", sub="")
+    }
+  }
   kmarkobj
 }
 
